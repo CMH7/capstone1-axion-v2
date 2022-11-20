@@ -1,0 +1,67 @@
+.border {
+  &-color {
+    &-white {border-color: white;}
+    &-black {border-color: black;}
+    &-danger {border-color: hsl(0, 91%, 73%);}
+    &-grey {
+      border-color: hsl(0, 0%, 48%);
+
+      &-light {border-color: hsl(0, 0%, 71%);}
+      &-lighter {border-color: hsl(0, 0%, 86%);}
+    }
+    &-yaz {
+      &-grey {
+        border-color: #B9B9B9;
+        &-dark {border-color: #626262;}
+      }
+    }
+  }
+
+  //top
+  &-t-color {
+    &-white {border-top-color: white;}
+    &-black {border-top-color: black;}
+    &-yaz {
+      &-grey {
+        border-top-color: #B9B9B9;
+        &-dark {border-top-color: #626262;}
+      }
+    }
+  }
+  
+  //right
+  &-r-color {
+    &-white {border-right-color: white;}
+    &-black {border-right-color: black;}
+    &-yaz {
+      &-grey {
+        border-right-color: #B9B9B9;
+        &-dark {border-right-color: #626262;}
+      }
+    }
+  }
+  
+  //bottom
+  &-b-color {
+    &-white {border-bottom-color: white;}
+    &-black {border-bottom-color: black;}
+    &-yaz {
+      &-grey {
+        border-bottom-color: #B9B9B9;
+        &-dark {border-bottom-color: #626262;}
+      }
+    }
+  }
+  
+  //left
+  &-l-color {
+    &-white {border-left-color: white;}
+    &-black {border-left-color: black;}
+    &-yaz {
+      &-grey {
+        border-left-color: #B9B9B9;
+        &-dark {border-left-color: #626262;}
+      }
+    }
+  }
+}

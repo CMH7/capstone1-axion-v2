@@ -1,0 +1,19 @@
+@forward 'width.scss';
+@forward 'type.scss';
+@forward 'color.scss';
+
+.border {
+  &-none {
+    border: none;
+    
+    &-onfocus:focus {
+      outline: none;
+    }
+  }
+
+  &-outline {
+    &-none {
+      outline-width: 0;
+    }
+  }
+}

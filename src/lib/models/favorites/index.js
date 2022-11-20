@@ -1,0 +1,4 @@
+export default {
+  for: '',
+  ids: ['']
+}

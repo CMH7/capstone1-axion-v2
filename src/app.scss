@@ -1,0 +1,65 @@
+/* Write your global styles here, in SCSS syntax. Variables and mixins from the src/variables.scss file are available here without importing */ /* Import only what you need from Bulma */
+@import 'bulma/sass/utilities/_all';
+@import 'bulma/sass/base/_all';
+@import 'bulma/sass/elements/_all';
+@import 'bulma/sass/form/_all';
+@import 'bulma/sass/components/_all';
+@import 'bulma/sass/grid/_all';
+@import 'bulma/sass/helpers/_all';
+@import 'bulma/sass/layout/_all';
+@import url('./SCSS/index.scss');
+
+// general scroll style
+::-webkit-scrollbar {
+  width: 4px;
+  height: 1px
+}
+
+::-webkit-scrollbar-thumb {
+  border-radius: 10px;
+  background-color: rgba(0, 0, 0, 0.4);
+}
+
+:root {
+  scroll-behavior: smooth;
+}
+
+// other custom uncategorized classes
+
+.has-transition {
+  transition: all 0.38s ease-in-out;
+}
+
+.overflow {
+  &-x {
+    &-scroll {overflow-x: scroll;}
+    &-hidden {overflow-x: hidden;}
+    &-auto {overflow-x: auto;}
+    &-visible {overflow-x: visible;}
+  }
+
+  &-y {
+    &-scroll {overflow-y: scroll;}
+    &-hidden {overflow-y: hidden;}
+    &-auto {overflow-y: auto;}
+    &-visible {overflow-y: visible;}
+  }
+}
+
+.max-h-calc-100vh-65px {max-height: calc(100vh - 65px);}
+.min-h-calc-100vh-65px {min-height: calc(100vh - 65px);}
+.min-h-fit-content {min-height: fit-content;}
+
+.maxmins-h-calc-100vh-65px {@extend .max-h-calc-100vh-65px; @extend .min-h-calc-100vh-65px;}
+
+@media screen and (max-width: $mb) {
+  .maxmins-w-400-dt-to-mb-100p {max-width: 100%; min-width: 100%;}
+  .maxmins-w-400-dt-to-mb-90p {max-width: 90%; min-width: 90%;}
+}
+
+@media screen and (min-width: $mb) {
+  .maxmins-w-400-dt-to-mb-100p {max-width: 400px; min-width: 400px;}
+  .maxmins-w-400-dt-to-mb-90p {max-width: 400px; min-width: 400px;}
+}
+
+.txt-overflow-ellipsis {text-overflow: ellipsis; white-space: nowrap;}
