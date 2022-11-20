@@ -15,3 +15,5 @@ export let invModalActive = writable(false)
 export let notifs = writable([{ msg: '', type: '', id: '' }])
 
 export let loading = writable(false)
+
+export let hintText = writable('')

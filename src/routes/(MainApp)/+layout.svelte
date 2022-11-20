@@ -3,22 +3,19 @@
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
 	import { goto } from '$app/navigation';
-	import { breadCrumbsItems, loading, logoutModalActive, notifCenterOpen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText, loading, notifCenterOpen } from '$lib/stores/global.store';
 	import { activeSubject, invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
-	import { onMount } from 'svelte';
   import { fade } from 'svelte/transition'
 	import NotificationContainer from '$lib/components/System-Notification/Notification-container.svelte';
+	import Fab from '$lib/components/fab/fab.svelte';
 
   /** @type {import('./$types').LayoutServerData} */
   export let data
 
-  const toggleNavigation = () => active = !active
-  
   let active = false
-  let dashCount = 0
   let innerWidth = 0
   let currentIndex = 0
   let showProfileMenu = false
@@ -34,6 +31,10 @@
   ];
 
   breadCrumbsItems.subscribe(value => breadcrumbs = value)
+
+  const toggleNavigation = () => {
+    active = !active
+  }
 
   const navClicked = async (i, href) => {
     if(i == 0) breadcrumbs = [{text: 'Subjects', href: `/${data.user.email}`}]
@@ -201,7 +202,7 @@
           </div>
       </AppBar>
   
-      <NavigationDrawer fixed active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='pt-12 has-background-white'>
+      <NavigationDrawer fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
         <List>
           <ListItemGroup mandatory class='has-text-{navs[currentIndex].color} {navs[currentIndex].color}'>
             {#each navs as navItem, i}
@@ -239,7 +240,7 @@
         </List>
       </NavigationDrawer>
   
-      <Overlay {active} absolute on:click={toggleNavigation} index={1} />
+      <Overlay active={active || $notifCenterOpen} absolute on:click={toggleNavigation} index={1} />
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
@@ -286,7 +287,7 @@
               <div class="tags has-addons">
                 <span class="tag is-dark fredoka-reg txt-size-18 {innerWidth < 571 ? 'is-hidden' : ''}">Hint</span>
                 <span class="fredoka-reg {innerWidth < 571 ? 'txt-size-13 notification' : 'txt-size-18 tag'} is-success is-light">
-                  Hint: Press the + button to open menu and actions
+                  {$hintText}
                   <!-- svelte-ignore a11y-click-events-have-key-events -->
                   <span on:click={hideHint} class="{innerWidth < 571 ? '' : 'is-hidden'} delete is-clickable"/>
                 </span>
@@ -311,7 +312,11 @@
       </div>
     </MaterialApp>
   </div>
-{/if}
-
+  {/if}
+  {#if currentIndex == 0 }
+    <div class="z-90">
+      <Fab {data} />
+    </div>
+  {/if}
 
 
