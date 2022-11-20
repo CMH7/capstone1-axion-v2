@@ -1,6 +1,6 @@
 # AXION V2
 
-An online web-based academic task management tool for college students, powered by netlify [`netlify`](https://netlify.com).
+An online web-based academic task management tool for college students [`Axion v1`](https:/axion-dev.me) [`Axion v2`](https://axion.social).
 
 ## About this project
 
