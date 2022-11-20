@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText } from '$lib/stores/global.store';
 	import { onMount } from 'svelte'
 	import BoardMobile from '$lib/components/board/board-mobile.svelte';
 	import BoardDesktop from '$lib/components/board/board-desktop.svelte';
@@ -15,6 +15,7 @@
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'boards', href: '#'}]
+    hintText.set('Click the \'+\' to create task and more tools!')
   })
 
 </script>

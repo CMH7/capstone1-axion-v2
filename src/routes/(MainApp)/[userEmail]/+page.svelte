@@ -4,7 +4,7 @@
   import {Button, Icon} from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
 	import { goto } from '$app/navigation';
-	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onDestroy, onMount } from 'svelte';
 	import models from '$lib/models';
@@ -24,6 +24,7 @@
     activeSubject.set(models.subject)
     activeWorkspace.set(models.workspace)
     $breadCrumbsItems = [{text: 'Subjects', href: '#'}]
+    hintText.set('Click the \'+\' icon to add new subject!')
   })
 </script>
 
