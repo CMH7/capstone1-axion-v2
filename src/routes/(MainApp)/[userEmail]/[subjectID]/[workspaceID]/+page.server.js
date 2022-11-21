@@ -42,21 +42,15 @@ export async function load({ params }) {
 
 		if (!workspace) throw error(404, 'Workspace cannot be found');
 
-		let boardsConditions =
-			workspace.boards.length != 0
-				? workspace.boards.map((boardID) => {
-						return { id: boardID };
-				  })
-				: [];
+		let boardsConditions = workspace.boards.map((boardID) => {
+			return { id: boardID };
+		})
 
-		const boards =
-			boardsConditions.length != 0
-				? await prisma.boards.findMany({
-						where: {
-							OR: boardsConditions
-						}
-				  })
-				: [];
+		const boards = await prisma.boards.findMany({
+			where: {
+				OR: boardsConditions
+			}
+		})
 
 		/** 
 		 * @type {{id: string}[]} 

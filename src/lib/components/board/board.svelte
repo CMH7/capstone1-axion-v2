@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import { boardSettingsModalActive, selectedBoard, showFilter } from '$lib/stores/boards.store';
-	import { modalChosenColor } from '$lib/stores/global.store';
+	import { hintText, modalChosenColor } from '$lib/stores/global.store';
   import { Button, Icon } from 'svelte-materialify'
   import { fade } from 'svelte/transition'
   import TaskFilterDropdown from '$lib/components/taskFilterDropdown.svelte';
@@ -134,9 +134,14 @@
     }
   ]
 
+  const setHint = () => {
+    hintText.set('Click the board name to access the board status settings')
+  }
 </script>
 
-<div class="column is-narrow">
+<div
+  on:mouseenter={setHint}
+  class="column is-narrow">
   <div class="is-flex is-justify-content-center">
     <div class="notification pb-1 pt-2 maxmins-w-250 max-h-550 px-2 rounded elevation-3 has-background-{board.color}-light">
       <!-- board header -->

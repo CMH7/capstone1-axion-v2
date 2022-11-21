@@ -19,6 +19,9 @@
    */
   const setHint = (cs) => {
     switch(cs) {
+      case 'fab':
+        hintText.set('Click FAB to open tools and options')
+        break
       case 'c-s':
         hintText.set('Creates a new subject')
         break
@@ -55,7 +58,9 @@
 
 <svelte:window bind:innerWidth />
 
-<div class="has-transition pos-abs { innerWidth < 426 ? "pos-b-20 pos-r-20" : "pos-b-40 pos-r-45"}">
+<div
+  on:mouseenter={() => setHint('fab')}
+  class="has-transition pos-abs { innerWidth < 426 ? "pos-b-20 pos-r-20" : "pos-b-40 pos-r-45"}">
   <Menu right bind:active={fabActive} bottom closeOnClick transition={scale} inOpts="{{start: 0, duration: 100}}" style='overflow-y: hidden;'>
     <div slot="activator">
       <Button fab depressed class='has-background-primary'>

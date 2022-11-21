@@ -240,23 +240,53 @@
         </List>
       </NavigationDrawer>
   
-      <Overlay active={active || $notifCenterOpen} absolute on:click={toggleNavigation} index={1} />
+      <Overlay {active} absolute on:click={toggleNavigation} index={1} />
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
-        <div class="hero-head pl-3">
+        <div class="hero-head">
           <div class="is-flex is-align-items-center">
-            {#each breadcrumbs as crumb}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <div
-                on:click={e => crumbClicked(crumb)}
-                class="txt-size-{innerWidth < 426 ? '13' : '20'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
-                {crumb.text}
-              </div>
-              {#if breadcrumbs.length > 1 && crumb.text !== 'boards'}
-                <Icon path={mdiChevronRight} />
-              {/if}
-            {/each}
+            {#if innerWidth < 376}
+              <Button 
+                icon
+                on:click={() => {
+                  if(breadcrumbs.length > 1) {
+                    
+                    goto(breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' ? 2 : 1].href, {replaceState: true})
+                  } else {
+                    goto(breadcrumbs[0].href, {replaceState: true})
+                  }
+                }}
+              >
+                <Icon path={mdiChevronLeft} />
+              </Button>
+              <a href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
+                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+                {$breadCrumbsItems[$breadCrumbsItems.length - 1].text}
+              </a>
+            {:else}
+              <Button 
+                icon
+                on:click={() => {
+                  if(breadcrumbs.length > 1) {
+                    goto(breadcrumbs[breadcrumbs.length - 2].href, {replaceState: true})
+                  } else {
+                    goto(breadcrumbs[0].href, {replaceState: true})
+                  }
+                }}
+              >
+                <Icon path={mdiChevronLeft} />
+              </Button>
+              {#each breadcrumbs as crumb}
+                <a href='{crumb.href}'
+                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+                  {crumb.text}
+                </a>
+                {#if breadcrumbs.length > 1 && crumb.text !== 'boards' && crumb.text !== 'view'}
+                  <Icon path={mdiChevronRight} />
+                {/if}
+              {/each}
+            {/if}
           </div>
         </div>
   
