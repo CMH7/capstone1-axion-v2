@@ -2,7 +2,7 @@ import { global_PASS } from '$lib/stores/global.store'
 import { error, redirect } from '@sveltejs/kit'
 import { get } from 'svelte/store';
 import prisma from '$lib/db';
-import { compareSync } from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -19,7 +19,7 @@ export async function load({ params }) {
 	});
 
 	if (user) {
-		if (compareSync(get(global_PASS), user.password)) {
+		if (bcryptjs.compareSync(get(global_PASS), user.password)) {
 			return { user };
 		}
 	}
