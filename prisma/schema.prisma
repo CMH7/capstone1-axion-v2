@@ -34,11 +34,6 @@ type NotificationsFromInterface {
   subInterface String
 }
 
-type TasksViewers {
-  id   String
-  name String
-}
-
 type UsersFavorites {
   for String
   ids String[]
@@ -50,6 +45,13 @@ model boards {
   name    String
   tasks   String[]
   filter  String
+}
+
+model chats {
+  id      String   @id @default(auto())  @map("_id") @db.ObjectId
+  sender  String
+  message String
+  deliveredTime DateTime  @db.Date
 }
 
 model invitations {
@@ -95,7 +97,7 @@ model tasks {
   name          String
   status        String
   subtasks      String[]
-  viewers       TasksViewers[]
+  viewers       String[]
 }
 
 model users {
