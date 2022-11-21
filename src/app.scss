@@ -63,3 +63,5 @@
 }
 
 .txt-overflow-ellipsis {text-overflow: ellipsis; white-space: nowrap;}
+
+.centerxy {@extend .is-flex; @extend .is-justify-content-center; @extend .is-align-items-center;}
