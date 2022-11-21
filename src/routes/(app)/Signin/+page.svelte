@@ -70,7 +70,7 @@
   }
 
   const keyDown = e => {
-    if(e.keyCode == 13) handleSubmit()
+    if(e.keyCode == 13) signin()
   }
 
   onMount(() => {
@@ -80,6 +80,12 @@
 </script>
 
 <svelte:window bind:innerWidth on:keydown={keyDown}/>
+
+<svelte:head>
+  <title>
+    Axion | Signin
+  </title>
+</svelte:head>
 
 <form
   id='form'
