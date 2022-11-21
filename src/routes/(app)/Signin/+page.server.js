@@ -1,9 +1,8 @@
 import validators from '$lib/configs/validators';
 import prisma from '$lib/db';
-import { global_PASS, notifs } from '$lib/stores/global.store';
-import { error, invalid, redirect } from '@sveltejs/kit';
-import { compareSync } from 'bcryptjs';
-import { get } from 'svelte/store'
+import { global_PASS } from '$lib/stores/global.store';
+import { invalid, redirect } from '@sveltejs/kit';
+import bcryptjs from 'bcryptjs'
 
 /** @type {import('./$types').Actions} */
 export const actions = {
@@ -31,7 +30,7 @@ export const actions = {
     });
 
     if (!user) return invalid(404, {message: 'Email is not linked to any accounts', reason: 'noaccount'});
-    if (!compareSync(passS, user.password)) return invalid(401, { message: 'Password is incorrect', reason: 'credentials' });
+    if (!bcryptjs.compareSync(passS, user.password)) return invalid(401, { message: 'Password is incorrect', reason: 'credentials' });
 
     const user2 = await prisma.users.update({
       where: {
