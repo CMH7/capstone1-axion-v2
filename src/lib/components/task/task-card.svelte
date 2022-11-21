@@ -1,5 +1,7 @@
 <script>
   //@ts-nocheck
+	import { goto } from '$app/navigation';
+	import { activeWorkspace } from '$lib/stores/dashboard.store';
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 
   /** @type {import('@prisma/client').tasks}*/
@@ -139,103 +141,107 @@
   }
 </script>
 
-<div style='overflow-x: hidden;' class="{determineBG(task).backgroundColor}-dark mb-1 has-transition is-clickable maxmins-w-230 maxmins-h-60 rounded parent">
-  <Card outlined shaped flat class='{determineBG(task).backgroundColor} p-1 maxmins-h-60 is-flex is-flex-direction-column is-justify-content-space-between'>
-    <!-- Task Name and Task Labels: level and how many subtasks it has -->
-    <div class="is-flex is-justify-content-space-between maxmins-w-100p">
-      <div style='overflow-x: hidden;' class="{determineBG(task).textColor} has-transition fredoka-reg is-unselectable txt-size-14 maxmins-w-70p txt-overflow-ellipsis">
-        {task.name}
-      </div>
-  
-      <!-- Subtask count and level -->
-      <div class="is-flex is-align-items-center">
-        <!-- Subtasks Counts -->
-        {#if task.subtasks.length != 0}
-          <Avatar tile class="mr-1 maxmins-h-20 maxmins-w-{task.subtasks.length < 100 ? "20" : "30"} is-unselectable fredoka-reg has-text-weight-bold has-text-white has-background-primary-dark rounded txt-size-9">
-            {task.subtasks.length}
-          </Avatar>
-        {/if}
-  
-        <!-- Level -->
-        <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?"has-background-success": task.level == 2?"has-background-warning has-text-black":"has-background-danger"} rounded txt-size-9 px-1">
-          {task.level == 1? "Low": task.level == 2? "Medium": "High"}
-        </Avatar>
-      </div>
-    </div>
 
-    <!-- Due date -->
-    <div class="is-flex is-justify-content-space-between is-align-items-end">
-      <div class="{determineBG(task).textColor} is-unselectable txt-size-10 fredoka-reg has-transition">
-        {`${due(task).dueDate} ${due(task).date} ${due(task).finalHour}:${due(task).minute} ${parseInt(due(task).hour) > 11 ? 'PM': 'AM'}`}
+<a style="text-decoration: none;" href="{$activeWorkspace.id}/{task.status}/{task.id} ">
+  <!-- svelte-ignore a11y-click-events-have-key-events -->
+  <div style='overflow-x: hidden;' class="{determineBG(task).backgroundColor}-dark mb-1 has-transition is-clickable maxmins-w-230 maxmins-h-60 rounded parent">
+    <Card outlined shaped flat class='{determineBG(task).backgroundColor} p-1 maxmins-h-60 is-flex is-flex-direction-column is-justify-content-space-between'>
+      <!-- Task Name and Task Labels: level and how many subtasks it has -->
+      <div class="is-flex is-justify-content-space-between maxmins-w-100p">
+        <div style='overflow-x: hidden;' class="{determineBG(task).textColor} has-transition fredoka-reg is-unselectable txt-size-14 maxmins-w-70p txt-overflow-ellipsis">
+          {task.name}
+        </div>
+    
+        <!-- Subtask count and level -->
+        <div class="is-flex is-align-items-center">
+          <!-- Subtasks Counts -->
+          {#if task.subtasks.length != 0}
+            <Avatar tile class="mr-1 maxmins-h-20 maxmins-w-{task.subtasks.length < 100 ? "20" : "30"} is-unselectable fredoka-reg has-text-weight-bold has-text-white has-background-primary-dark rounded txt-size-9">
+              {task.subtasks.length}
+            </Avatar>
+          {/if}
+    
+          <!-- Level -->
+          <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?"has-background-success": task.level == 2?"has-background-warning has-text-black":"has-background-danger"} rounded txt-size-9 px-1">
+            {task.level == 1? "Low": task.level == 2? "Medium": "High"}
+          </Avatar>
+        </div>
       </div>
   
-      <!-- Members part -->
-      <div on:mouseenter={()=>show = true} on:mouseleave={()=>show = false}>
-        {#if task.members.length > 3}
-          <Tooltip class='px-1 py-1' bottom bind:active={show}>
-            <div class="is-flex">
-              <!-- 3 most members -->
-              {#each Array(4) as _, i}
-                {#if i == 4}
-                  <!-- Icon of how many members are there other than 3 most members -->
-                  <Avatar size='17px' class='has-background-{i == 0 ? 'primary': i == 1 ? 'link' : 'info'} is-flex is-justify-content-center is-align-items-center'>
-                    <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
-                      +{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members.length - 3}
-                    </div>
-                  </Avatar>
-                {:else}
-                  <Avatar size='17px' class='has-background-{i == 0 ? 'primary': i == 1 ? 'link' : 'info'} is-flex is-justify-content-center is-align-items-center'>
-                    {#if data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].profile === ''}
-                      <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
-                        {`${data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].firstName} ${data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].lastName}`.toUpperCase().split(' ')[0].charAt(0)}{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].name.toUpperCase().split(' ')[data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].name.toUpperCase().split(' ').length - 1].charAt(0)}
-                      </div>
-                    {:else}
-                      <img src="{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].members[i].profile}" alt="{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].members[i].firstName}"/>
-                    {/if}
-                  </Avatar>
-                {/if}
-              {/each}
-            </div>
-            <span slot="tip">
-              <p class="has-text-left mb-0">
-                Assigned Members:
-                <Divider class="p-0 mt-1 mb-2" />
-                {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member}
-                  {`${member.firstName} ${member.lastName}`}<br>
-                {/each}
-              </p>
-            </span>
-          </Tooltip>
-        {:else}
-          <!-- 3 or less members -->
-          <div on:mouseenter={()=>show = true} on:mouseleave={()=>show = false}>
+      <!-- Due date -->
+      <div class="is-flex is-justify-content-space-between is-align-items-end">
+        <div class="{determineBG(task).textColor} is-unselectable txt-size-10 fredoka-reg has-transition">
+          {`${due(task).dueDate} ${due(task).date} ${due(task).finalHour}:${due(task).minute} ${parseInt(due(task).hour) > 11 ? 'PM': 'AM'}`}
+        </div>
+    
+        <!-- Members part -->
+        <div on:mouseenter={()=>show = true} on:mouseleave={()=>show = false}>
+          {#if task.members.length > 3}
             <Tooltip class='px-1 py-1' bottom bind:active={show}>
               <div class="is-flex">
-                {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member, i}
-                  <Avatar size='17px' class='has-background-white-bis is-flex is-justify-content-center is-align-items-center'>
-                    {#if member.profile === ''}
+                <!-- 3 most members -->
+                {#each Array(4) as _, i}
+                  {#if i == 4}
+                    <!-- Icon of how many members are there other than 3 most members -->
+                    <Avatar size='17px' class='has-background-{i == 0 ? 'primary': i == 1 ? 'link' : 'info'} is-flex is-justify-content-center is-align-items-center'>
                       <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
-                        {`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[0].charAt(0)}{`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[member.name.toUpperCase().split(' ').length - 1].charAt(0)}
+                        +{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members.length - 3}
                       </div>
-                    {:else}
-                      <img src="{member.profile}" alt="{member.firstName} {member.lastName}"/>
-                    {/if}
-                  </Avatar>
+                    </Avatar>
+                  {:else}
+                    <Avatar size='17px' class='has-background-{i == 0 ? 'primary': i == 1 ? 'link' : 'info'} is-flex is-justify-content-center is-align-items-center'>
+                      {#if data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].profile === ''}
+                        <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
+                          {`${data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].firstName} ${data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].lastName}`.toUpperCase().split(' ')[0].charAt(0)}{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].name.toUpperCase().split(' ')[data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].name.toUpperCase().split(' ').length - 1].charAt(0)}
+                        </div>
+                      {:else}
+                        <img src="{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].members[i].profile}" alt="{data.taskMembers.filter(tm => tm.taskID === task.id)[0].members[i].members[i].firstName}"/>
+                      {/if}
+                    </Avatar>
+                  {/if}
                 {/each}
               </div>
               <span slot="tip">
-                <div class="has-text-left p-0">
+                <p class="has-text-left mb-0">
                   Assigned Members:
                   <Divider class="p-0 mt-1 mb-2" />
                   {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member}
-                    {`${member.firstName} ${member.lastName}`} <br>
+                    {`${member.firstName} ${member.lastName}`}<br>
                   {/each}
-                </div>
+                </p>
               </span>
             </Tooltip>
-          </div>
-        {/if}
+          {:else}
+            <!-- 3 or less members -->
+            <div on:mouseenter={()=>show = true} on:mouseleave={()=>show = false}>
+              <Tooltip class='px-1 py-1' bottom bind:active={show}>
+                <div class="is-flex">
+                  {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member, i}
+                    <Avatar size='17px' class='has-background-white-bis is-flex is-justify-content-center is-align-items-center'>
+                      {#if member.profile === ''}
+                        <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
+                          {`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[0].charAt(0)}{`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[member.name.toUpperCase().split(' ').length - 1].charAt(0)}
+                        </div>
+                      {:else}
+                        <img src="{member.profile}" alt="{member.firstName} {member.lastName}"/>
+                      {/if}
+                    </Avatar>
+                  {/each}
+                </div>
+                <span slot="tip">
+                  <div class="has-text-left p-0">
+                    Assigned Members:
+                    <Divider class="p-0 mt-1 mb-2" />
+                    {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member}
+                      {`${member.firstName} ${member.lastName}`} <br>
+                    {/each}
+                  </div>
+                </span>
+              </Tooltip>
+            </div>
+          {/if}
+        </div>
       </div>
-    </div>
-  </Card>
-</div>
+    </Card>
+  </div>
+</a>
