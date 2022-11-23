@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { breadCrumbsItems, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
