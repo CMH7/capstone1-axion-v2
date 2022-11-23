@@ -17,3 +17,5 @@ export let notifs = writable([])
 export let loading = writable(false)
 
 export let hintText = writable('')
+
+export let navDrawerActive = writable(false)
