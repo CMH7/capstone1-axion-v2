@@ -1,7 +1,16 @@
 <script>
   //@ts-nocheck
-  /** @type {import('./$types').PageServerData}*/
+	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { onMount } from 'svelte';
+
+  /**
+   * @type {import('./$types').PageServerData}
+   * */
   export let data
+
+  onMount(() => {
+    $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
+  })
 </script>
 
 <div>
