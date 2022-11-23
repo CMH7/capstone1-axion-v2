@@ -52,6 +52,7 @@ model chats {
   sender  String
   message String
   deliveredTime DateTime  @db.Date
+  edited  Boolean
 }
 
 model invitations {
