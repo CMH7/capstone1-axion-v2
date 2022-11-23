@@ -47,7 +47,7 @@
         hintText.set(`Add or remove admin in ${$activeWorkspace.name} workspace`)
         break
       case 'w-s':
-        hintText.set(`Access the settings of ${activeWorkspace.name} workspace`)
+        hintText.set(`Access the settings of ${$activeWorkspace.name} workspace`)
         break
       case 'l':
         hintText.set('Remove yourself as a member on this workspace')
@@ -60,7 +60,7 @@
 
 <div
   on:mouseenter={() => setHint('fab')}
-  class="has-transition pos-abs { innerWidth < 426 ? "pos-b-20 pos-r-20" : "pos-b-40 pos-r-45"}">
+  class="has-transition pos-fix { innerWidth < 426 ? "pos-b-20 pos-r-20" : "pos-b-40 pos-r-45"}">
   <Menu right bind:active={fabActive} bottom closeOnClick transition={scale} inOpts="{{start: 0, duration: 100}}" style='overflow-y: hidden;'>
     <div slot="activator">
       <Button fab depressed class='has-background-primary'>
