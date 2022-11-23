@@ -46,11 +46,28 @@ export async function load({ params }) {
 			return { id: boardID };
 		})
 
-		const boards = await prisma.boards.findMany({
+		let boards = await prisma.boards.findMany({
 			where: {
 				OR: boardsConditions
 			}
 		})
+
+		/**
+		 * @type {import('@prisma/client').boards[]}
+		 */
+		let tempBoards = []
+
+		workspace.boards.forEach(board => {
+			boards.every(board2 => {
+				if (board2.id === board) {
+					tempBoards = [...tempBoards, board2]
+					return false
+				}
+				return true
+			})
+		})
+
+		boards = tempBoards
 
 		/** 
 		 * @type {{id: string}[]} 

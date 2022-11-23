@@ -40,6 +40,11 @@
 
 <svelte:window bind:innerWidth />
 
+<svelte:head>
+  <title>
+    Axion | Signup
+  </title>
+</svelte:head>
 
 <MaterialApp>
   <div class="hero is-fullheight is-primary">

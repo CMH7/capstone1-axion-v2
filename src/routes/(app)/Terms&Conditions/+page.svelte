@@ -4,6 +4,12 @@
   import { mdiCircleSmall } from '@mdi/js'
 </script>
 
+<svelte:head>
+  <title>
+    Axion | Terms & Conditions
+  </title>
+</svelte:head>
+
 <div class="hero-body p-0">
   <div class="columns m-5 mr-5 is-flex is-justify-content-center is-multiline is-align-items-center">
     <div class="column mt-0 is-align-items-center is-mobile">

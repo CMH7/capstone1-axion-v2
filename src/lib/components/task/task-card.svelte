@@ -1,6 +1,5 @@
 <script>
   //@ts-nocheck
-	import { goto } from '$app/navigation';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 

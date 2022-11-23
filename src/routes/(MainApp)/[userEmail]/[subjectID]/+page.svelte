@@ -3,7 +3,6 @@
   import { fade } from 'svelte/transition'
   import {Button, Icon} from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
-	import { goto } from '$app/navigation';
 	import { breadCrumbsItems, hintText } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onMount } from 'svelte';
@@ -15,10 +14,6 @@
   let mouseEnter = false
   let hovering = false
   let innerWidth
-
-  const workspaceClicked = async workspace => {
-    await goto(`${$activeSubject.id}/${workspace.id}`)
-  }
 
   onMount(() => {
     activeWorkspace.set(models.workspace)
@@ -48,33 +43,34 @@
       <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
         <!-- SUBJECT BOX -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div
-          on:mouseenter={() => mouseEnter = true}
-          on:mouseleave={() => mouseEnter = false}
-          on:click={e => {workspaceClicked(workspace)}}
-          class="has-transition notification rounded maxmins-h-110 is-relative {mouseEnter?`has-background-${workspace.color}-dark`:""} is-{workspace.color} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
-        >
+        <a href="{$activeSubject.id}/{workspace.id}">
           <div
-            on:mouseenter={e => hovering = true}
-            on:mouseleave={e => hovering = false}
-            class="pos-abs pos-r-0 pos-t-0"
+            on:mouseenter={() => mouseEnter = true}
+            on:mouseleave={() => mouseEnter = false}
+            class="has-transition notification rounded maxmins-h-110 is-relative {mouseEnter?`has-background-${workspace.color}-dark`:""} is-{workspace.color} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
           >
-            <Button
-              icon
+            <div
+              on:mouseenter={e => hovering = true}
+              on:mouseleave={e => hovering = false}
+              class="pos-abs pos-r-0 pos-t-0"
             >
-              {#if workspace.isFavorite}
-              <Icon class='has-text-{workspace.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStarOutline : mdiStar} />
-              {:else}
-              <Icon class='has-text-{workspace.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStar : mdiStarOutline} />
-              {/if}
-            </Button>
+              <Button
+                icon
+              >
+                {#if workspace.isFavorite}
+                <Icon class='has-text-{workspace.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStarOutline : mdiStar} />
+                {:else}
+                <Icon class='has-text-{workspace.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStar : mdiStarOutline} />
+                {/if}
+              </Button>
+            </div>
+    
+            <!-- subject name -->
+            <p class="is-unselectable txt-size-14 pos-abs pos-r-10 pos-b-10 max-w-{innerWidth < 571 && innerWidth > 473 ? '180' : '200'} txt-overflow-ellipsis overflow-x-hidden mb-0">
+              {workspace.name}
+            </p>
           </div>
-  
-          <!-- subject name -->
-          <p class="is-unselectable txt-size-14 pos-abs pos-r-10 pos-b-10 max-w-{innerWidth < 571 && innerWidth > 473 ? '180' : '200'} txt-overflow-ellipsis overflow-x-hidden mb-0">
-            {workspace.name}
-          </p>
-        </div>
+        </a>
       </div>
     {/each}
   {/if}

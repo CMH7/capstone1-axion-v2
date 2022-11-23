@@ -1,3 +1,5 @@
-<div>
-  get email here
-</div>
+<svelte:head>
+  <title>
+    Axion | Reset
+  </title>
+</svelte:head>

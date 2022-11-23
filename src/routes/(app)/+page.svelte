@@ -8,6 +8,12 @@
 
 <svelte:window bind:innerWidth />
 
+<svelte:head>
+  <title>
+    Axion
+  </title>
+</svelte:head>
+
 <div class="hero-body">
   <div class="columns is-vcentered is-centered is-multiline is-mobile">
 

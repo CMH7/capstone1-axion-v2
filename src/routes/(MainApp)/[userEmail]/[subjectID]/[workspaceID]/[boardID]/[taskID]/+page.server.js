@@ -38,16 +38,45 @@ export async function load({ params }) {
 	})
 
 	if (!workspace) throw error(404, 'Workspace not found')
-	
-	const board = await prisma.boards.findFirst({
+
+	/**
+	 * @type {{id: string}[]}
+	 */
+	let workspaceMembersConditions = workspace.members.map(id => {
+		return { id }
+	})
+
+	const workspaceMembers = await prisma.users.findMany({
 		where: {
-			id: {
-				equals: params.boardID
-			}
+			OR: workspaceMembersConditions
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profile: true,
+			online: true,
+			email: true
 		}
 	})
 
-	if(!board) throw error(404, 'Board not found')
+	/**
+	 * @type {{id: string}[]}
+	 */
+	let statusesConditions = workspace.boards.map(boardID => {
+		return { id: boardID }
+	})
+
+	let statuses = await prisma.boards.findMany({
+		where: {
+			OR: statusesConditions
+		},
+		select: {
+			id: true,
+			name: true,
+			color: true
+		}
+	})
 
 	const task = await prisma.tasks.findFirst({
 		where: {
@@ -58,6 +87,31 @@ export async function load({ params }) {
 	});
 
 	if (!task) throw error(404, 'Task cannot be found');
+
+	const board = await prisma.boards.findFirst({
+		where: {
+			id: {
+				equals: task.status
+			}
+		}
+	});
+
+	if (!board) throw error(404, 'Board not found');
+
+	/**
+	 * @type {{id: string, name: string, color: string}[]}
+	 */
+	let tempStatuses = []
+	workspace.boards.forEach(board => {
+		statuses.every(status => {
+			if (status.id === board) {
+				tempStatuses = [...tempStatuses, status]
+				return false
+			}
+			return true
+		})
+	})
+	statuses = tempStatuses
 
 	/** 
 	 * @type {{id: string}[]} 
@@ -90,14 +144,17 @@ export async function load({ params }) {
 			firstName: true,
 			lastName: true,
 			email: true,
-			profile: true
+			profile: true,
+			online: true
 		}
 	})
 
 	/**
 	 * @type {{id: string}[]}
 	 */
-	let chatsConditions = []
+	let chatsConditions = task.conversations.map(chatID => {
+		return {id: chatID}
+	})
 
 	const chats = await prisma.chats.findMany({
 		where: {
@@ -108,7 +165,9 @@ export async function load({ params }) {
 	/**
 	 * @type {{id: string}[]}
 	 */
-	let viewersConditions = []
+	let viewersConditions = task.viewers.map(viewersID => {
+		return {id: viewersID}
+	})
 
 	let viewers = await prisma.users.findMany({
 		where: {
@@ -123,8 +182,58 @@ export async function load({ params }) {
 		}
 	})
 
+	const createdBy = await prisma.users.findFirst({
+		where: {
+			id: {
+				equals: task.createdBy
+			}
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profile: true
+		}
+	})
+
+	/**
+	 * @type {{chatID: string, chatSender: {id: string, firstName: string, lastName: string, profile: string, online: boolean}}[]}
+	 */
+	let chatChatSenders = []
+	/**
+	 * @type {{id: string}[]}
+	 */
+	let chatChatSendersConditions = chats.map(chat => {
+		return {id: chat.sender}
+	})
+
+	let chatChatSenders2 = await prisma.users.findMany({
+		where: {
+			OR: chatChatSendersConditions
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profile: true,
+			online: true
+		}
+	})
+
+	chats.forEach(chat => {
+		chatChatSenders2.every(sender => {
+			if (chat.sender === sender.id) {
+				chatChatSenders = [...chatChatSenders, {
+					chatID: chat.id,
+					chatSender: sender
+				}]
+				return false
+			}
+			return true
+		})
+	})
 	
-	return { user, subject, workspace, board, task, subtasks, members, chats, viewers };
+	return { user, subject, workspace, workspaceMembers, board, task, subtasks, members, chats, chatChatSenders, viewers, createdBy, statuses };
 }
 
 

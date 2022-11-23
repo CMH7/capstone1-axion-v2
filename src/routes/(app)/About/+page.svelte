@@ -35,6 +35,12 @@
 
 <svelte:window bind:innerWidth />
 
+<svelte:head>
+  <title>
+    Axion | About
+  </title>
+</svelte:head>
+
 <div class="hero-body is-flex is-flex-direction-column p-0">
   <!-- banner -->
   <div class="maxmins-w-100p maxmins-h-{innerWidth < 571 ? '2': innerWidth < 1215 && innerWidth > 570 ? '4' : '6'}00 is-relative" style="overflow-y: hidden;">
