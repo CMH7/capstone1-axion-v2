@@ -12,6 +12,10 @@ export let logoutModalActive = writable(false)
 
 export let invModalActive = writable(false)
 
-export let notifs = writable([{ msg: '', type: '', id: '' }])
+export let notifs = writable([])
 
 export let loading = writable(false)
+
+export let hintText = writable('')
+
+export let navDrawerActive = writable(false)

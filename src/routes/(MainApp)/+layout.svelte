@@ -3,26 +3,26 @@
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
 	import { goto } from '$app/navigation';
-	import { breadCrumbsItems, loading, logoutModalActive, notifCenterOpen } from '$lib/stores/global.store';
-	import { activeSubject, invModalActive } from '$lib/stores/dashboard.store';
+	import { breadCrumbsItems, hintText, loading, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
+	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
-	import { onMount } from 'svelte';
   import { fade } from 'svelte/transition'
 	import NotificationContainer from '$lib/components/System-Notification/Notification-container.svelte';
+	import Fab from '$lib/components/fab/fab.svelte';
+	import { onMount } from 'svelte';
 
-  /** @type {import('./$types').LayoutServerData} */
+  /**
+   * @type {import('./$types').LayoutServerData}
+   * */
   export let data
 
-  const toggleNavigation = () => active = !active
-  
-  let active = false
-  let dashCount = 0
+  let active = $navDrawerActive
   let innerWidth = 0
+  let breadcrumbs = []
   let currentIndex = 0
   let showProfileMenu = false
-  let breadcrumbs = []
   let hint = true
   let removeHint = false
   let navs = [
@@ -35,6 +35,11 @@
 
   breadCrumbsItems.subscribe(value => breadcrumbs = value)
 
+  const toggleNavigation = () => {
+    active = !active
+    navDrawerActive.set(active)
+  }
+
   const navClicked = async (i, href) => {
     if(i == 0) breadcrumbs = [{text: 'Subjects', href: `/${data.user.email}`}]
     if(i == 1) breadcrumbs = [{text: 'Assigned to me', href: `/${data.user.email}/assigned-to-me`}]
@@ -44,15 +49,10 @@
       logout()
       return
     }
+    if(innerWidth < 571) active = false
+    
     currentIndex = i
-    await goto(href, {replaceState: true})
-  }
-
-  const crumbClicked = async crumb => {
-    if(crumb.text === $activeSubject.name) {
-      $breadCrumbsItems = [{text: 'Subjects', href: '#'}]
-    }
-    await goto(crumb.href, {replaceState: true})
+    // await goto(href, {replaceState: true})
   }
 
   const logout = () => {
@@ -63,6 +63,10 @@
   const hideHint = () => {
     hint = false
   }
+
+  onMount(() => {
+    currentIndex = $breadCrumbsItems[0].text === 'Assigned to me' ? 1 : $breadCrumbsItems[0].text === 'Favorites' ? 2 : $breadCrumbsItems[0].text === 'My profile' ? 3 : 0
+  })
 </script>
 
 <svelte:window bind:innerWidth />
@@ -201,39 +205,41 @@
           </div>
       </AppBar>
   
-      <NavigationDrawer fixed active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='pt-12 has-background-white'>
+      <NavigationDrawer width={innerWidth < 571 ? '100%' : ''} fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
         <List>
           <ListItemGroup mandatory class='has-text-{navs[currentIndex].color} {navs[currentIndex].color}'>
             {#each navs as navItem, i}
               {#if navItem.name === "My Profile" || navItem.name === 'Logout'}
                 <Divider class="is-hidden-desktop p-0 m-0 my-1" />
               {/if}
-              <ListItem
-                active={currentIndex == i}
-                disabled={currentIndex == i}
-                class="{navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
-                on:click={() => {navClicked(i, navItem.href)}}
-              >
-                <span slot="prepend">
-                  <!-- {#if navItem.name === 'My Profile' && $userData.profile} -->
-                  {#if navItem.name === 'My Profile' && data.user.profile !== ''}
-                    <Avatar size='35px' class='maxmins-w-35 maxmins-h-35 {!active ? 'mb-0' : 'mr-7'}'>
-                      <img src="{data.user.profile}" alt="Axion logo">
-                    </Avatar>
-                    <div class="txt-size-9 pb-4 {!active ? '' : 'is-hidden'}">
-                      Profile
-                    </div>
-                  {:else}
-                    <Icon size="35px" path={navItem.icon} />
-                    <div class="txt-size-9 pb-2 {!active ? '' : 'is-hidden'}">
-                      {navItem.name === 'Assigned to me' ? 'Assigned' : navItem.name}
-                    </div>
-                  {/if}
-                </span>
-                <span class="fredoka-reg font-weight-semibold {navItem.name === 'My Profile' ? 'ml-1' : ''}">
-                  {navItem.name}
-                </span>
-              </ListItem>
+              <a href="{navItem.href}">
+                <ListItem
+                  active={currentIndex == i}
+                  disabled={currentIndex == i}
+                  class="{navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
+                  on:click={() => {navClicked(i, navItem.href)}}
+                >
+                  <span slot="prepend">
+                    <!-- {#if navItem.name === 'My Profile' && $userData.profile} -->
+                    {#if navItem.name === 'My Profile' && data.user.profile !== ''}
+                      <Avatar size='35px' class='maxmins-w-35 maxmins-h-35 {!active ? 'mb-0' : 'mr-7'}'>
+                        <img src="{data.user.profile}" alt="Axion logo">
+                      </Avatar>
+                      <div class="txt-size-9 pb-4 {!active ? '' : 'is-hidden'}">
+                        Profile
+                      </div>
+                    {:else}
+                      <Icon size="35px" path={navItem.icon} />
+                      <div class="txt-size-9 pb-2 {!active ? '' : 'is-hidden'}">
+                        {navItem.name === 'Assigned to me' ? 'Assigned' : navItem.name}
+                      </div>
+                    {/if}
+                  </span>
+                  <span class="fredoka-reg font-weight-semibold {navItem.name === 'My Profile' ? 'ml-1' : ''}">
+                    {navItem.name}
+                  </span>
+                </ListItem>
+              </a>
             {/each}
           </ListItemGroup>
         </List>
@@ -243,19 +249,50 @@
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
-        <div class="hero-head pl-3">
-          <div class="is-flex is-align-items-center">
-            {#each breadcrumbs as crumb}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <div
-                on:click={e => crumbClicked(crumb)}
-                class="txt-size-{innerWidth < 426 ? '13' : '20'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
-                {crumb.text}
-              </div>
-              {#if breadcrumbs.length > 1 && crumb.text !== 'boards'}
-                <Icon path={mdiChevronRight} />
-              {/if}
-            {/each}
+        <div class="hero-head">
+          <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'pl-3' : ''}">
+            {#if innerWidth < 571}
+              <Button 
+                icon
+                on:click={() => {
+                  if(breadcrumbs.length > 1) {
+                    goto(breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' ? 2 : 1].href, {replaceState: true})
+                  } else {
+                    goto(breadcrumbs[0].href, {replaceState: true})
+                  }
+                }}
+                class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+              >
+                <Icon path={mdiChevronLeft} />
+              </Button>
+              <a href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
+                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+                {$breadCrumbsItems[$breadCrumbsItems.length - 1].text}
+              </a>
+            {:else}
+              <Button 
+                icon
+                on:click={() => {
+                  if(breadcrumbs.length > 1) {
+                    goto(breadcrumbs[breadcrumbs.length - 2].href, {replaceState: true})
+                  } else {
+                    goto(breadcrumbs[0].href, {replaceState: true})
+                  }
+                }}
+                class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+              >
+                <Icon path={mdiChevronLeft} />
+              </Button>
+              {#each breadcrumbs as crumb}
+                <a href='{crumb.href}'
+                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+                  {crumb.text}
+                </a>
+                {#if breadcrumbs.length > 1 && crumb.text !== 'boards' && crumb.text !== 'view'}
+                  <Icon path={mdiChevronRight} />
+                {/if}
+              {/each}
+            {/if}
           </div>
         </div>
   
@@ -286,7 +323,7 @@
               <div class="tags has-addons">
                 <span class="tag is-dark fredoka-reg txt-size-18 {innerWidth < 571 ? 'is-hidden' : ''}">Hint</span>
                 <span class="fredoka-reg {innerWidth < 571 ? 'txt-size-13 notification' : 'txt-size-18 tag'} is-success is-light">
-                  Hint: Press the + button to open menu and actions
+                  {$hintText}
                   <!-- svelte-ignore a11y-click-events-have-key-events -->
                   <span on:click={hideHint} class="{innerWidth < 571 ? '' : 'is-hidden'} delete is-clickable"/>
                 </span>
@@ -311,7 +348,11 @@
       </div>
     </MaterialApp>
   </div>
-{/if}
-
+  {/if}
+  {#if currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' }
+    <div class="z-90">
+      <Fab {data} />
+    </div>
+  {/if}
 
 

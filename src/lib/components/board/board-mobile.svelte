@@ -139,7 +139,7 @@
 </script>
 
 <div class="mt-3 column is-12">
-  <ExpansionPanels popout multiple flat>
+  <ExpansionPanels style='z-index: 0' popout multiple flat>
     {#each data.boards as board}
       <ExpansionPanel class='has-background-{board.color}-light mb-2 is-flex is-flex-direction-column is-align-items-center'>
         <span

@@ -1,5 +1,5 @@
 <svelte:head>
   <title>
-    Axion
+    Axion | Reset
   </title>
 </svelte:head>

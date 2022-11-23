@@ -1,7 +1,7 @@
 import prisma from '$lib/db';
 import { global_PASS, loading } from '$lib/stores/global.store';
 import { redirect } from '@sveltejs/kit';
-import { compareSync } from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 import { get } from 'svelte/store';
 
 /** @type {import('./$types').LayoutServerLoad} */
@@ -20,7 +20,7 @@ export async function load({ params }) {
 	});
 
 	if (user) {
-		if (compareSync(get(global_PASS), user.password)) {
+		if (bcryptjs.compareSync(get(global_PASS), user.password)) {
 			let notificationConditions = user.notifications.length != 0 ? user.notifications.map(notifID => {
 				return {id: notifID}
 			}) : []

@@ -3,10 +3,9 @@
   import { fade } from 'svelte/transition'
   import {Button, Icon} from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
-	import { goto } from '$app/navigation';
-	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { onDestroy, onMount } from 'svelte';
+	import { onMount } from 'svelte';
 	import models from '$lib/models';
 
   /** @type {import('./$types').PageServerData}*/
@@ -16,14 +15,11 @@
   let hovering = false
   let innerWidth
 
-  const subjectClicked = async subject => {
-    await goto(`/${data.user.email}/${subject.id}`)
-  }
-
   onMount(() => {
     activeSubject.set(models.subject)
     activeWorkspace.set(models.workspace)
     $breadCrumbsItems = [{text: 'Subjects', href: '#'}]
+    hintText.set('Click the \'+\' icon to add new subject!')
   })
 </script>
 
@@ -47,33 +43,34 @@
       <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
         <!-- SUBJECT BOX -->
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div
-          on:mouseenter={() => mouseEnter = true}
-          on:mouseleave={() => mouseEnter = false}
-          on:click={e => {subjectClicked(subject)}}
-          class="has-transition notification rounded maxmins-h-110 is-relative {mouseEnter?`has-background-${subject.color}-dark`:""} is-{subject.color} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
-        >
+        <a href='/{data.user.email}/{subject.id}'>
           <div
-            on:mouseenter={e => hovering = true}
-            on:mouseleave={e => hovering = false}
-            class="pos-abs pos-r-0 pos-t-0"
+            on:mouseenter={() => mouseEnter = true}
+            on:mouseleave={() => mouseEnter = false}
+            class="has-transition notification rounded maxmins-h-110 is-relative {mouseEnter?`has-background-${subject.color}-dark`:""} is-{subject.color} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
           >
-            <Button
-              icon
+            <div
+              on:mouseenter={e => hovering = true}
+              on:mouseleave={e => hovering = false}
+              class="pos-abs pos-r-0 pos-t-0"
             >
-              {#if subject.isFavorite}
-              <Icon class='has-text-{subject.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStarOutline : mdiStar} />
-              {:else}
-              <Icon class='has-text-{subject.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStar : mdiStarOutline} />
-              {/if}
-            </Button>
+              <Button
+                icon
+              >
+                {#if subject.isFavorite}
+                <Icon class='has-text-{subject.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStarOutline : mdiStar} />
+                {:else}
+                <Icon class='has-text-{subject.color === 'warning' ? '' : 'warning'}' path={hovering ? mdiStar : mdiStarOutline} />
+                {/if}
+              </Button>
+            </div>
+    
+            <!-- subject name -->
+            <p class="is-unselectable txt-size-14 pos-abs pos-r-10 pos-b-10 max-w-{innerWidth < 571 && innerWidth > 473 ? '180' : '200'} txt-overflow-ellipsis overflow-x-hidden mb-0">
+              {subject.name}
+            </p>
           </div>
-  
-          <!-- subject name -->
-          <p class="is-unselectable txt-size-14 pos-abs pos-r-10 pos-b-10 max-w-{innerWidth < 571 && innerWidth > 473 ? '180' : '200'} txt-overflow-ellipsis overflow-x-hidden mb-0">
-            {subject.name}
-          </p>
-        </div>
+        </a>
       </div>
     {/each}
   {/if}

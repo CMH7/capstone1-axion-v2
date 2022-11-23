@@ -2,7 +2,7 @@ import prisma from '$lib/db';
 import { error, redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { global_PASS } from '$lib/stores/global.store';
-import { compareSync } from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -17,7 +17,7 @@ export async function load({ params }) {
 	});
 
 	if (!user) throw error(401, 'Account not found')
-	if (!compareSync(get(global_PASS), user.password)) throw error(404, 'Unauthorized access')
+	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(404, 'Unauthorized access')
 
 	const subject = await prisma.subjects.findFirst({
 		where: {

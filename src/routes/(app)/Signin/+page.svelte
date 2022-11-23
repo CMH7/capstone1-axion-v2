@@ -7,6 +7,7 @@
 	import { mdiAccount, mdiEye, mdiEyeOff, mdiLock } from "@mdi/js";
 	import { onMount } from "svelte";
   import { Avatar, Button, Divider, Icon, MaterialApp, TextField } from 'svelte-materialify'
+  import { Pulse } from 'svelte-loading-spinners'
 
 
   let email = ''
@@ -16,6 +17,7 @@
   let show = false
   let innerWidth = 0
   let signingin = false
+  let wrongPass = false
 
   const startAnimation = () => {
     setInterval(() => {
@@ -38,17 +40,22 @@
       body: data
     });
 
-    console.log(response);
-
     /** @type {import('@sveltejs/kit').ActionResult} */
     const result = deserialize(await response.text());
-
-    console.log(result);
 
     if(result.type === 'invalid') {
       $notifs = [...$notifs, {
         msg: result.data.message,
         type: 'error',
+        id: `${(Math.random() * 999) + 1}`
+      }]
+      if(result.data.reason === 'credentials') wrongPass = true
+    }
+
+    if (result.type === 'redirect') {
+      $notifs = [...$notifs, {
+        msg: 'Login successful',
+        type: 'success',
         id: `${(Math.random() * 999) + 1}`
       }]
     }
@@ -62,12 +69,23 @@
     signingin = false
   }
 
+  const keyDown = e => {
+    if(e.keyCode == 13) signin()
+  }
+
   onMount(() => {
+    notifs.set([])
     startAnimation()
   })
 </script>
 
-<svelte:window bind:innerWidth/>
+<svelte:window bind:innerWidth on:keydown={keyDown}/>
+
+<svelte:head>
+  <title>
+    Axion | Signin
+  </title>
+</svelte:head>
 
 <form
   id='form'
@@ -90,7 +108,7 @@
                 <img src="images/axionFinalLogo.png" alt="Axion logo">
               </Avatar>
               <div class="fredoka-reg is-size-6-desktop has-text-weight-bold has-text-grey-dark mt-3">
-                Welcome back to Axion
+                Welcome back
               </div>
             </div>
 
@@ -148,8 +166,15 @@
               </button>
             </TextField>
 
+            {#if wrongPass}
+              <div class="txt-size-13 mt-3" >
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
+                Forgot your password? <a href="/getEmail" class="is-underlined">Click here</a>
+              </div>
+            {/if}
+
             <div class="maxmins-w-100p is-flex is-justify-content-center is-align-items-center mt-{innerWidth < 571 ? '8' : '16'}">
-              <div class="maxmins-w-50p">
+              <div class="maxmins-w-{signingin ? '30' : '50p'}">
                 <Button
                   on:click={signin}
                   block
@@ -161,11 +186,15 @@
                   {#if !signingin}
                     Signin
                   {:else}
-                    loading...
+                    <Pulse 
+                      size=30
+                      color="#fff"
+                    />
                   {/if}
                 </Button>
               </div>
             </div>
+
           </div>
         </MaterialApp>
       </div>

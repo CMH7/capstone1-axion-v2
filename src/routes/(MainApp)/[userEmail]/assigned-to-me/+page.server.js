@@ -1,7 +1,7 @@
 import prisma from "$lib/db";
 import { global_PASS } from "$lib/stores/global.store";
 import { error, redirect } from "@sveltejs/kit";
-import { compareSync } from "bcryptjs";
+import bcryptjs from 'bcryptjs';
 import { get } from "svelte/store";
 
 /** @type {import('./$types').PageServerLoad} */
@@ -20,7 +20,7 @@ export async function load({ params }) {
 	});
 
 	if (user) {
-    if (compareSync(get(global_PASS), user.password)) {
+    if (bcryptjs.compareSync(get(global_PASS), user.password)) {
       const tasks = await prisma.tasks.findMany({
 				where: {
 					members: {

@@ -4,7 +4,7 @@ import prisma from '$lib/db';
 import { error, redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { global_PASS } from '$lib/stores/global.store';
-import { compareSync } from 'bcryptjs';
+import bcryptjs from 'bcryptjs';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -20,7 +20,7 @@ export async function load({ params }) {
 		});
 
 		if (!user) throw error(404, 'Account not found');
-		if (!compareSync(get(global_PASS), user.password)) throw error(401, 'Unauthorized access');
+		if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(401, 'Unauthorized access');
 
 		const subject = await prisma.subjects.findFirst({
 			where: {
@@ -42,21 +42,32 @@ export async function load({ params }) {
 
 		if (!workspace) throw error(404, 'Workspace cannot be found');
 
-		let boardsConditions =
-			workspace.boards.length != 0
-				? workspace.boards.map((boardID) => {
-						return { id: boardID };
-				  })
-				: [];
+		let boardsConditions = workspace.boards.map((boardID) => {
+			return { id: boardID };
+		})
 
-		const boards =
-			boardsConditions.length != 0
-				? await prisma.boards.findMany({
-						where: {
-							OR: boardsConditions
-						}
-				  })
-				: [];
+		let boards = await prisma.boards.findMany({
+			where: {
+				OR: boardsConditions
+			}
+		})
+
+		/**
+		 * @type {import('@prisma/client').boards[]}
+		 */
+		let tempBoards = []
+
+		workspace.boards.forEach(board => {
+			boards.every(board2 => {
+				if (board2.id === board) {
+					tempBoards = [...tempBoards, board2]
+					return false
+				}
+				return true
+			})
+		})
+
+		boards = tempBoards
 
 		/** 
 		 * @type {{id: string}[]} 

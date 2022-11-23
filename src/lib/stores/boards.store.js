@@ -6,3 +6,7 @@ export let selectedBoard = writable(models.board)
 export let boardSettingsModalActive = writable(false)
 
 export let showFilter = writable(false)
+
+export let addBoardModalActive = writable(false)
+
+export let activeBoard = writable(models.board)
