@@ -2,9 +2,9 @@
   //@ts-nocheck
   import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
 	import { activeTask } from '$lib/stores/task.store';
-	import { mdiAccountOutline,mdiAccountPlusOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload,mdiFilter, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
+	import { mdiAccountOutline,mdiAccountPlusOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
   import { Icon, Avatar, MaterialApp, Tabs, Tab, Divider, Checkbox, Window, WindowItem, Textarea, Button, ClickOutside, TextField, Badge, Select } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
@@ -281,7 +281,7 @@
       <div class="columns is-mobile is-multiline">
         <!-- name -->
         <div style='{innerWidth < 769 ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.3); margin-bottom: 3%' : ''}' class="column is-12-mobile is-flex is-justify-content-space-between is-align-items-center">
-          <div class="fredoka-reg txt-size-{innerWidth < 571 ? '25' : '40'} has-text-grey-dark is-flex is-align-items-center txt-overflow-ellipsis overflow-x-hidden {taskNameEditing ? 'is-hidden' : ''}">
+          <div on:mouseenter={() => hintText.set('Hint text here')} class="fredoka-reg txt-size-{innerWidth < 571 ? '25' : '40'} has-text-grey-dark is-flex is-align-items-center txt-overflow-ellipsis overflow-x-hidden {taskNameEditing ? 'is-hidden' : ''}">
             {data.task.name}
           </div>
 
