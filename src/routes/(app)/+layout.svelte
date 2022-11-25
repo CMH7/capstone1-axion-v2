@@ -124,13 +124,17 @@
 			</div>
 
 			<div class="level-right">
-				<a href="/Terms&Conditions" class="txt-size-14 fredoka-reg level-item is-underlined">
-					Terms & conditions
-				</a>
+        <div class="level-item">
+          <a href="/Terms&Conditions" class="txt-size-14 fredoka-reg level-item is-underlined">
+            Terms & conditions
+          </a>
+        </div>
 
-				<a href="/Privacy_Policy" class="txt-size-14 fredoka-reg level-item is-underlined">
-					Privacy policy
-				</a>
+        <div class='level-item'>
+          <a href="/Privacy_Policy" class="txt-size-14 fredoka-reg level-item is-underlined">
+            Privacy policy
+          </a>
+        </div>
 			</div>
 		</div>
   </div>

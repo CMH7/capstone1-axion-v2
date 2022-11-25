@@ -5,7 +5,7 @@
 	import { breadCrumbsItems, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
 	import { activeSubtask } from '$lib/stores/subtask.store';
 	import { activeTask } from '$lib/stores/task.store';
-	import { mdiAccountOutline,mdiAccountPlusOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload,mdiFilter, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
+	import { mdiAccountOutline,mdiAccountPlusOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
   import { Icon, Avatar, MaterialApp, Tabs, Tab, Divider, Checkbox, Window, WindowItem, Textarea, Button, ClickOutside, TextField, Badge, Select } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
