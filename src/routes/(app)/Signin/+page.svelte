@@ -14,7 +14,6 @@
   let password = ''
   let rotz = 0
   let disabled = false
-  let show = false
   let innerWidth = 0
   let signingin = false
   let wrongPass = false
@@ -100,7 +99,7 @@
 <div class="columns maxmins-h-80v" style="overflow-y: hidden; overflow-x: hidden;">
   <div class="column is-8-tablet is-12-mobile">
     <div class="is-flex {innerWidth < 571 ? 'is-flex-direction-column' : ''} maxmins-h-100p is-justify-content-center is-align-items-center is-flex-wrap-wrap maxmins-h-100p">
-      <div style="overflow: hidden;" class="maxmins-w-{innerWidth < 571 ? '90p' : '50p'} mt-{innerWidth < 571 ? '16' : '0'} rounded-xl">
+      <div style="overflow: hidden;" class="maxmins-w-{innerWidth < 571 ? '90p' : '50p'} mt-{innerWidth < 571 ? '16' : '0'} rounded">
         <MaterialApp>
           <div class="has-background-white-bis p-{innerWidth < 571 ? '3' : '6'} maxmins-w-100p">
             <div class="maxmins-w-100p is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
@@ -115,7 +114,6 @@
             <Divider class='mt-13' />
             
             <TextField
-              rounded
               outlined
               type='email'
               {disabled}
@@ -135,9 +133,8 @@
             </TextField>
             
             <TextField
-              rounded
               outlined
-              type={show ? 'text' : 'password'}
+              type='password'
               {disabled}
               bind:value={password}
               name='password'
@@ -156,14 +153,6 @@
                 <Icon path={mdiLock} />
               </span>
               Password
-              <button
-                on:click={() => {
-                  show = !show
-                }}
-                slot="append"
-              >
-                <Icon path={show ? mdiEyeOff : mdiEye} />
-              </button>
             </TextField>
 
             {#if wrongPass}
@@ -178,7 +167,6 @@
                 <Button
                   on:click={signin}
                   block
-                  rounded
                   depressed
                   size='large'
                   class='has-background-primary has-text-white'
@@ -205,7 +193,7 @@
   <div class="column is-4-tablet is-12-mobile">
     <div class="{innerWidth < 571 ? 'maxmins-w-100p' : 'image is-1by1'} is-relative">
       <img class="mt-{innerWidth < 571 ? '0' : '16'} rot-z-n{rotz}" style="filter: blur({innerWidth < 571 ? '30px' : '90px'})" src="/images/axionFinalLogo.png" alt="Axion logo">
-      <div class="pos-abs pos-t-0 pos-l-0 maxmins-w-100p maxmins-h-100p is-flex is-flex-direction-column is-justify-content-center is-align-items-center">
+      <div class="pos-abs pos-t-0 pos-l-0 maxmins-w-100p maxmins-h-100p is-flex is-flex-direction-column is-justify-content-center is-align-items-center is-hidden-mobile">
         <div class="maxmins-w-100p has-text-centered fredoka-reg txt-size-30">
           Signin to
         </div>
