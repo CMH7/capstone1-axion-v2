@@ -1,4 +1,3 @@
-import validators from '$lib/configs/validators';
 import prisma from '$lib/db';
 import { global_PASS } from '$lib/stores/global.store';
 import { invalid, redirect } from '@sveltejs/kit';
@@ -13,10 +12,6 @@ export const actions = {
     const emailS = email?.toString()
     const passS = pass?.toString()
 
-    if (!emailS || !passS) return invalid(400, { message: `${!emailS && !passS ? 'Email and password' : !emailS && passS ? 'Email' : 'Password'} is empty`, reason: 'empty' })
-
-    if (!validators.isEmailValid(emailS)) return invalid(400, { message: 'Email is not valid', reason: 'notvalid_email' });
-    if (!validators.isPassValid(passS)) return invalid(400, {message: 'Password is invalid', reason: 'notvalid_pass'})
     global_PASS.set(passS)
 
     const user = await prisma.users.findFirst({
