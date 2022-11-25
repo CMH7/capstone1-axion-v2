@@ -1,3 +1,4 @@
+//@ts-nocheck
 import prisma from '$lib/db';
 import { global_PASS } from '$lib/stores/global.store';
 import { invalid, redirect } from '@sveltejs/kit';
