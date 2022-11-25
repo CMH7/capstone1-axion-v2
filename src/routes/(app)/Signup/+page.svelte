@@ -296,8 +296,8 @@
                     {disabled}
                     bind:value={year}
                     rules={[
-                      /** @param {number} v */ v => v > 0 || 'year cannot be less than 1',
-                      /** @param {number} v */ v => v > 6 || 'year cannot be greater than 6'
+                      /** @param {number} v */ v => v >= 1 || 'year cannot be less than 1',
+                      /** @param {number} v */ v => v <= 6 || 'year cannot be greater than 6'
                     ]}
                     color='indigo darken-4'
                     class='fredoka-reg mb-4'
