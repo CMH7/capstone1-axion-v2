@@ -18,6 +18,10 @@
   let signingin = false
   let wrongPass = false
 
+  // dynamically changing variables
+  $: emailError = email === ''
+  $: passError = password === ''
+
   const startAnimation = () => {
     setInterval(() => {
       if(rotz == 720) rotz = 0
@@ -26,6 +30,8 @@
   }
 
   const signin = () => {
+    if(!validators.isEmailValid(email)) return
+    if(!validators.isPassValid(password)) return
     signingin = true
     handleSubmit()
   }
@@ -117,6 +123,7 @@
               outlined
               type='email'
               {disabled}
+              error={emailError}
               bind:value={email}
               name='email'
               rules={[
@@ -136,6 +143,7 @@
               outlined
               type='password'
               {disabled}
+              error={passError}
               bind:value={password}
               name='password'
               rules={[
@@ -163,7 +171,7 @@
             {/if}
 
             <div class="maxmins-w-100p is-flex is-justify-content-center is-align-items-center mt-{innerWidth < 571 ? '8' : '16'}">
-              <div class="maxmins-w-{signingin ? '30' : '50p'}">
+              <div class="maxmins-w-50p">
                 <Button
                   on:click={signin}
                   block
