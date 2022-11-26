@@ -171,22 +171,24 @@
             <div
               style='transform-origin: top center' class="pos-abs pos-t-65 pos-r-5 has-background-white-bis elevation-3 rounded-b maxmins-w-200 z-100 has-transition rot-x-{showProfileMenu ? '0' : '90'}">
               <List nav>
-                <ListItem
-                  on:click={async () => {
-                    currentIndex = 3
-                    showProfileMenu = false
-                    await goto(`/${data.user.email}/my-profile`, {replaceState: true})
-                  }}
-                  disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
-                  active={$page.url.pathname === `/${data.user.email}/my-profile`}
-                >
-                  <span slot="prepend">
-                    <Icon path={mdiTune} />
-                  </span>
-                  <span class="fredoka-reg">
-                    My profile
-                  </span>
-                </ListItem>
+                <a href="/{data.user.email}/my-profile">
+                  <ListItem
+                    on:click={async () => {
+                      currentIndex = 3
+                      showProfileMenu = false
+                      // await goto(`/${data.user.email}/my-profile`, {replaceState: true})
+                    }}
+                    disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
+                    active={$page.url.pathname === `/${data.user.email}/my-profile`}
+                  >
+                    <span slot="prepend">
+                      <Icon path={mdiTune} />
+                    </span>
+                    <span class="fredoka-reg">
+                      My profile
+                    </span>
+                  </ListItem>
+                </a>
   
                 <!-- make this form hidden always -->
                 <form id="form" method="POST" action="?/logout" class="is-hidden"></form>
