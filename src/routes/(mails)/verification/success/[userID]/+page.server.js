@@ -1,8 +1,6 @@
 import prisma from '$lib/db'
 import { error } from '@sveltejs/kit'
 
-export const prerender = true;
-
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
   let msg = 'Verified Successfully!'

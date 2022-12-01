@@ -1,6 +1,6 @@
 <script>
   //@ts-nocheck
-	import { selectedBoard, showFilter } from '$lib/stores/boards.store';
+	import { boardSettingsPanelActive, selectedBoard, showFilter } from '$lib/stores/boards.store';
 	import { modalChosenColor } from '$lib/stores/global.store';
   import { mdiTune, mdiFilter } from '@mdi/js'
   import { ExpansionPanels, ExpansionPanel, Button, Icon } from 'svelte-materialify'
@@ -165,7 +165,7 @@
                 if(board.name === 'Todo' || board.name === 'In progress' || board.name === 'Done') return
                   selectedBoard.set(board)
                   modalChosenColor.set(board.color)
-                  boardSettingsModalActive.set(true)
+                  boardSettingsPanelActive.set(true)
                 }}
                 depressed
                 size='x-small'
