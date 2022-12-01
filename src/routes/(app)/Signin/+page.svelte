@@ -37,7 +37,7 @@
   }
 
   async function handleSubmit(event) {
-    let form = document.getElementById('form')
+    let form = document.getElementById('formSignin')
     const data = new FormData(form);
 
     const response = await fetch(form.action, {
@@ -93,7 +93,7 @@
 </svelte:head>
 
 <form
-  id='form'
+  id='formSignin'
   class="is-hidden"
   action="?/signin"
   use:enhance

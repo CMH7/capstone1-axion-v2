@@ -1,5 +1,6 @@
 import courses from "../collections/courses";
 import schools from "../collections/schools";
+import colors from "../collections/colors";
 
 export default {
 	lowerCasedLetters: new String('abcdefghijklmnopqrstuvwxyz').split(''),
@@ -7,7 +8,8 @@ export default {
 	digits: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
 	specialCharacters: "~!$%^&*_=+}{'?-".split(''),
 	courses,
-  schools,
+	schools,
+	colors,
   /**
    * 
    * @param {string} to 
@@ -43,5 +45,5 @@ export default {
 				link
 			}
 		};
-	}
+	},
 };

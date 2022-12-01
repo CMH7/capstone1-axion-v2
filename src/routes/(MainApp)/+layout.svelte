@@ -2,8 +2,8 @@
   //@ts-nocheck
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
-	import { goto } from '$app/navigation';
-	import { breadCrumbsItems, hintText, loading, navDrawerActive, notifCenterOpen } from '$lib/stores/global.store';
+	import { invalidateAll } from '$app/navigation';
+	import { breadCrumbsItems, hintText, loading, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
@@ -12,6 +12,22 @@
 	import NotificationContainer from '$lib/components/System-Notification/Notification-container.svelte';
 	import Fab from '$lib/components/fab/fab.svelte';
 	import { onMount } from 'svelte';
+	import AddSubjectPanel from '$lib/components/subject/addSubjectPanel.svelte';
+	import SubjectSettingsPanel from '$lib/components/subject/subjectSettingsPanel.svelte';
+	import { applyAction, deserialize, enhance } from '$app/forms';
+	import SubjectDeleteConfirmationModal from '$lib/components/subject/subjectDeleteConfirmationModal.svelte';
+	import AddWorkspacePanel from '$lib/components/workspace/addWorkspacePanel.svelte';
+	import WorkspaceSettingsPanel from '$lib/components/workspace/workspaceSettingsPanel.svelte';
+	import WorkspaceDeleteConfirmationModal from '$lib/components/workspace/workspaceDeleteConfirmationModal.svelte';
+	import AddTaskPanel from '$lib/components/task/addTaskPanel.svelte';
+	import TaskSettingsPanel from '$lib/components/task/taskSettingsPanel.svelte';
+	import TaskDeleteConfirmationModal from '$lib/components/task/taskDeleteConfirmationModal.svelte';
+	import AddBoardPanel from '$lib/components/board/addBoardPanel.svelte';
+	import BoardSettingsPanel from '$lib/components/board/boardSettingsPanel.svelte';
+	import BoardDeleteConfirmationModal from '$lib/components/board/boardDeleteConfirmationModal.svelte';
+	import WorkspaceRemoveMemberConfirmationModal from '$lib/components/workspace/workspaceRemoveMemberConfirmationModal.svelte';
+	import WorkspaceDemoteWorkspaceAdmin from '$lib/components/workspace/workspaceDemoteWorkspaceAdmin.svelte';
+	import WorkspacePromoteWorkspaceMember from '$lib/components/workspace/workspacePromoteWorkspaceMember.svelte';
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -55,9 +71,42 @@
     // await goto(href, {replaceState: true})
   }
 
-  const logout = () => {
-    let form = document.getElementById('form')
-    form.submit()
+  const logout = async () => {
+    let form = document.getElementById('formlogout')
+    const data = new FormData(form);
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: data
+    });
+
+    /** @type {import('@sveltejs/kit').ActionResult} */
+    const result = deserialize(await response.text());
+
+    console.log(result);
+
+    if(result.type === 'invalid') {
+      $notifs = [...$notifs, {
+        msg: result.data.message,
+        type: 'error',
+        id: `${(Math.random() * 999) + 1}`
+      }]
+    }
+
+    if(result.type === 'redirect') {
+      $notifs = [...$notifs, {
+        msg: 'Logout successfully',
+        type: 'success',
+        id: `${(Math.random() * 999) + 1}`
+      }]
+    }
+
+    if (result.type === 'success') {
+      // re-run all `load` functions, following the successful update
+      await invalidateAll();
+    }
+
+    applyAction(result);
   }
 
   const hideHint = () => {
@@ -71,12 +120,34 @@
 
 <svelte:window bind:innerWidth />
 
+<!-- make this form hidden always -->
+<form id="formlogout" action="?/logout" class="is-hidden" use:enhance></form>
 
 {#if $loading}
 <LoadingScreen />
 {:else}
   <div in:fade>
     <NotificationContainer />
+    <AddSubjectPanel />
+    <AddWorkspacePanel />
+    <AddTaskPanel />
+    <AddBoardPanel />
+
+    <SubjectSettingsPanel {data} />
+    <WorkspaceSettingsPanel {data} />
+    <TaskSettingsPanel />
+    <BoardSettingsPanel />
+
+
+    <SubjectDeleteConfirmationModal />
+    <WorkspaceDeleteConfirmationModal />
+    <TaskDeleteConfirmationModal />
+    <BoardDeleteConfirmationModal />
+
+    <WorkspaceRemoveMemberConfirmationModal />
+    <WorkspaceDemoteWorkspaceAdmin />
+    <WorkspacePromoteWorkspaceMember />
+
     <MaterialApp>
       <AppBar fixed class='maxmins-w-100p has-background-primary px-3 is-align-items-center'>
         <div slot="icon">
@@ -189,9 +260,6 @@
                     </span>
                   </ListItem>
                 </a>
-  
-                <!-- make this form hidden always -->
-                <form id="form" method="POST" action="?/logout" class="is-hidden"></form>
                 
                 <!-- logoutModalActive.set(true) -->
                 <ListItem on:click={logout}>
@@ -254,43 +322,33 @@
         <div class="hero-head">
           <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'pl-3' : ''}">
             {#if innerWidth < 571}
-              <Button 
-                icon
-                on:click={() => {
-                  if(breadcrumbs.length > 1) {
-                    goto(breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' ? 2 : 1].href, {replaceState: true})
-                  } else {
-                    goto(breadcrumbs[0].href, {replaceState: true})
-                  }
-                }}
-                class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
-              >
-                <Icon path={mdiChevronLeft} />
-              </Button>
+              <a href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+                <Button 
+                  icon
+                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+                >
+                  <Icon path={mdiChevronLeft} />
+                </Button>
+              </a>
               <a href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
                 class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
                 {$breadCrumbsItems[$breadCrumbsItems.length - 1].text}
               </a>
             {:else}
-              <Button 
-                icon
-                on:click={() => {
-                  if(breadcrumbs.length > 1) {
-                    goto(breadcrumbs[breadcrumbs.length - 2].href, {replaceState: true})
-                  } else {
-                    goto(breadcrumbs[0].href, {replaceState: true})
-                  }
-                }}
-                class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
-              >
-                <Icon path={mdiChevronLeft} />
-              </Button>
+              <a href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+                <Button
+                  icon
+                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+                >
+                  <Icon path={mdiChevronLeft} />
+                </Button>
+              </a>
               {#each breadcrumbs as crumb}
                 <a href='{crumb.href}'
                   class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
                   {crumb.text}
                 </a>
-                {#if breadcrumbs.length > 1 && crumb.text !== 'boards' && crumb.text !== 'view'}
+                {#if breadcrumbs.length > 1 && crumb.text !== 'boards' && crumb.text !== 'view' && crumb.text !== 'members' && crumb.text !== 'manage members'}
                   <Icon path={mdiChevronRight} />
                 {/if}
               {/each}
@@ -351,10 +409,8 @@
     </MaterialApp>
   </div>
   {/if}
-  {#if currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' }
+  {#if currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
     <div class="z-90">
       <Fab {data} />
     </div>
   {/if}
-
-

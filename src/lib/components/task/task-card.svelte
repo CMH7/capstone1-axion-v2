@@ -1,6 +1,10 @@
 <script>
   //@ts-nocheck
+	import models from '$lib/models';
+	import { boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
+	import { modalChosenColor } from '$lib/stores/global.store';
+	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, selectedTask, statuses, taskSettingsPanelActive } from '$lib/stores/task.store';
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 
   /** @type {import('@prisma/client').tasks}*/
@@ -8,17 +12,20 @@
   export let data
 
   let show = false
+  let timer
+  let hold = 0
 
   /**
    * @param {import('@prisma/client').tasks} task
    * @return {{backgroundColor: string, textColor: string}}
    * */
   const determineBG = (task) => {
-    let backgroundColor = 'has-background-success'
-    let textColor = 'has-text-success-light'
+    let backgroundColor = ''
+    let textColor = ''
 
-    if(task.status === 'Done') {
+    if(task.status === $statuses.filter(status => status.name === 'Done')[0].value) {
       backgroundColor = 'has-background-success'
+      textColor = 'has-text-success-dark'
     }else {
       let date1 = new Date(task.dueDateTime)
       let date2 = new Date()
@@ -138,12 +145,40 @@
 
     return {dueDate, date, finalHour, minute, hour}
   }
+
+  const handleRightClick = () => {
+    taskSettingsPanelActive.set(true)
+    boardSettingsPanelActive.set(false)
+    newBoardName.set('')
+    modalChosenColor.set('primary')
+    selectedBoard.set(models.board)
+    selectedTask.set(task)
+    newTaskName.set(task.name)
+    newTaskDueDateTime.set(task.dueDateTime)
+    newTaskLevel.set(task.level)
+    newTaskStatus.set(task.status)
+  }
+
+  const touchStart = () => {
+
+  }
+
+  const touchEnd = () => {
+
+  }
+
 </script>
 
 
 <a style="text-decoration: none;" href="{$activeWorkspace.id}/{task.status}/{task.id} ">
   <!-- svelte-ignore a11y-click-events-have-key-events -->
-  <div style='overflow-x: hidden;' class="{determineBG(task).backgroundColor}-dark mb-1 has-transition is-clickable maxmins-w-230 maxmins-h-60 rounded parent">
+  <div
+    on:touchstart={touchStart}
+    on:touchend={touchEnd}
+    on:contextmenu|preventDefault={handleRightClick}
+    style='overflow-x: hidden;'
+    class="{determineBG(task).backgroundColor}-dark mb-1 has-transition is-clickable maxmins-w-230 maxmins-h-60 rounded parent"
+  >
     <Card outlined shaped flat class='{determineBG(task).backgroundColor} p-1 maxmins-h-60 is-flex is-flex-direction-column is-justify-content-space-between'>
       <!-- Task Name and Task Labels: level and how many subtasks it has -->
       <div class="is-flex is-justify-content-space-between maxmins-w-100p">
@@ -161,7 +196,7 @@
           {/if}
     
           <!-- Level -->
-          <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?"has-background-success": task.level == 2?"has-background-warning has-text-black":"has-background-danger"} rounded txt-size-9 px-1">
+          <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?`has-background-success${determineBG(task).backgroundColor === 'has-background-success' ? '-dark' : ''}`: task.level == 2?`has-background-warning${determineBG(task).backgroundColor === 'has-background-warning' ? '-dark has-text-white' : ' has-text-black'}`:"has-background-danger"} rounded txt-size-9 px-1">
             {task.level == 1? "Low": task.level == 2? "Medium": "High"}
           </Avatar>
         </div>
@@ -216,10 +251,10 @@
               <Tooltip class='px-1 py-1' bottom bind:active={show}>
                 <div class="is-flex">
                   {#each data.taskMembers.filter(tm => tm.taskID === task.id)[0].members as member, i}
-                    <Avatar size='17px' class='has-background-white-bis is-flex is-justify-content-center is-align-items-center'>
+                    <Avatar size='17px' class='has-background-{member.profile === '' ? 'primary' : 'white-bis'} is-flex is-justify-content-center is-align-items-center'>
                       {#if member.profile === ''}
                         <div class="has-text-white has-text-weight-semibold txt-size-7 fredoka-reg is-flex is-justify-content-center is-align-items-center">
-                          {`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[0].charAt(0)}{`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[member.name.toUpperCase().split(' ').length - 1].charAt(0)}
+                          {`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[0].charAt(0)}{`${member.firstName} ${member.lastName}`.toUpperCase().split(' ')[`${member.firstName} ${member.lastName}`.toUpperCase().split(' ').length - 1].charAt(0)}
                         </div>
                       {:else}
                         <img src="{member.profile}" alt="{member.firstName} {member.lastName}"/>

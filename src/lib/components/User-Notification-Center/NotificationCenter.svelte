@@ -64,7 +64,7 @@
 
   <!-- Notication Center Content -->
   <div class="is-flex is-flex-direction-column maxmins-w-100p flex-grow-1 overflow-y-auto rounded">
-    {#each notifications as notification}
+    {#each notifications.reverse() as notification}
       <NotificationCard {notification} profileb={notifFromPic.filter(nfp => nfp.notifID === notification.id)[0].profile} />
     {/each}
   </div>

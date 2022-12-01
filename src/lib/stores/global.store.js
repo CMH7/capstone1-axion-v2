@@ -2,6 +2,8 @@ import { writable } from "svelte/store";
 
 export let global_PASS = writable('')
 
+export let global_USERID = writable('')
+
 export let breadCrumbsItems = writable([{ text: 'Subjects', href: '#' }])
 
 export let modalChosenColor = writable('primary')

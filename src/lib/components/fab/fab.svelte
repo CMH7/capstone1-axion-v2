@@ -1,13 +1,14 @@
 <script>
   //@ts-nocheck
-	import { addBoardModalActive } from '$lib/stores/boards.store';
+	import { addBoardPanelActive } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { breadCrumbsItems, hintText, modalChosenColor } from '$lib/stores/global.store';
-	import { addSubjectPanelActive } from '$lib/stores/subject.store';
-	import { addTaskPanelActive, addWorkspacePanelActive, leaveWorkspacePanelActive, manageAdminPanelActive, manageMembersPanelActive, viewMembersNow, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
-	import { mdiAccountArrowUp, mdiAccountGroup, mdiAccountPlus, mdiAccountSettings, mdiAccountSupervisor, mdiApplicationSettings, mdiApplicationSettingsOutline, mdiExitRun, mdiPlus, mdiPlusBox, mdiServerPlus, mdiTeamviewer, mdiTextBoxPlus, mdiTextBoxPlusOutline } from '@mdi/js';
+	import { addSubjectPanelActive, newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store';
+	import { addTaskPanelActive } from '$lib/stores/task.store';
+	import { addWorkspacePanelActive, leaveWorkspacePanelActive, manageAdminPanelActive, manageMembersPanelActive, newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
+	import { mdiAccountGroup, mdiAccountSettings, mdiAccountSupervisor, mdiApplicationSettings, mdiApplicationSettingsOutline, mdiExitRun, mdiPlus, mdiPlusBox, mdiServerPlus, mdiTextBoxPlus, mdiTextBoxPlusOutline } from '@mdi/js';
   import { Menu, Button, Icon, List, ListItem } from 'svelte-materialify'
-  import { fade, scale } from 'svelte/transition'
+  import { scale } from 'svelte/transition'
 
   export let data
 
@@ -100,8 +101,10 @@
         <div
           on:mouseenter={() => setHint('s-s')}
           on:click={e => {
+            selectedSubject.set($activeSubject)
             modalChosenColor.set($activeSubject.color)
-            // subjectSettingsModalActive.set(true) -> change this to goto() where subject settings resides
+            newSubjectName.set($activeSubject.name)
+            subjectSettingsPanelActive.set(true)
           }}
         >
           <ListItem>
@@ -128,7 +131,7 @@
             <!-- svelte-ignore a11y-click-events-have-key-events -->
             <div
               on:mouseenter={() => setHint('c-b')}
-              on:click={e => addBoardModalActive.set(true)}>
+              on:click={e => addBoardPanelActive.set(true)}>
               <ListItem>
                 <span slot="prepend">
                   <Icon path={mdiServerPlus} />
@@ -138,52 +141,40 @@
             </div>
           {/if}
 
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div
-            on:mouseenter={() => setHint('v-m')}
-            on:click={() => viewMembersNow.set(true)}>
-            <ListItem>
-              <span slot="prepend">
-                <Icon path={mdiAccountGroup} />
-              </span>
-              View members
-            </ListItem>
+          <div on:mouseenter={() => setHint('v-m')}>
+            <a href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/members">
+              <ListItem>
+                <span slot="prepend">
+                  <Icon path={mdiAccountGroup} />
+                </span>
+                View members
+              </ListItem>
+            </a>
           </div>
 
           
           {#if $activeSubject.owner === data.user.id || $activeWorkspace.admins.filter(admin => admin.id === data.user.id).length != 0}
-            <!-- svelte-ignore a11y-click-events-have-key-events -->
-            <div
-              on:mouseenter={() => setHint('m-m')}
-              on:click={() => manageMembersPanelActive.set(true)}>
-              <ListItem>
-                <span slot="prepend">
-                  <Icon path={mdiAccountSettings} />
-                </span>
-                Manage members
-              </ListItem>
-            </div>
-
-            {#if $activeWorkspace.members.filter(member => member.id !== data.user.id).length != 0}
-              <!-- svelte-ignore a11y-click-events-have-key-events -->
-              <div
-                on:mouseenter={() => setHint('m-a')}
-                on:click={e => manageAdminPanelActive.set(true)}>
+            <div on:mouseenter={() => setHint('m-m')}>
+              <a href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/manageMembers">
                 <ListItem>
                   <span slot="prepend">
-                    <Icon path={mdiAccountSupervisor} />
+                    <Icon path={mdiAccountSettings} />
                   </span>
-                  Manage admins
+                  Manage members
                 </ListItem>
-              </div>
-            {/if}
-            
+              </a>
+            </div>
           {/if}
         {/if}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
           on:mouseenter={() => setHint('w-s')}
-          on:click={e => workspaceSettingsPanelActive.set(true)}>
+          on:click={e => {
+            selectedWorkspace.set($activeWorkspace)
+            modalChosenColor.set($activeWorkspace.color)
+            newWorkspaceName.set($activeWorkspace.name)
+            workspaceSettingsPanelActive.set(true)
+          }}>
           <ListItem>
             <span slot="prepend">
               <Icon path={mdiApplicationSettings} />

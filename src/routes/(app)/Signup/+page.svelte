@@ -77,7 +77,7 @@
 
       creating = true
 
-      let form = document.getElementById('form')
+      let form = document.getElementById('formSignup')
       const data = new FormData(form);
 
       const response = await fetch(form.action, {
@@ -129,7 +129,7 @@
   </title>
 </svelte:head>
 
-<form id='form' action='?/signup' class="is-hidden" use:enhance>
+<form id='formSignup' action='?/signup' class="is-hidden" use:enhance>
   <input name='firstName' type="text" bind:value={firstName}>
   <input name='lastName' type="text" bind:value={lastName}>
   <input name='age' type="number" bind:value={age}>

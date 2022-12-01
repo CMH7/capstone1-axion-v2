@@ -1,6 +1,6 @@
 //@ts-nocheck
 import prisma from '$lib/db';
-import { global_PASS } from '$lib/stores/global.store';
+import { global_PASS, global_USERID } from '$lib/stores/global.store';
 import { invalid, redirect } from '@sveltejs/kit';
 import bcryptjs from 'bcryptjs'
 
@@ -40,6 +40,7 @@ export const actions = {
     })
     if(!user2) return invalid(409, { message: 'Try again, server error', reason: 'other' });
 
+    global_USERID.set(user2.id)
     throw redirect(302, `/${emailS}`);
 
 	}

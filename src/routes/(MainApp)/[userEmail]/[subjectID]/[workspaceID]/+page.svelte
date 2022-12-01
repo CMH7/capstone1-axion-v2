@@ -1,10 +1,11 @@
 <script>
   //@ts-nocheck
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
 	import { onMount } from 'svelte'
 	import BoardMobile from '$lib/components/board/board-mobile.svelte';
 	import BoardDesktop from '$lib/components/board/board-desktop.svelte';
+	import { newTaskMembers, newTaskStatus, statuses, workspaceMembers } from '$lib/stores/task.store';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -16,6 +17,11 @@
     activeWorkspace.set(data.workspace)
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'boards', href: '#'}]
     hintText.set('Click the \'+\' to create task and more tools!')
+    global_USERID.set(data.user.id)
+    statuses.set(data.statuses)
+    newTaskStatus.set($statuses.filter(status => status.name === 'Todo')[0].value)
+    newTaskMembers.set([data.user.id])
+    workspaceMembers.set(data.workspaceMembers)
   })
 
 </script>

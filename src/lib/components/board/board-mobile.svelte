@@ -1,9 +1,9 @@
 <script>
   //@ts-nocheck
-	import { boardSettingsModalActive, selectedBoard, showFilter } from '$lib/stores/boards.store';
+	import { selectedBoard, showFilter } from '$lib/stores/boards.store';
 	import { modalChosenColor } from '$lib/stores/global.store';
-  import { mdiTune, mdiMinus, mdiFilter } from '@mdi/js'
-  import { ExpansionPanels, ExpansionPanel, Button, Icon, ClickOutside, Divider } from 'svelte-materialify'
+  import { mdiTune, mdiFilter } from '@mdi/js'
+  import { ExpansionPanels, ExpansionPanel, Button, Icon } from 'svelte-materialify'
 	import TaskCard from '../task/task-card.svelte';
 	import TaskFilterDropdown from '../taskFilterDropdown.svelte';
 
@@ -207,7 +207,7 @@
             {:else}
               {#each data.boardTasks as bt}
                 {#if bt.boardID === board.id}
-                  {#each bt.bTasks as task}
+                  {#each bt.bTasks.reverse() as task}
                     {#if !task.isSubtask}
                       <!-- TASK CARD COMPONENT -->
                       <TaskCard {task} {data} />
