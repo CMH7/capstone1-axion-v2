@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import { Avatar, Icon } from 'svelte-materialify'
   import { mdiCheck } from '@mdi/js'
 	import { onMount } from 'svelte';

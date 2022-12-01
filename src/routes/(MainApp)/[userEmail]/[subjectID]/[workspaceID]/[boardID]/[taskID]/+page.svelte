@@ -1029,7 +1029,7 @@
     <!-- list of workspace members -->
     <div style='overflow-y: auto;' class='maxmins-w-100p flex-grow-1 px-2 py-1 rounded'>
       {#each data.workspaceMembers as wm}
-        <div class="maxmins-w-100p">
+        <div class="maxmins-w-100p mb-3">
           <div style="overflow: hidden;" class="maxmins-w-100p has-background-white elevation-1 rounded-lg maxmins-h-65 is-flex">
             <div class="maxmins-w-20p flex-shrink-0 centerxy">
               <Badge class='success-color' dot bottom offsetX={10} offsetY={10} active={wm.online}>
@@ -1149,7 +1149,7 @@
       <div style='overflow-y: auto; transform-origin: top center;' class="pos-abs pos-l-0 pos-t-70p rounded maxmins-w-100p max-h-30v has-background-white elevation-2 p-2 has-transition rot-x-{addSubtaskAssigneeDropOpen ? '0' : '90'}">
         {#each data.workspaceMembers as wm}
           <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div on:click={() => addSubtaskAssigneeDropOpen = true}>
+          <div on:click={() => addSubtaskAssigneeDropOpen = true} class='mb-3'>
             <Checkbox color='green' bind:group value="{wm.id}">
               <div class='maxmins-w-100p is-flex is-align-items-center'>
                 <div>
