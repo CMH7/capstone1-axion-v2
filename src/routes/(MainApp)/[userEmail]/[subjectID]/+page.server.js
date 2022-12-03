@@ -44,7 +44,7 @@ export async function load({ params }) {
 		return true
 	})
 
-	if (!aMember) {
+	if (!aMember && subject.owner !== user.id) {
 		const updatedUser = await prisma.users.update({
 			where: {
 				id: user.id
@@ -60,7 +60,7 @@ export async function load({ params }) {
 		return { workspaces, user, subject, aMember };
 	} else {
 		workspaces = workspaces.filter(workspace => workspace.members.includes(user.id))
-
+		aMember = true
 		return { workspaces, user, subject, aMember };
 	}
 }
