@@ -1,11 +1,9 @@
 //@ts-ignore
-import models from '$lib/models';
 import prisma from '$lib/db';
 import { error, invalid, redirect } from '@sveltejs/kit';
 import { get } from 'svelte/store';
 import { global_PASS, global_USERID } from '$lib/stores/global.store';
 import bcryptjs from 'bcryptjs';
-import { statuses } from '$lib/stores/task.store';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params, depends }) {
@@ -18,7 +16,6 @@ export async function load({ params, depends }) {
 			}
 		}
 	});
-
 	if (!user) throw error(404, 'Account not found');
 	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(401, 'Unauthorized access');
 
@@ -29,7 +26,6 @@ export async function load({ params, depends }) {
 			}
 		}
 	});
-
 	if (!subject) throw error(404, 'Subject not found');
 
 	const workspace = await prisma.workspaces.findFirst({
@@ -39,16 +35,11 @@ export async function load({ params, depends }) {
 			}
 		}
 	});
-
 	if (!workspace) throw error(404, 'Workspace cannot be found');
-
-	let boardsConditions = workspace.boards.map((boardID) => {
-		return { id: boardID };
-	})
 
 	let boards = await prisma.boards.findMany({
 		where: {
-			OR: boardsConditions
+			OR: workspace.boards.map(id => {return{id}})
 		}
 	})
 
@@ -56,7 +47,6 @@ export async function load({ params, depends }) {
 	 * @type {import('@prisma/client').boards[]}
 	 */
 	let tempBoards = []
-
 	workspace.boards.forEach(board => {
 		boards.every(board2 => {
 			if (board2.id === board) {
@@ -66,7 +56,6 @@ export async function load({ params, depends }) {
 			return true
 		})
 	})
-
 	boards = tempBoards
 
 	let statuses = boards.map((board) => {
@@ -77,23 +66,31 @@ export async function load({ params, depends }) {
 	});
 
 	/** 
-	 * @type {{id: string}[]} 
+	 * @type {{AND: {id: string, isSubtask: boolean}}[]} 
 	 * */
 	let allTasksConditions = [];
 	boards.map((board) => {
-		board.tasks.map((taskID) => {
-			allTasksConditions = [...allTasksConditions, { id: taskID }];
+		board.tasks.map((id) => {
+			allTasksConditions = [...allTasksConditions, { AND: {id, isSubtask: false} }];
 		});
 	});
-
 	const allTasks = await prisma.tasks.findMany({
 		where: {
 			OR: allTasksConditions
+		},
+		select: {
+			id: true,
+			name: true,
+			level: true,
+			members: true,
+			subtasks: true,
+			dueDateTime: true,
+			status: true
 		}
 	});
 
 	/** 
-	 * @type {{boardID: string, bTasks: import('@prisma/client').tasks[]}[]}
+	 * @type {{boardID: string, bTasks: {id: string, name: string, level: number, members: string[], subtasks: string[], dueDateTime: Date, status: string}[]}[]}
 	 * */
 	let boardTasks = [];
 	boards.forEach((board) => {
@@ -112,10 +109,11 @@ export async function load({ params, depends }) {
 	let allMembersConditions = [];
 	allTasks.map(task => {
 		task.members.map(memberID => {
-			allMembersConditions = [...allMembersConditions, {id: memberID}]
+			if (allMembersConditions.filter(obj => obj.id === memberID).length == 0) {
+				allMembersConditions = [...allMembersConditions, {id: memberID}]
+			}
 		})
 	})
-
 	const allMembers = await prisma.users.findMany({
 		where: {
 			OR: allMembersConditions

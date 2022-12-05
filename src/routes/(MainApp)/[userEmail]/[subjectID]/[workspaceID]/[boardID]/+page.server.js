@@ -49,18 +49,25 @@ export async function load({ params }) {
 
 	if (!board) throw error(404, 'Board is empty');
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let tasksConditions = [];
-
-	board.tasks.forEach((taskID) => {
-		tasksConditions = [...tasksConditions, { id: taskID }];
-	});
-
 	const tasks = await prisma.tasks.findMany({
 		where: {
-			OR: tasksConditions
+			OR: board.tasks.map(id => {
+				return {
+					AND: {
+						id,
+						isSubtask: false
+					}
+				}
+			})
+		},
+		select: {
+			id: true,
+			name: true,
+			level: true,
+			status: true,
+			dueDateTime: true,
+			subtasks: true,
+			members: true
 		}
 	});
 
@@ -70,21 +77,28 @@ export async function load({ params }) {
 	let allMembersConditions = [];
 	tasks.map((task) => {
 		task.members.map((memberID) => {
-			allMembersConditions = [...allMembersConditions, { id: memberID }];
+			if (allMembersConditions.filter(objID => objID.id === memberID).length == 0) {
+				allMembersConditions = [...allMembersConditions, { id: memberID }];
+			}
 		});
 	});
 
 	const allMembers = await prisma.users.findMany({
 		where: {
 			OR: allMembersConditions
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profile: true
 		}
 	});
 
 	/**
-	 * @type {{taskID: string, members: import('@prisma/client').users[]}[]}
+	 * @type {{taskID: string, members: {id: string, firstName: string, lastName: string, profile: string}[]}[]}
 	 * */
 	let taskMembers = [];
-
 	allMembers.forEach((member) => {
 		tasks.forEach((task) => {
 			if (taskMembers.filter((tm) => tm.taskID === task.id).length != 0) {

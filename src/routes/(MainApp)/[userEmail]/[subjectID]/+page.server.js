@@ -15,7 +15,6 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!user) throw error(401, 'Account not found')
 	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(404, 'Unauthorized access')
 
@@ -26,12 +25,18 @@ export async function load({ params }) {
 			}
 		}
 	})
-
 	if(!subject) throw redirect(303, `/${user.email}`)
 
 	let workspaces = await prisma.workspaces.findMany({
 		where: {
 			OR: subject.workspaces.map(id => {return {id}})
+		},
+		select: {
+			id: true,
+			color: true,
+			name: true,
+			owner: true,
+			members: true
 		}
 	})
 
@@ -44,7 +49,7 @@ export async function load({ params }) {
 		return true
 	})
 
-	if (!aMember) {
+	if (!aMember && subject.owner !== user.id) {
 		const updatedUser = await prisma.users.update({
 			where: {
 				id: user.id
@@ -60,7 +65,7 @@ export async function load({ params }) {
 		return { workspaces, user, subject, aMember };
 	} else {
 		workspaces = workspaces.filter(workspace => workspace.members.includes(user.id))
-
+		aMember = true
 		return { workspaces, user, subject, aMember };
 	}
 }
@@ -282,7 +287,7 @@ export const actions = {
       }
     })
 
-    if(!upatedUser) return invalid(500, {message: 'Failed to update favorites but is added to favorites, please reload', reason: 'databaseError'})
+    if(!upatedUser) return invalid(500, {message: 'Failed to return data but is added to favorites, please reload', reason: 'databaseError'})
 
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {

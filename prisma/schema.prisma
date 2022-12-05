@@ -99,6 +99,7 @@ model tasks {
   status        String
   subtasks      String[]
   viewers       String[]
+  subscribers   String[]
 }
 
 model users {

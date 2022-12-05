@@ -3,14 +3,16 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
   import { addSubjectPanelActive, newSubjectName } from '$lib/stores/subject.store'
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
 
-  $: subjectNameError = $newSubjectName === ''
   let creating = false
+  
+  $: subjectNameError = $newSubjectName === ''
+  $: size = innerWidth < 571 ? 'small' : 'large'
 
   const createSubject = async () => {
     if(creating) return
@@ -62,7 +64,7 @@
 </form>
 
 <div
-  class="has-transition z-99 pos-abs p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addSubjectPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$notifCenterOpen || $navDrawerActive ? '1' : '2'} pos-abs p-2 pos-t-57 pos-r-0 {innerWidth < 571 ? 'min-h-fit-content' : 'maxmins-h-calc-100vh-65px'} maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addSubjectPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->
@@ -112,7 +114,7 @@
           fab
           depressed
           disabled={creating}
-          size='large'
+          {size}
           class='has-background-{color} centerxy'
           on:click={() => modalChosenColor.set(color)}
         >
