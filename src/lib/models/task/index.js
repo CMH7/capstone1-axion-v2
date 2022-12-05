@@ -11,5 +11,6 @@ export default {
   isSubtask: false,
   level: 1,
   name: '',
-  status: ''
+  status: '',
+  subscribers: ['']
 }

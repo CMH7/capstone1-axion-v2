@@ -175,7 +175,7 @@
 
           <!-- Task Count Text -->
           <div class="fredoka-reg txt-size-12 is-unselectable">
-            {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length} {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length > 1 ? "Tasks" : "Task"}
+            {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.length} {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.length > 1 ? "Tasks" : "Task"}
           </div>
 
           <!-- filter icon -->

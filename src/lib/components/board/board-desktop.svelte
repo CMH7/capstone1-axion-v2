@@ -21,10 +21,7 @@
     {#each data.boardTasks as bt}
       {#if bt.boardID === board.id}
         {#each bt.bTasks.reverse() as task}
-          {#if !task.isSubtask}
-            <!-- TASK CARD COMPONENT -->
-            <TaskCard {task} {data} />
-          {/if}
+          <TaskCard {task} {data} />
         {/each}
       {/if}
     {/each}

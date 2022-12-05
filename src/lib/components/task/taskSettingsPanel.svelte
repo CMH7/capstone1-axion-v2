@@ -20,7 +20,7 @@
   let dateToday1 = $newTaskDueDateTime.toISOString()
   let dateToday = new Date(`${dateToday1.split('T')[0].split('-')[0]}-${dateToday1.split('T')[0].split('-')[1]}-${dateToday1.split('T')[0].split('-')[2]}T${dateToday1.split('T')[1].split(':')[0]}:${dateToday1.split('T')[1].split(':')[1]}`).toISOString()
   
-  let newTask = {
+  $: newTask = {
     description: $selectedTask.description,
     dueDateTime: `${dateToday.split('T')[0].split('-')[0]}-${dateToday.split('T')[0].split('-')[1]}-${dateToday.split('T')[0].split('-')[2]} ${dateToday.split('T')[1].split(':')[0]}:${dateToday.split('T')[1].split(':')[1]}`
   }

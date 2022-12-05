@@ -151,7 +151,7 @@
           </div>
   
           <div class="txt-size-11 fredoka-reg">
-            {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length} {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length > 1 ? "Tasks" : "Task"}
+            {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.length} {data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.length > 1 ? "Tasks" : "Task"}
           </div>
         </span>
 

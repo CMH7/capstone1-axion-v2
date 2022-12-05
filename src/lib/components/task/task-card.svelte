@@ -21,7 +21,7 @@
    * */
   const determineBG = (task) => {
     let backgroundColor = ''
-    let textColor = ''
+    let textColor = 'has-text-success-dark'
 
     if(task.status === $statuses.filter(status => status.name === 'Done')[0].value) {
       backgroundColor = 'has-background-success'
@@ -187,7 +187,7 @@
         </div>
     
         <!-- Subtask count and level -->
-        <div class="is-flex is-align-items-center">
+        <div class="is-flex is-align-items-center is-justify-content-flex-end">
           <!-- Subtasks Counts -->
           {#if task.subtasks.length != 0}
             <Avatar tile class="mr-1 maxmins-h-20 maxmins-w-{task.subtasks.length < 100 ? "20" : "30"} is-unselectable fredoka-reg has-text-weight-bold has-text-white has-background-primary-dark rounded txt-size-9">
@@ -196,7 +196,7 @@
           {/if}
     
           <!-- Level -->
-          <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?`has-background-success${determineBG(task).backgroundColor === 'has-background-success' ? '-dark' : ''}`: task.level == 2?`has-background-warning${determineBG(task).backgroundColor === 'has-background-warning' ? '-dark has-text-white' : ' has-text-black'}`:"has-background-danger"} rounded txt-size-9 px-1">
+          <Avatar tile style="max-width: fit-content" class="is-unselectable maxmins-h-20 fredoka-reg has-text-white {task.level == 1?`has-background-success${determineBG(task).backgroundColor === 'has-background-success' ? '-dark' : ''}`: task.level == 2?`has-background-warning${determineBG(task).backgroundColor === 'has-background-warning' ? '-dark has-text-white' : ' has-text-black'}` : `has-background-danger${determineBG(task).backgroundColor === 'has-background-danger' ? '-dark has-text-white' : ''}`} rounded txt-size-9 px-1">
             {task.level == 1? "Low": task.level == 2? "Medium": "High"}
           </Avatar>
         </div>

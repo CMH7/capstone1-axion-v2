@@ -3,7 +3,7 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { global_USERID, modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider, Switch} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
@@ -18,6 +18,7 @@
   $: isFavorite = isFavorite1
   $: addFavorite = isFavorite1 == false && isFavorite == true ? 'add' : isFavorite1 == true && isFavorite == false ? 'rem' : 'nothing'
   $: workspaceNameError = $newWorkspaceName === ''
+  $: size = innerWidth < 571 ? 'small' : 'large'
 
   const updateWorkspace = async () => {
     if(updating) return
@@ -76,7 +77,7 @@
 </form>
 
 <div
-  class="has-transition z-{$confirmDeleteWorkspaceModalActive ? '1' : '99'} pos-abs p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$workspaceSettingsPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$confirmDeleteWorkspaceModalActive || $notifCenterOpen || $navDrawerActive ? '1' : '2'} pos-abs p-2 pos-t-57 pos-r-0 {innerWidth < 571 ? 'min-h-fit-content' : 'maxmins-h-calc-100vh-65px'} maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$workspaceSettingsPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->
@@ -123,25 +124,27 @@
         /** @param {string} v*/ v => v.length <= 30 || 'Subject name must be only 30 or less characters',
       ]}
     >
-      Subject name
+      Workspace name
     </TextField>
   </div>
 
   <div class="maxmins-w-100p is-flex is-justify-content-center is-flex-wrap-wrap">
-    {#each constants.colors as color}
-      <div class="maxmins-w-30p centerxy min-h-fit-content py-3">
-        <Button
-          fab
-          depressed
-          size='large'
-          class='has-background-{color} centerxy {$selectedWorkspace.owner !== $global_USERID ? 'opacity-20p' : ''}'
-          disabled={$selectedWorkspace.owner !== $global_USERID || updating}
-          on:click={() => modalChosenColor.set(color)}
-        >
-          <div class="rounded-circle maxmins-w-10 maxmins-h-10 has-background-white {$modalChosenColor === color ? '' : 'is-hidden'}"/>
-        </Button>
-      </div>
-    {/each}
+    {#key size}
+      {#each constants.colors as color}
+        <div class="maxmins-w-30p centerxy min-h-fit-content py-3">
+          <Button
+            fab
+            depressed
+            {size}
+            class='has-background-{color} centerxy {$selectedWorkspace.owner !== $global_USERID ? 'opacity-20p' : ''}'
+            disabled={$selectedWorkspace.owner !== $global_USERID || updating}
+            on:click={() => modalChosenColor.set(color)}
+          >
+            <div class="rounded-circle maxmins-w-10 maxmins-h-10 has-background-white {$modalChosenColor === color ? '' : 'is-hidden'}"/>
+          </Button>
+        </div>
+      {/each}
+    {/key}
   </div>
 
   <div class='maxmins-w-100p mt-6 p-3'>
