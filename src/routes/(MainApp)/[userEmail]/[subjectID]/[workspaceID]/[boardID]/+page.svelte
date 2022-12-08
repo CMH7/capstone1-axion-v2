@@ -4,7 +4,7 @@
 	import models from '$lib/models';
 	import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { breadCrumbsItems, loadingScreen } from '$lib/stores/global.store';
 	import { activeTask } from '$lib/stores/task.store';
   import { onMount } from 'svelte';
 
@@ -24,6 +24,7 @@
       {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
       {text: 'view', href: '#'}
     ]
+    loadingScreen.set(false)
   })
 </script>
 

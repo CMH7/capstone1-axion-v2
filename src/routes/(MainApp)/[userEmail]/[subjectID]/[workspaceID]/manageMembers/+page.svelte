@@ -2,7 +2,7 @@
   //@ts-nocheck
 	import UserBox from '$lib/components/workspace/userBox.svelte';
   import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { mdiMagnify } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Checkbox, Icon, MaterialApp, TextField } from 'svelte-materialify';
@@ -28,6 +28,7 @@
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'manage members', href: `/${data.user.email}/${$activeSubject.id}/${$activeWorkspace.id}`}]
     hintText.set('Click the \'+\' to create task and more tools!')
     global_USERID.set(data.user.id)
+    loadingScreen.set(false)
   })
 </script>
 

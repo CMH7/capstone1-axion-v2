@@ -7,7 +7,7 @@
   export let data
 
   onMount(() => {
-    $breadCrumbsItems = [{text: 'My profile', href: '#'}]
+    $breadCrumbsItems = [{text: 'Invitations', href: '#'}]
     loadingScreen.set(false)
   })
 </script>

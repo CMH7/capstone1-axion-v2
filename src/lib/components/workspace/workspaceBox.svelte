@@ -7,7 +7,7 @@
   import { Moon } from 'svelte-loading-spinners'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
 	import { newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
-	import { modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { addSubjectPanelActive, subjectSettingsPanelActive } from '$lib/stores/subject.store';
@@ -143,7 +143,15 @@
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
   <!-- WORKSPACE BOX -->
-  <a href="{favHovering ? '#' : `${$activeSubject.id}/${workspace.id}`}" class="{workspace.color === ' pink lighten-3' || workspace.color === 'black' || workspace.color === 'grey-light' || workspace.color === 'grey-lighter' ? 'has-text-grey-dark' : workspace.color === ' purple lighten-1' || workspace.color === 'grey' ? 'has-text-white' :  ''}">
+  <a
+    data-sveltekit-preload-data="hover"
+    data-sveltekit-preload-code='eager'
+    on:click={() => {
+      if(!favHovering) loadingScreen.set(true)
+    }}
+    href="{favHovering ? '#' : `${$activeSubject.id}/${workspace.id}`}"
+    class="{workspace.color === ' pink lighten-3' || workspace.color === 'black' || workspace.color === 'grey-light' || workspace.color === 'grey-lighter' ? 'has-text-grey-dark' : workspace.color === ' purple lighten-1' || workspace.color === 'grey' ? 'has-text-white' :  ''}"
+  >
     <div
       on:mouseenter={() => hoveringWorkspace(workspace.id, true)}
       on:mouseleave={() => hoveringWorkspace('', false)}

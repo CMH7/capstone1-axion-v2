@@ -1,6 +1,6 @@
 <script>
   //@ts-nocheck
-	import { breadCrumbsItems } from '$lib/stores/global.store';
+	import { breadCrumbsItems, loadingScreen } from '$lib/stores/global.store';
 	import { onMount } from 'svelte';
 
   /**
@@ -10,6 +10,7 @@
 
   onMount(() => {
     $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
+    loadingScreen.set(false)
   })
 </script>
 

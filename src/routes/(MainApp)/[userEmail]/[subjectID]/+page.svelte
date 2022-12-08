@@ -1,6 +1,6 @@
 <script>
   // @ts-nocheck
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onMount } from 'svelte';
 	import models from '$lib/models';
@@ -28,6 +28,7 @@
     hintText.set('Click the \'+\' icon to add new workspace and access to subject settings!')
     global_USERID.set(data.user.id)
     addTaskPanelActive.set(false)
+    loadingScreen.set(false)
   })
 </script>
 

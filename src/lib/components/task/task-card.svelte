@@ -3,7 +3,7 @@
 	import models from '$lib/models';
 	import { boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
-	import { modalChosenColor } from '$lib/stores/global.store';
+	import { loadingScreen, modalChosenColor } from '$lib/stores/global.store';
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, selectedTask, statuses, taskSettingsPanelActive } from '$lib/stores/task.store';
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 
@@ -170,7 +170,12 @@
 </script>
 
 
-<a style="text-decoration: none;" href="{$activeWorkspace.id}/{task.status}/{task.id} ">
+<a
+  data-sveltekit-preload-data="hover"
+  data-sveltekit-preload-code='eager'
+  on:click={() => loadingScreen.set(true)}
+  style="text-decoration: none;"
+  href="{$activeWorkspace.id}/{task.status}/{task.id} ">
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
     on:touchstart={touchStart}

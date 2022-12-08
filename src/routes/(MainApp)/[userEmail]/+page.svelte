@@ -1,6 +1,6 @@
 <script>
   // @ts-nocheck
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onMount } from 'svelte';
 	import models from '$lib/models';
@@ -29,6 +29,7 @@
     workspaceSettingsPanelActive.set(false)
     taskSettingsPanelActive.set(false)
     boardSettingsPanelActive.set(false)
+    loadingScreen.set(false)
   })
 </script>
 

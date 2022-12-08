@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { mdiAccountOutline, mdiMagnify } from '@mdi/js';
 	import { onMount } from 'svelte';
 	import { Card, CardSubtitle, CardTitle, Icon, MaterialApp, TextField } from 'svelte-materialify';
@@ -26,6 +26,7 @@
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'members', href: `/${data.user.email}/${$activeSubject.id}/${$activeWorkspace.id}`}]
     hintText.set('Click the \'+\' to create task and more tools!')
     global_USERID.set(data.user.id)
+    loadingScreen.set(false)
   })
 </script>
 

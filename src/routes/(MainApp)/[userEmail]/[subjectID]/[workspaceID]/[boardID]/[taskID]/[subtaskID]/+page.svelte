@@ -1,9 +1,10 @@
 <script>
+  //@ts-nocheck
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, hintText, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText, loadingScreen, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { activeTask, taskSettingsPanelActive } from '$lib/stores/task.store';
 	import { mdiAccountOutline,mdiAccountPlusOutline, mdiBellCancelOutline, mdiBellCheckOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
@@ -870,6 +871,7 @@
     workspaceSettingsPanelActive.set(false)
     taskSettingsPanelActive.set(false)
     newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
+    loadingScreen.set(false)
   })
 </script>
 
