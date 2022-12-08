@@ -103,25 +103,28 @@ model tasks {
 }
 
 model users {
-  id            String           @id @default(auto()) @map("_id") @db.ObjectId
-  age           Int
-  bio           String
-  course        String
-  email         String
-  favorites     UsersFavorites[]
-  firstName     String
-  gender        String
-  invitations   String[]
-  lastName      String
-  notifications String[]
-  password      String
-  profile       String
-  school        String
-  showTutorial  Boolean
-  subjects      String[]
-  verified      Boolean
-  year          Int
-  online        Boolean
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  age             Int
+  bio             String
+  course          String
+  email           String
+  favorites       UsersFavorites[]
+  firstName       String
+  gender          String
+  invitations     String[]
+  lastName        String
+  notifications   String[]
+  password        String
+  profile         String
+  school          String
+  showTutorial    Boolean
+  subjects        String[]
+  verified        Boolean
+  year            Int
+  online          Boolean
+  canBeInvited    Boolean
+  footerHints     Boolean
+  showStatistics  Boolean
 }
 
 model workspaces {
