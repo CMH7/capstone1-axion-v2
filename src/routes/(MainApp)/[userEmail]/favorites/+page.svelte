@@ -1,6 +1,6 @@
 <script>
   //@ts-nocheck
-	import { breadCrumbsItems, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, loadingScreen } from '$lib/stores/global.store';
 	import { onMount } from 'svelte';
 
   /**
@@ -9,6 +9,7 @@
   export let data
 
   onMount(() => {
+    currentIndex.set(2)
     $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
     loadingScreen.set(false)
   })

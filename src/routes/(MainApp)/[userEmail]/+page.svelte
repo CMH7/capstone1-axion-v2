@@ -1,6 +1,6 @@
 <script>
   // @ts-nocheck
-	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onMount } from 'svelte';
 	import models from '$lib/models';
@@ -17,6 +17,7 @@
   let innerWidth
 
   onMount(() => {
+    currentIndex.set(0)
     activeSubject.set(models.subject)
     activeWorkspace.set(models.workspace)
     addWorkspacePanelActive.set(false)

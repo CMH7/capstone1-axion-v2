@@ -17,15 +17,14 @@
 
   let innerWidth = 0
   let updating = false
-  let dateToday1 = $newTaskDueDateTime.toISOString()
-  let dateToday = new Date(`${dateToday1.split('T')[0].split('-')[0]}-${dateToday1.split('T')[0].split('-')[1]}-${dateToday1.split('T')[0].split('-')[2]}T${dateToday1.split('T')[1].split(':')[0]}:${dateToday1.split('T')[1].split(':')[1]}`).toISOString()
   
-  $: newTask = {
-    description: $selectedTask.description,
-    dueDateTime: `${dateToday.split('T')[0].split('-')[0]}-${dateToday.split('T')[0].split('-')[1]}-${dateToday.split('T')[0].split('-')[2]} ${dateToday.split('T')[1].split(':')[0]}:${dateToday.split('T')[1].split(':')[1]}`
-  }
+  $: firstCopyDesc = $selectedTask.description
+  $: dateToday1 = $newTaskDueDateTime.toISOString()
+  $: dateToday = new Date(`${dateToday1.split('T')[0].split('-')[0]}-${dateToday1.split('T')[0].split('-')[1]}-${dateToday1.split('T')[0].split('-')[2]}T${dateToday1.split('T')[1].split(':')[0]}:${dateToday1.split('T')[1].split(':')[1]}:00Z`).toISOString()
+  $: newTaskDesc = firstCopyDesc
+  $: newTaskDue = `${dateToday.split('T')[0].split('-')[0]}-${dateToday.split('T')[0].split('-')[1]}-${dateToday.split('T')[0].split('-')[2]} ${dateToday.split('T')[1].split(':')[0]}:${dateToday.split('T')[1].split(':')[1]}`
   $: taskNameError = $newTaskName === ''
-  $: toSendDueDateTime = new Date(`${newTask.dueDateTime.split(' ')[0].split('-')[0]}-${newTask.dueDateTime.split(' ')[0].split('-')[1]}-${newTask.dueDateTime.split(' ')[0].split('-')[2]}T${newTask.dueDateTime.split(' ')[1].split(':')[0]}:${newTask.dueDateTime.split(' ')[1].split(':')[1]}:00Z`).toISOString()
+  $: toSendDueDateTime = newTaskDue !== '' ? new Date(`${newTaskDue.split(' ')[0].split('-')[0]}-${newTaskDue.split(' ')[0].split('-')[1]}-${newTaskDue.split(' ')[0].split('-')[2]}T${newTaskDue.split(' ')[1].split(':')[0]}:${newTaskDue.split(' ')[1].split(':')[1]}:00Z`).toISOString() : ''
 
   const close = () => {
     if(updating) return
@@ -49,8 +48,6 @@
 
     /** @type {import('@sveltejs/kit').ActionResult} */
     const result = deserialize(await response.text());
-
-    console.log(result);
 
     if(result.type === 'invalid') {
       $notifs = [...$notifs, {
@@ -77,6 +74,8 @@
     newTaskLevel.set(1)
     newTaskMembers.set([])
     newTaskDueDateTime.set(new Date())
+    newTaskDesc = ''
+    newTaskDue = ''
   }
 
   const deleteTask = async () => {
@@ -88,7 +87,7 @@
 
 <form action="?/updateTask" id='{$selectedTask.id}' class="is-hidden" use:enhance>
   <input type="text" name='name' bind:value={$newTaskName}>
-  <input type="text" name='description' bind:value={newTask.description}>
+  <input type="text" name='description' bind:value={newTaskDesc}>
   <input type="number" name='level' bind:value={$newTaskLevel}>
   <input type="text" name='status' bind:value={$newTaskStatus}>
   <input type="text" name='dueDateTime' bind:value={toSendDueDateTime}>
@@ -144,7 +143,7 @@
           outlined
           color='grey'
           disabled={updating}
-          bind:value={newTask.description}
+          bind:value={newTaskDesc}
         >
           Description
         </Textarea>
@@ -195,7 +194,7 @@
           placeholder="Due date"
           inputClasses="maxmins-w-100p rounded px-2 py-4 fredoka-reg is-clickable"
           format="yyyy-mm-dd hh:ii"
-          bind:value={newTask.dueDateTime}
+          bind:value={newTaskDue}
           clearBtn={false}
           todayBtn={false}
           required={true}

@@ -2,14 +2,26 @@
   //@ts-nocheck
 	import models from '$lib/models';
 	import { boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
-	import { activeWorkspace } from '$lib/stores/dashboard.store';
 	import { loadingScreen, modalChosenColor } from '$lib/stores/global.store';
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, selectedTask, statuses, taskSettingsPanelActive } from '$lib/stores/task.store';
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 
-  /** @type {import('@prisma/client').tasks}*/
+  /**
+   * @type {
+   *  {
+        id: string;
+        name: string;
+        level: number;
+        members: string[];
+        subtasks: string[];
+        dueDateTime: Date;
+        status: string;
+      }
+   * }
+   */
   export let task
   export let data
+  export let inDone = false
 
   let show = false
   let timer
@@ -23,7 +35,7 @@
     let backgroundColor = ''
     let textColor = 'has-text-success-dark'
 
-    if(task.status === $statuses.filter(status => status.name === 'Done')[0].value) {
+    if(task.status === $statuses.filter(status => status.name === 'Done')[0].value || inDone) {
       backgroundColor = 'has-background-success'
       textColor = 'has-text-success-dark'
     }else {
@@ -146,7 +158,7 @@
     return {dueDate, date, finalHour, minute, hour}
   }
 
-  const handleRightClick = () => {
+  const handleRightClick = () => { 
     taskSettingsPanelActive.set(true)
     boardSettingsPanelActive.set(false)
     newBoardName.set('')
@@ -175,7 +187,7 @@
   data-sveltekit-preload-code='eager'
   on:click={() => loadingScreen.set(true)}
   style="text-decoration: none;"
-  href="{$activeWorkspace.id}/{task.status}/{task.id} ">
+  href="/{data.user.email}/{data.subject.id}/{data.workspace.id}/{task.status}/{task.id}">
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
     on:touchstart={touchStart}

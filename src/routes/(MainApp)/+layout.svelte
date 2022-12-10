@@ -3,7 +3,7 @@
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
 	import { invalidateAll } from '$app/navigation';
-	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs, currentIndex } from '$lib/stores/global.store';
 	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
@@ -29,6 +29,10 @@
 	import WorkspaceDemoteWorkspaceAdmin from '$lib/components/workspace/workspaceDemoteWorkspaceAdmin.svelte';
 	import WorkspacePromoteWorkspaceMember from '$lib/components/workspace/workspacePromoteWorkspaceMember.svelte';
   import { Pulse } from 'svelte-loading-spinners';
+	import { addSubjectPanelActive, confirmDeleteModalActive, subjectSettingsPanelActive } from '$lib/stores/subject.store';
+	import { addWorkspacePanelActive, confirmDeleteWorkspaceModalActive, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
+	import { addTaskPanelActive, taskConfirmDeleteModalActive, taskSettingsPanelActive } from '$lib/stores/task.store';
+	import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationModalActive } from '$lib/stores/boards.store';
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -38,7 +42,6 @@
   let active = $navDrawerActive
   let innerWidth = 0
   let breadcrumbs = []
-  let currentIndex = 0
   let showProfileMenu = false
   let hint = true
   let removeHint = false
@@ -52,12 +55,14 @@
 
   breadCrumbsItems.subscribe(value => breadcrumbs = value)
 
+  $: color = navs[$currentIndex].color
+
   const toggleNavigation = () => {
     active = !active
     navDrawerActive.set(active)
   }
 
-  const navClicked = async (i, href) => {
+  const navClicked = async (i) => {
     if(i == 0) breadcrumbs = [{text: 'Subjects', href: `/${data.user.email}`}]
     if(i == 1) breadcrumbs = [{text: 'Assigned to me', href: `/${data.user.email}/assigned-to-me`}]
     if(i == 2) breadcrumbs = [{text: 'Favorites', href: `/${data.user.email}/favorites`}]
@@ -68,7 +73,7 @@
     }
     if(innerWidth < 571) active = false
     
-    currentIndex = i
+    currentIndex.set(i)
     // await goto(href, {replaceState: true})
   }
 
@@ -113,10 +118,6 @@
   const hideHint = () => {
     hint = false
   }
-
-  onMount(() => {
-    currentIndex = $breadCrumbsItems[0].text === 'Assigned to me' ? 1 : $breadCrumbsItems[0].text === 'Favorites' ? 2 : $breadCrumbsItems[0].text === 'My profile' ? 3 : 0
-  })
 </script>
 
 <svelte:window bind:innerWidth />
@@ -254,9 +255,8 @@
                 >
                   <ListItem
                     on:click={async () => {
-                      currentIndex = 3
+                      currentIndex.set(3)
                       showProfileMenu = false
-                      // await goto(`/${data.user.email}/my-profile`, {replaceState: true})
                     }}
                     disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
                     active={$page.url.pathname === `/${data.user.email}/my-profile`}
@@ -286,7 +286,7 @@
   
       <NavigationDrawer width={innerWidth < 571 ? '100%' : '250px'} fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
         <List>
-          <ListItemGroup mandatory class='has-text-{navs[currentIndex].color} {navs[currentIndex].color}'>
+          <ListItemGroup mandatory>
             {#each navs as navItem, i}
               {#if navItem.name === "My Profile" || navItem.name === 'Logout'}
                 <Divider class="is-hidden-desktop p-0 m-0 my-1" />
@@ -298,10 +298,10 @@
                 on:click={() => loadingScreen.set(true)}
               >
                 <ListItem
-                  active={currentIndex == i}
-                  disabled={currentIndex == i}
-                  class="{navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
-                  on:click={() => {navClicked(i, navItem.href)}}
+                  active={$currentIndex == i}
+                  disabled={$currentIndex == i}
+                  class="has-text-{$currentIndex == i ? '' : 'asdf'}{color} has-background-{$currentIndex == i ? '' : 'asdf'}{color}-light {$currentIndex == i && color === 'yellow-text text-darken-2' ? `yellow-text text-darken-2 yellow lighten-4` : $currentIndex == i ? color : ''} {navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
+                  on:click={() => {navClicked(i)}}
                 >
                   <span slot="prepend">
                     <!-- {#if navItem.name === 'My Profile' && $userData.profile} -->
@@ -313,7 +313,7 @@
                         Profile
                       </div>
                     {:else}
-                      <Icon size="35px" path={navItem.icon} />
+                      <Icon class='has-text-{$currentIndex == i ? '' : 'asdf'}{color} {$currentIndex == i ? '' : 'asdf'}{color}' size="35px" path={navItem.icon} />
                       <div class="txt-size-9 pb-2 {!active ? '' : 'is-hidden'}">
                         {navItem.name === 'Assigned to me' ? 'Assigned' : navItem.name}
                       </div>
@@ -338,7 +338,7 @@
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
-        <div class="hero-head z-2">
+        <div class="hero-head z-{$addSubjectPanelActive || $subjectSettingsPanelActive || $confirmDeleteModalActive || $addWorkspacePanelActive || $workspaceSettingsPanelActive || $confirmDeleteWorkspaceModalActive || $addTaskPanelActive || $taskSettingsPanelActive || $taskConfirmDeleteModalActive || $navDrawerActive || $notifCenterOpen || $addBoardPanelActive || $boardSettingsPanelActive || $deleteBoardConfirmationModalActive ? '1' : '2'}">
           <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'pl-3' : ''}">
             {#if innerWidth < 571}
               <a
@@ -446,7 +446,7 @@
     </MaterialApp>
   </div>
   {/if}
-  {#if currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
+  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
     <div class="z-90">
       <Fab {data} />
     </div>
