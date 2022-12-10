@@ -151,7 +151,7 @@
         on:click={updateBoard}
       >
         {#if !updating}
-          Create
+          Update
         {:else}
           <Pulse size={20} color='#fff' />
         {/if}

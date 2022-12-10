@@ -4,7 +4,7 @@
 	import models from '$lib/models';
 	import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, loadingScreen } from '$lib/stores/global.store';
 	import { activeTask } from '$lib/stores/task.store';
   import { onMount } from 'svelte';
 
@@ -14,6 +14,7 @@
   export let data
 
   onMount(() => {
+    currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)
     activeBoard.set(data.board)

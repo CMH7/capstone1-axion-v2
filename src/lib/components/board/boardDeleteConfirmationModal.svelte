@@ -8,6 +8,7 @@
   import { Pulse } from 'svelte-loading-spinners'
 	import { boardSettingsPanelActive, deleteBoardConfirmationModalActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { statuses } from '$lib/stores/task.store';
+	import { activeWorkspace } from '$lib/stores/dashboard.store';
 
   let deleting = false
   let move = false
@@ -70,6 +71,7 @@
   <input type="text" bind:value={$selectedBoard.id} name='id'>
   <input type="text" bind:value={moves} name='move'>
   <input type="text" bind:value={moveToID} name='moveToID'>
+  <input type="text" bind:value={$activeWorkspace.id} name='workspaceID'>
 </form>
 
 <Dialog persistent bind:active={$deleteBoardConfirmationModalActive} class='p-2'>

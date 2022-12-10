@@ -534,6 +534,7 @@ export const actions = {
 		const boardID = data.get('id')?.toString();
 		const move = data.get('move')?.toString();
 		const moveToID = data.get('moveToID')?.toString();
+		const workspaceID = data.get('workspaceID')?.toString()
 
 		const toDeleteBoard = await prisma.boards.findFirst({
 			where: {

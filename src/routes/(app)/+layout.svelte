@@ -65,7 +65,10 @@
       on:mouseleave={e => mouseEnteredNav = false}
       class="navbar has-transition has-text-white-bis {mouseEnteredNav ? 'has-background-primary-dark2' : 'has-background-primary'} is-spaced">
       <div class="navbar-brand mr-3">
-        <a href="/" class="is-flex is-align-items-center">
+        <a
+          data-sveltekit-preload-code='eager'
+          href="/" class="is-flex is-align-items-center"
+        >
           <div class="is-flex is-align-items-center">
             <!-- logo -->
             <img class="maxmins-w-30 maxmins-h-30 ml-3" src="/images/axionFinalLogo.png" alt="Axion logo">
@@ -90,12 +93,18 @@
       <div class="navbar-menu fredoka-reg {menuActive ? 'is-active' : ''}">
         <div class="navbar-end">
           {#each navbarEndLinks as item}
-            <a href="{item.href}" class="navbar-item has-text-centered {item.label === 'Signin' && !menuActive ? 'mr-3' : ''}">
+            <a
+              data-sveltekit-preload-code='eager'
+              href="{item.href}" class="navbar-item has-text-centered {item.label === 'Signin' && !menuActive ? 'mr-3' : ''}"
+            >
               {item.label}
             </a>
           {/each}
     
-          <a href="/Signup" class="navbar-item has-text-centered has-transition button is-size-7 is-success fredoka-reg">
+          <a
+            data-sveltekit-preload-code='eager'
+            href="/Signup" class="navbar-item has-text-centered has-transition button is-size-7 is-success fredoka-reg"
+          >
             Signup
           </a>
         </div>
@@ -125,13 +134,19 @@
 
 			<div class="level-right">
         <div class="level-item">
-          <a href="/Terms&Conditions" class="txt-size-14 fredoka-reg level-item is-underlined">
+          <a
+            data-sveltekit-preload-code='eager'
+            href="/Terms&Conditions" class="txt-size-14 fredoka-reg level-item is-underlined"
+          >
             Terms & conditions
           </a>
         </div>
 
         <div class='level-item'>
-          <a href="/Privacy_Policy" class="txt-size-14 fredoka-reg level-item is-underlined">
+          <a
+            data-sveltekit-preload-code='eager'
+            href="/Privacy_Policy" class="txt-size-14 fredoka-reg level-item is-underlined"
+          >
             Privacy policy
           </a>
         </div>

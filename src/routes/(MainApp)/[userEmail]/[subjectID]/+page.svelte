@@ -1,6 +1,6 @@
 <script>
   // @ts-nocheck
-	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { onMount } from 'svelte';
 	import models from '$lib/models';
@@ -18,6 +18,7 @@
   let innerWidth
 
   onMount(async () => {
+    currentIndex.set(0)
     if(!data.aMember) {
       await invalidate(`/${data.user.email}`)
       goto(`/${data.user.email}`)
