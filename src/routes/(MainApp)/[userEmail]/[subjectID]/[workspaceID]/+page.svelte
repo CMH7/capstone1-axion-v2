@@ -6,6 +6,7 @@
 	import BoardMobile from '$lib/components/board/board-mobile.svelte';
 	import BoardDesktop from '$lib/components/board/board-desktop.svelte';
 	import { newTaskMembers, newTaskStatus, statuses, workspaceMembers } from '$lib/stores/task.store';
+	import helpers from '$lib/configs/helpers';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -23,6 +24,7 @@
     newTaskStatus.set($statuses.filter(status => status.name === 'Todo')[0].value)
     newTaskMembers.set([data.user.id])
     workspaceMembers.set(data.workspaceMembers)
+    helpers.resetPanels()
     loadingScreen.set(false)
   })
 

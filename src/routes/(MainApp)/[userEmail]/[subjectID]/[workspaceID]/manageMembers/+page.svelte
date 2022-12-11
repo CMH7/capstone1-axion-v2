@@ -1,6 +1,7 @@
 <script>
   //@ts-nocheck
 	import UserBox from '$lib/components/workspace/userBox.svelte';
+	import helpers from '$lib/configs/helpers';
   import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { breadCrumbsItems, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
 	import { mdiMagnify } from '@mdi/js';
@@ -29,6 +30,7 @@
     hintText.set('Click the \'+\' to create task and more tools!')
     global_USERID.set(data.user.id)
     loadingScreen.set(false)
+    helpers.resetPanels()
   })
 </script>
 

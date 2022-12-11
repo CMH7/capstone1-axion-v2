@@ -1,4 +1,6 @@
 <script>
+	import helpers from '$lib/configs/helpers';
+
   //@ts-nocheck
 	import models from '$lib/models';
 	import { boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
@@ -35,7 +37,7 @@
     let backgroundColor = ''
     let textColor = 'has-text-success-dark'
 
-    if(task.status === $statuses.filter(status => status.name === 'Done')[0].value || inDone) {
+    if(task.status === $statuses.filter(status => status.name === 'Done')[0]?.value || inDone) {
       backgroundColor = 'has-background-success'
       textColor = 'has-text-success-dark'
     }else {
@@ -171,12 +173,26 @@
     newTaskStatus.set(task.status)
   }
 
-  const touchStart = () => {
+  const startTimer = e => {
+    timer = setInterval(() => {
+      if(hold >= 2) {
+        hold = 0
+        handleRightClick()
+        clearInterval(timer)
+      }
+      hold += 1
+    }, 200)
+  }
 
+  const touchStart = () => {
+    startTimer()
   }
 
   const touchEnd = () => {
-
+    if(hold < 2) {
+      hold = 0
+      clearInterval(timer)
+    }
   }
 
 </script>
@@ -185,7 +201,10 @@
 <a
   data-sveltekit-preload-data="hover"
   data-sveltekit-preload-code='eager'
-  on:click={() => loadingScreen.set(true)}
+  on:click={() => {
+    helpers.resetPanels()
+    loadingScreen.set(true)
+  }}
   style="text-decoration: none;"
   href="/{data.user.email}/{data.subject.id}/{data.workspace.id}/{task.status}/{task.id}">
   <!-- svelte-ignore a11y-click-events-have-key-events -->

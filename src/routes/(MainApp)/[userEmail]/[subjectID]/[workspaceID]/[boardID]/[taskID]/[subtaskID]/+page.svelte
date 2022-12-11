@@ -13,6 +13,7 @@
   import { Moon } from 'svelte-loading-spinners'
 	import { workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { newSubtaskDescription, newSubtaskDue, newSubtaskLevel, newSubtaskName, newSubtaskStatus } from '$lib/stores/subtask.store';
+	import helpers from '$lib/configs/helpers';
 
 
   /** 
@@ -869,10 +870,9 @@
       color: data.board.color
     }
     statuses = data.statuses
-    workspaceSettingsPanelActive.set(false)
-    taskSettingsPanelActive.set(false)
     newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
     loadingScreen.set(false)
+    helpers.resetPanels()
   })
 </script>
 

@@ -89,6 +89,7 @@
     newTaskLevel.set(1)
     newTaskMembers.set([])
     newTaskDueDateTime.set(new Date())
+    group = []
   }
 
 </script>

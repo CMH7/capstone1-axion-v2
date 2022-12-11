@@ -1,10 +1,11 @@
 <script>
   // @ts-nocheck
 	import TaskCard from '$lib/components/task/task-card.svelte';
+	import helpers from '$lib/configs/helpers';
 	import models from '$lib/models';
 	import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, currentIndex, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen } from '$lib/stores/global.store';
 	import { activeTask } from '$lib/stores/task.store';
   import { onMount } from 'svelte';
 
@@ -26,6 +27,8 @@
       {text: 'view', href: '#'}
     ]
     loadingScreen.set(false)
+    global_USERID.set(data.user.id)
+    helpers.resetPanels()
   })
 </script>
 

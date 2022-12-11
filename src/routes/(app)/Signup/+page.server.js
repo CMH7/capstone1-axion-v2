@@ -59,7 +59,10 @@ export const actions = {
 				subjects: [],
 				verified: false,
 				year,
-				online: false
+        online: false,
+        canBeInvited: true,
+        footerHints: true,
+        showStatistics: true
 			}
 		});
     if (!user) return invalid(500, { message: 'Database error. Please try again' })

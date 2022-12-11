@@ -23,8 +23,11 @@ export async function load({ params }) {
 
 	const tasks = await prisma.tasks.findMany({
 		where: {
-			members: {
-				has: user.id
+			AND: {
+				members: {
+					has: user.id
+				},
+				isSubtask: false
 			}
 		},
 		select: {
@@ -51,21 +54,13 @@ export async function load({ params }) {
 		}
 	});
 
-	/**
-	 * @type {{id: string}[]}
-	 * */
-	let allMembersConditions = []
-	tasks.forEach(task => {
-		task.members.forEach(id => {
-			if (allMembersConditions.filter(amc => amc.id === id).length == 0) {
-				allMembersConditions = [...allMembersConditions, {id}]
-			}
-		})
-	})
-
 	const allMembers = await prisma.users.findMany({
 		where: {
-			OR: allMembersConditions
+			OR: tasks.map(task => {
+				return {
+					OR: task.members.map(id => {return{id}})
+				}
+			})
 		},
 		select: {
 			id: true,
@@ -320,6 +315,7 @@ export const actions = {
 			});
 
 			//@ts-ignore
+			// eslint-disable-next-line no-unsafe-optional-chaining
 			const newTasks = [...toUpdateBoard?.tasks, ...toDeleteBoard?.tasks];
 
 			const updatedBoard = await prisma.boards.update({
