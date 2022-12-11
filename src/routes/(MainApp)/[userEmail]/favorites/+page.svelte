@@ -43,6 +43,8 @@
   let taskHigh = true
   let taskMedium = true
   let taskLow = true
+  let taskOverdue = true
+  let taskUpcoming = true
   let subjectSort = [
     {name: 'Ascending', value: 1},
     {name: 'Descending', value: 2}
@@ -158,6 +160,28 @@
       
       if(!taskLow) {
         clientTasks = clientTasks.filter(ct => ct.level !== 1)
+      }
+
+      if(!taskUpcoming) {
+        clientTasks = clientTasks.filter(ct => {
+          let date1 = new Date(ct.dueDateTime)
+          let date2 = new Date()
+          let difTime = date1.getTime() - date2.getTime()
+          let difDays = difTime / (1000 * 3600 * 24)
+          if(difDays < 0) return true
+          return false
+        })
+      }
+      
+      if(!taskOverdue) {
+        clientTasks = clientTasks.filter(ct => {
+          let date1 = new Date(ct.dueDateTime)
+          let date2 = new Date()
+          let difTime = date1.getTime() - date2.getTime()
+          let difDays = difTime / (1000 * 3600 * 24) 
+          if(difDays > 0) return true
+          return false
+        })
       }
 
       if(currentTaskSort == 1) {
@@ -428,6 +452,16 @@
           <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
             <Checkbox bind:checked={taskLow}>
               Low
+            </Checkbox>
+          </div>
+          <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
+            <Checkbox bind:checked={taskUpcoming}>
+              Upcoming
+            </Checkbox>
+          </div>
+          <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
+            <Checkbox bind:checked={taskOverdue}>
+              Overdue
             </Checkbox>
           </div>
           <div class='mr-{innerWidth < 571 ? '3' : '6'} {innerWidth < 571 ? 'mt-3 maxmins-w-100p' : ''}'>
