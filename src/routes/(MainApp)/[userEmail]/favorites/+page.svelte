@@ -1,12 +1,14 @@
 <script>
   //@ts-nocheck
+	import { goto } from '$app/navigation';
 	import SubjectBox from '$lib/components/subject/subjectBox.svelte';
 	import TaskCard from '$lib/components/task/task-card.svelte';
 	import WorkspaceBox from '$lib/components/workspace/workspaceBox.svelte';
 	import helpers from '$lib/configs/helpers';
-  import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen } from '$lib/stores/global.store';
+  import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { statuses } from '$lib/stores/task.store';
 	import { mdiAlphaSBox, mdiAlphaTBox, mdiAlphaWBox, mdiMagnify } from '@mdi/js';
+	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte';
 	import { Checkbox, Icon, Select, Tab, Tabs, TextField, Window, WindowItem } from 'svelte-materialify';
 
@@ -287,15 +289,25 @@
     statuses.set(workspaceStatuses.filter(ws => ws.statuses.some(y => y.value === task.status))[0].statuses)
   }
 
-  onMount(
-    () => {
-      currentIndex.set(2)
-      $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
-      loadingScreen.set(false)
-      global_USERID.set(data.user.id)
-      helpers.resetPanels()
+  onMount(() => {
+      if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
     }
-  )
+    currentIndex.set(2)
+    $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
+    loadingScreen.set(false)
+    global_USERID.set(data.user.id)
+    helpers.resetPanels()
+  })
 </script>
 
 <svelte:window bind:innerWidth />

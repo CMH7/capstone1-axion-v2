@@ -2,8 +2,8 @@
   //@ts-nocheck
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
-	import { invalidateAll } from '$app/navigation';
-	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs, currentIndex } from '$lib/stores/global.store';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs, currentIndex, global_USERID } from '$lib/stores/global.store';
 	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
@@ -34,6 +34,7 @@
 	import { addTaskPanelActive, taskConfirmDeleteModalActive, taskSettingsPanelActive } from '$lib/stores/task.store';
 	import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationModalActive } from '$lib/stores/boards.store';
 	import helpers from '$lib/configs/helpers';
+  import bcryptjs from 'bcryptjs'
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -119,6 +120,22 @@
   const hideHint = () => {
     hint = false
   }
+
+  onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
+    global_USERID.set(data.user.id)
+  })
 </script>
 
 <svelte:window bind:innerWidth />

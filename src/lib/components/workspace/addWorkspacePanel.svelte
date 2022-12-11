@@ -3,15 +3,17 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
 	import { addWorkspacePanelActive, newWorkspaceName } from '$lib/stores/workspace.store';
 	import { activeSubject } from '$lib/stores/dashboard.store';
 
-  $: workspaceNameError = $newWorkspaceName === ''
   let creating = false
+  let innerWidth = 0
+  
+  $: workspaceNameError = $newWorkspaceName === ''
 
   const createWorkspace = async () => {
     if(creating) return
@@ -55,10 +57,13 @@
   }
 </script>
 
+<svelte:window bind:innerWidth />
+
 <form id='formAddWorkspace' class="is-hidden" action="?/createWorkspace" use:enhance>
   <input type="text" bind:value={$newWorkspaceName} name='name'>
   <input type="text" bind:value={$modalChosenColor} name='color'>
   <input type="text" bind:value={$activeSubject.id} name='subjectID'>
+  <input type="text" bind:value={$global_USERID} name='creator'>
 </form>
 
 <div

@@ -1,12 +1,8 @@
-import { global_PASS } from '$lib/stores/global.store';
-import { error, redirect } from '@sveltejs/kit';
-import { get } from 'svelte/store';
-import prisma from '$lib/db';
-import bcryptjs from 'bcryptjs';
+import { error, redirect } from '@sveltejs/kit'
+import prisma from '$lib/db'
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(303, '/Signin');
 
 	const user = await prisma.users.findFirst({
 		where: {
@@ -15,9 +11,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!user) throw error(404, 'Account not found') 
-  if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(402, 'Unauthorized accessing')
   
   return { user };
 }
@@ -32,7 +26,6 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user) throw error(404, 'Account not found');
 
 		const user2 = await prisma.users.update({
@@ -45,9 +38,8 @@ export const actions = {
 				}
 			}
 		});
+		if (!user2) throw redirect(301, 'my-profile')
 
-		if (!user2) throw redirect(301, 'my-profile');
-		global_PASS.set('');
 		throw redirect(301, '/Signin');
 	}
 };

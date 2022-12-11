@@ -72,6 +72,10 @@
 
     applyAction(result);
     signingin = false
+    if(result.type === 'redirect') {
+      localStorage.setItem('exmxaxixlx', email)
+      localStorage.setItem('xxx', password)
+    }
   }
 
   const keyDown = e => {
@@ -81,6 +85,12 @@
   onMount(() => {
     notifs.set([])
     startAnimation()
+    if(localStorage.getItem('exmxaxixlx') && localStorage.getItem('xxx')) {
+      email = localStorage.getItem('exmxaxixlx')
+      password = localStorage.getItem('xxx')
+      console.log(email);
+      signin()
+    }
   })
 </script>
 

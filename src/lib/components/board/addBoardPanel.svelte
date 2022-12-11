@@ -13,6 +13,7 @@
   const colors = ["primary", "link", "info", "success", "warning", "danger"]
   
   let creating = false
+  let innerWidth = 0
 
   $: boardNameError = $newBoardName === '' || $newBoardName.split(' ').join('').toLowerCase() === 'todo' || $newBoardName.split(' ').join('').toLowerCase() === 'inprogress' || $newBoardName.split(' ').join('').toLowerCase() === 'done'
 
@@ -64,6 +65,8 @@
     newBoardName.set('')
   }
 </script>
+
+<svelte:window bind:innerWidth />
 
 <form id='formAddBoard' class="is-hidden" action="?/createBoard" use:enhance>
   <input type="text" bind:value={$newBoardName} name='name'>

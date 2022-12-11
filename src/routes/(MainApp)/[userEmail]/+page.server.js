@@ -1,13 +1,8 @@
 import prisma from '$lib/db';
-import { global_PASS, global_USERID } from '$lib/stores/global.store';
 import { redirect, error, invalid } from '@sveltejs/kit'
-import bcryptjs from 'bcryptjs';
-import { get } from 'svelte/store';
 
 /** @type {import('./$types').PageServerLoad} */
-export async function load({ params }) {
-  if (!get(global_PASS)) throw redirect(303, '/Signin')
-  
+export async function load({ params }) {  
   const user = await prisma.users.findFirst({
     where: {
       email: {
@@ -15,21 +10,11 @@ export async function load({ params }) {
       }
     }
   })
-
-  if (!user) throw redirect(303, '/Signin');
-
-  global_USERID.set(user.id)
-  if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(402, 'Unauthorized accessing')
-
-  let subjectConditions = user.subjects.map(subjectID => {
-    return {
-      id: subjectID
-    }
-  })
+  if (!user) throw redirect(303, '/Signin')
 
   const subjects = await prisma.subjects.findMany({
     where: {
-      OR: subjectConditions
+      OR: user.subjects.map(id => {return{id}})
     }
   })
 
@@ -58,28 +43,29 @@ export const actions = {
 			}
 		})
 		if(!user2) throw redirect(301, 'my-profile')
-    global_PASS.set('')
-    global_USERID.set('')
     throw redirect(301, '/Signin')
   },
-  createSubject: async ({ request, params }) => {
+  createSubject: async ({ request }) => {
     const data = await request.formData()
     const color = data.get('color')?.toString()
     const name = data.get('name')?.toString()
+    const owner = data.get('owner')?.toString()
+
     const newSubject = await prisma.subjects.create({
       data: {
         //@ts-ignore
         color,
         //@ts-ignore
         name,
-        owner: get(global_USERID),
+        //@ts-ignore
+        owner,
         workspaces: []
       }
     })
-    if (!newSubject) return invalid(404, { message: 'Error creating subject, A database error' })
+    if (!newSubject) return invalid(404, { message: 'Error creating subject, A database error', reason: 'databaseError' })
     const user = await prisma.users.update({
       where: {
-        id: get(global_USERID)
+        id: owner
       },
       data: {
         subjects: {
@@ -87,7 +73,7 @@ export const actions = {
         }
       }
     })
-    if (!user) return invalid(404, { message: 'Subject created but an error in database occured upon referencing to subject' })
+    if (!user) return invalid(404, { message: 'Subject created but an error in database occured upon referencing to subject', reason: 'databaseError' })
   },
   updateSubject: async ({ request, params }) => {
     const data = await request.formData()
@@ -166,8 +152,6 @@ export const actions = {
         subjects: true
       }
     })
-
-    if (!users) throw error(404, 'Some accounts not found, cannot delete this subject forever')
     
     const trs = users.map(user => {
       let newSubjectList = user.subjects.filter(id => id !== subjectID)
@@ -191,11 +175,12 @@ export const actions = {
     const data = await request.formData()
     const subjectID = data.get('id')?.toString()
     const mode = data.get('mode')?.toString()
+    const userID = data.get('userID')?.toString()
 
     let user = await prisma.users.findFirst({
       where: {
         id: {
-          equals: get(global_USERID)
+          equals: userID
         }
       },
       select: {
@@ -203,7 +188,9 @@ export const actions = {
       }
     })
 
-    user?.favorites.every(fav => {
+    if(!user) throw error(404, 'Account not found')
+
+    user.favorites.every(fav => {
       if (fav.for === 'subjects') {
         if (mode === 'set') {
           //@ts-ignore
@@ -218,10 +205,10 @@ export const actions = {
 
     let updatedUser = await prisma.users.update({
 			where: {
-				id: get(global_USERID)
+				id: userID
 			},
 			data: {
-				favorites: user?.favorites
+				favorites: user.favorites
 			},
 			select: {
 				id: true

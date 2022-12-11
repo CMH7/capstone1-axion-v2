@@ -1,13 +1,8 @@
 import prisma from '$lib/db';
-import { error, invalid, redirect } from '@sveltejs/kit';
-import { get } from 'svelte/store';
-import { global_PASS } from '$lib/stores/global.store';
-import bcryptjs from 'bcryptjs';
+import { error, invalid, redirect } from '@sveltejs/kit'
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(303, '/Signin');
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -15,9 +10,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-
-	if (!user) throw error(404, 'Account not found');
-	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(402, 'Unauthorized accessing');
+	if (!user) throw error(404, 'Account not found')
 
 	const subject = await prisma.subjects.findFirst({
 		where: {
@@ -26,7 +19,6 @@ export async function load({ params }) {
 			}
 		}
 	})
-
 	if (!subject) throw error(404, 'Subject not found')
 	
 	const workspace = await prisma.workspaces.findFirst({
@@ -36,7 +28,6 @@ export async function load({ params }) {
 			}
 		}
 	})
-
 	if (!workspace) throw error(404, 'Workspace not found')
 
 	const anAdmin = workspace.admins.includes(user.id)
@@ -74,7 +65,6 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!task) throw error(404, 'Task cannot be found');
 
 	const addViewer = !task.viewers.includes(user.id)
@@ -99,7 +89,6 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!board) throw error(404, 'Board not found');
 
 	/**
@@ -117,31 +106,15 @@ export async function load({ params }) {
 	})
 	statuses = tempStatuses
 
-	/** 
-	 * @type {{id: string}[]} 
-	 * */
-	let subtasksConditions = []
-	task.subtasks.forEach(staskID => {
-		subtasksConditions = [...subtasksConditions, {id: staskID}]
-	})
-
 	const subtasks = await prisma.tasks.findMany({
 		where: {
-			OR: subtasksConditions
+			OR: task.subtasks.map(id => {return{id}})
 		}
-	})
-
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let membersCondition = []
-	task.members.forEach(membersID => {
-		membersCondition = [...membersCondition, {id: membersID}]
 	})
 
 	const members = await prisma.users.findMany({
 		where: {
-			OR: membersCondition
+			OR: task.members.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -153,29 +126,15 @@ export async function load({ params }) {
 		}
 	})
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let chatsConditions = task.conversations.map(chatID => {
-		return {id: chatID}
-	})
-
 	const chats = await prisma.chats.findMany({
 		where: {
-			OR: chatsConditions
+			OR: task.conversations.map(id => {return{id}})
 		}
-	})
-
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let viewersConditions = task.viewers.map(viewersID => {
-		return {id: viewersID}
 	})
 
 	let viewers = await prisma.users.findMany({
 		where: {
-			OR: viewersConditions
+			OR: task.viewers.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -204,16 +163,9 @@ export async function load({ params }) {
 	 * @type {{chatID: string, chatSender: {id: string, firstName: string, lastName: string, profile: string, online: boolean, gender: string}}[]}
 	 */
 	let chatChatSenders = []
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let chatChatSendersConditions = chats.map(chat => {
-		return {id: chat.sender}
-	})
-
 	let chatChatSenders2 = await prisma.users.findMany({
 		where: {
-			OR: chatChatSendersConditions
+			OR: chats.map(c => {return{id: c.sender}})
 		},
 		select: {
 			id: true,
@@ -254,7 +206,6 @@ export const actions = {
 				}
 			}
 		})
-
 		if(!user) throw error(404, 'Account not found')
 
 		const user2 = await prisma.users.update({
@@ -267,9 +218,8 @@ export const actions = {
 				}
 			}
 		})
+		if (!user2) throw redirect(301, 'my-profile')
 		
-		if(!user2) throw redirect(301, 'my-profile')
-    global_PASS.set('')
     throw redirect(301, '/Signin')
 	},
 	taskRename: async ({ request }) => {
@@ -323,7 +273,6 @@ export const actions = {
 				favorites: true
 			}
 		})
-
 		if(!user) throw error(404, 'Account not found')
 
 		if (setFav === 'set') {
@@ -367,10 +316,6 @@ export const actions = {
 		const newStatus = data.get('status')?.toString()
 		const oldStatus = data.get('oldStatus')?.toString()
 
-		console.log(`new: ${newStatus}`);
-		console.log(`old: ${oldStatus}`);
-		console.log(`task: ${taskID}`);
-
 		const updatedTask = await prisma.tasks.update({
 			where: {
 				id: taskID
@@ -379,7 +324,6 @@ export const actions = {
 				status: newStatus
 			}
 		})
-
 		if (!updatedTask) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
 		
 		let toUpdateOldBoard = await prisma.boards.findFirst({
@@ -392,7 +336,6 @@ export const actions = {
 				tasks: true
 			}
 		})
-
 		if (!toUpdateOldBoard) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
 		
 		toUpdateOldBoard.tasks = toUpdateOldBoard.tasks.filter(id => id !== taskID)
@@ -434,7 +377,6 @@ export const actions = {
 				description: desc
 			}
 		})
-
 		if(!updatedTask) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
 	},
 	taskSendChat: async ({ request, params }) => {
@@ -452,7 +394,6 @@ export const actions = {
 				id: true
 			}
 		})
-
 		if(!user) throw error(404, 'Account not found')
 
 		const today = new Date().toISOString()
@@ -470,7 +411,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!newChat) return invalid(404, { message: 'send but error in updating', reason: 'databaseError' })
 		
 		const updatedTask = await prisma.tasks.update({
@@ -483,7 +423,6 @@ export const actions = {
 				}
 			}
 		})
-
 		if(!updatedTask) return invalid(404, { message: 'send but error in updating task', reason: 'databaseError' });
 	},
 	taskEditChat: async ({ request }) => {
@@ -503,7 +442,6 @@ export const actions = {
 				deliveredTime: new Date(`${today.split('T')[0]}T${today.split('T')[1].split(':')[0]}:${today.split('T')[1].split(':')[1]}:00.000-08:00`),
 			}
 		})
-
 		if(!updatedChat) return invalid(404, { message: 'edited but error in updating task', reason: 'databaseError' });
 	},
 	taskSubscribe: async ({ request, params }) => {
@@ -521,7 +459,6 @@ export const actions = {
 				id: true
 			}
 		})
-
 		if(!user) throw error(404, 'Account not found')
 
 		if (subsMode === 'sub') {

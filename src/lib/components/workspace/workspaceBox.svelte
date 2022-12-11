@@ -7,7 +7,7 @@
   import { Moon } from 'svelte-loading-spinners'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
 	import { newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
-	import { loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { addSubjectPanelActive, subjectSettingsPanelActive } from '$lib/stores/subject.store';
@@ -139,6 +139,7 @@
 <form id='{workspace.id}' action="?/updateFavoriteWorkspaces" class='is-hidden' use:enhance>
   <input type="text" bind:value={workspace.id} name='id'>
   <input type="text" bind:value={mode} name='mode'>
+  <input type="text" bind:value={$global_USERID} name='userID'>
 </form>
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">

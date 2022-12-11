@@ -3,13 +3,14 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
   import { addSubjectPanelActive, newSubjectName } from '$lib/stores/subject.store'
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
 
   let creating = false
+  let innerWidth = 0
   
   $: subjectNameError = $newSubjectName === ''
   $: size = innerWidth < 571 ? 'small' : 'large'
@@ -58,9 +59,12 @@
   }
 </script>
 
+<svelte:window bind:innerWidth />
+
 <form id='formAddSubject' class="is-hidden" action="?/createSubject" use:enhance>
   <input type="text" bind:value={$newSubjectName} name='name'>
   <input type="text" bind:value={$modalChosenColor} name='color'>
+  <input type="text" bind:value={$global_USERID} name='owner'>
 </form>
 
 <div

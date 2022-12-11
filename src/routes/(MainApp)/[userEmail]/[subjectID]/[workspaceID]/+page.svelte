@@ -1,12 +1,14 @@
 <script>
   //@ts-nocheck
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { onMount } from 'svelte'
 	import BoardMobile from '$lib/components/board/board-mobile.svelte';
 	import BoardDesktop from '$lib/components/board/board-desktop.svelte';
 	import { newTaskMembers, newTaskStatus, statuses, workspaceMembers } from '$lib/stores/task.store';
 	import helpers from '$lib/configs/helpers';
+	import bcryptjs from 'bcryptjs';
+	import { goto } from '$app/navigation';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -14,6 +16,18 @@
   let innerWidth = 0
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)

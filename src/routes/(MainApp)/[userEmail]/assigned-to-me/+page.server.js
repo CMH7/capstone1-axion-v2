@@ -1,14 +1,9 @@
 /* eslint-disable no-unused-vars */
-import prisma from "$lib/db";
-import { global_PASS } from "$lib/stores/global.store";
-import { error, redirect, invalid } from "@sveltejs/kit";
-import bcryptjs from 'bcryptjs';
-import { get } from "svelte/store";
+import prisma from "$lib/db"
+import { error, redirect, invalid } from "@sveltejs/kit"
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(301, '/Signin');
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -17,9 +12,7 @@ export async function load({ params }) {
 		}
 	});
 
-	if (!user) throw error(404, 'Account not found');
-	if (!bcryptjs.compareSync(get(global_PASS), user.password))
-		throw error(402, 'Unauthorized accessing');
+	if (!user) throw error(404, 'Account not found')
 
 	const tasks = await prisma.tasks.findMany({
 		where: {
@@ -128,7 +121,6 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user) throw error(404, 'Account not found');
 
 		const user2 = await prisma.users.update({
@@ -141,9 +133,8 @@ export const actions = {
 				}
 			}
 		});
+		if (!user2) throw redirect(301, 'my-profile')
 
-		if (!user2) throw redirect(301, 'my-profile');
-		global_PASS.set('');
 		throw redirect(301, '/Signin');
 	},
 	updateTask: async ({ request }) => {
@@ -151,6 +142,7 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const description = data.get('description')?.toString();
 		const status = data.get('status')?.toString();
+		const oldStatus = data.get('oldStatus')?.toString()
 		//@ts-ignore
 		const level = parseInt(data.get('level')?.toString());
 		const dueDateTime = data.get('dueDateTime')?.toString();
@@ -169,23 +161,55 @@ export const actions = {
 				status: status
 			},
 			select: {
-				id: true
+				id: true,
+				status: true
 			}
 		});
+		if (!updatedTask.id) return invalid(500, { message: 'Update failure on the task', reason: 'databaseError' });
 
-		if (!updatedTask.id)
-			return invalid(500, { message: 'Update failure on the task', reason: 'databaseError' });
-
-		const updatedBoard = await prisma.boards.update({
-			where: {
-				id: status
-			},
-			data: {
-				tasks: {
-					push: updatedTask.id
+		if (oldStatus !== status) {
+			let toUpdateBoard1 = await prisma.boards.findFirst({
+				where: {
+					//@ts-ignore
+					id: oldStatus
+				},
+				select: {
+					id: true,
+					tasks: true
 				}
-			}
-		});
+			})
+			if(!toUpdateBoard1) throw error(404, 'Board to update not found')
+			
+			toUpdateBoard1.tasks = toUpdateBoard1.tasks.filter(id => id !== taskID)
+
+			const updatedBoard1 = await prisma.boards.update({
+				where: {
+					id: toUpdateBoard1.id
+				},
+				data: {
+					tasks: toUpdateBoard1.tasks
+				},
+				select: {
+					id: true
+				}
+			})
+			if(!updatedBoard1) throw error(404, 'Failed to fetch updated board data')
+
+			const updatedBoard = await prisma.boards.update({
+				where: {
+					id: status
+				},
+				data: {
+					tasks: {
+						push: updatedTask.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if(!updatedBoard) return invalid(500, {message: 'Updated board data failed to fetch please reload', reason: 'databaseError'})
+		}
 	},
 	deleteTask: async ({ request }) => {
 		const data = await request.formData();
@@ -202,7 +226,6 @@ export const actions = {
 				status: true
 			}
 		});
-
 		if (!deletedTask.id)
 			return invalid(500, {
 				message: "Can't delete or remove task pleast try again later",
@@ -220,8 +243,7 @@ export const actions = {
 				id: true
 			}
 		});
-
-		if (!toUpdateBoard?.id)
+		if (!toUpdateBoard)
 			return invalid(404, {
 				message: 'Board that a task is in cannot be found, please try again',
 				reason: 'databaseError'
@@ -232,9 +254,10 @@ export const actions = {
 				id: toUpdateBoard.id
 			},
 			data: {
-				tasks: toUpdateBoard?.tasks.filter((id) => id !== deletedTask.id)
+				tasks: toUpdateBoard.tasks.filter((id) => id !== deletedTask.id)
 			}
 		});
+		if(!updatedBoard) throw error(404, 'Failed to fetch data of board, please try again later')
 
 		const deletedSUBTasks = prisma.tasks.deleteMany({
 			where: {
@@ -285,7 +308,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 	},
-	deleteBoard: async ({ request, params }) => {
+	deleteBoard: async ({ request }) => {
 		const data = await request.formData();
 		const boardID = data.get('id')?.toString();
 		const move = data.get('move')?.toString();

@@ -1,13 +1,8 @@
 import prisma from "$lib/db";
-import { error, redirect, invalid } from "@sveltejs/kit";
-import { get } from "svelte/store";
-import { global_PASS, global_USERID } from "$lib/stores/global.store";
-import bcryptjs from 'bcryptjs';
+import { error, redirect, invalid } from "@sveltejs/kit"
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(303, '/Signin')
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -16,38 +11,21 @@ export async function load({ params }) {
 		}
 	});
   
-	if (!user) throw redirect(303, '/Signin');
-	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(401, 'Unauthorized accessing');
-
-	const subjectConditions = user.favorites
-		.filter((favorite) => favorite.for === 'subjects')[0]
-		.ids.map((id) => {
-			return { id };
-		});
-	const workspaceConditions = user.favorites
-		.filter((favorite) => favorite.for === 'workspaces')[0]
-		.ids.map((id) => {
-			return { id };
-		});
-	const taskConditions = user.favorites
-		.filter((favorite) => favorite.for === 'tasks')[0]
-		.ids.map((id) => {
-			return { id };
-		});
+	if (!user) throw redirect(303, '/Signin')
 
 	const favsubjects = await prisma.subjects.findMany({
 		where: {
-			OR: subjectConditions
+			OR: user.favorites[0].ids.map(id => {return{id}})
 		}
 	});
 	const favworkspaces = await prisma.workspaces.findMany({
 		where: {
-			OR: workspaceConditions
+			OR: user.favorites[1].ids.map(id => {return{id}})
 		}
 	});
 	const favtasks = await prisma.tasks.findMany({
 		where: {
-			OR: taskConditions
+			OR: user.favorites[2].ids.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -120,7 +98,6 @@ export async function load({ params }) {
 			name: true
 		}
 	});
-
 	const allStatusesFavorites = allStatusesFavoritesa.map((asatm) => {
 		return {
 			value: asatm.id,
@@ -142,7 +119,6 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user) throw error(404, 'Account not found');
 
 		const user2 = await prisma.users.update({
@@ -155,9 +131,8 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user2) throw redirect(301, 'my-profile');
-		global_PASS.set('');
+
 		throw redirect(301, '/Signin');
 	},
 	updateSubject: async ({ request, params }) => {
@@ -201,7 +176,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!upatedUser)
 			return invalid(500, {
 				message: 'Failed to update favorites but is added to favorites, please reload',
@@ -217,7 +191,6 @@ export const actions = {
 				color
 			}
 		});
-
 		if (!updatedSubject)
 			return invalid(500, {
 				message: 'Failed to return favorites, please reload',
@@ -233,7 +206,6 @@ export const actions = {
 				id: subjectID
 			}
 		});
-
 		if (!deletedSubject)
 			return invalid(500, { message: 'Error in deleting subject, database related' });
 
@@ -248,8 +220,6 @@ export const actions = {
 				subjects: true
 			}
 		});
-
-		if (!users) throw error(404, 'Some accounts not found, cannot delete this subject forever');
 
 		const trs = users.map((user) => {
 			let newSubjectList = user.subjects.filter((id) => id !== subjectID);
@@ -266,7 +236,6 @@ export const actions = {
 		});
 
 		const results = await prisma.$transaction(trs);
-
 		if (!results)
 			return invalid(500, {
 				message: 'Cannot delete this subject. Database operation failure occured'
@@ -276,11 +245,12 @@ export const actions = {
 		const data = await request.formData();
 		const subjectID = data.get('id')?.toString();
 		const mode = data.get('mode')?.toString();
+		const userID = data.get('userID')?.toString();
 
 		let user = await prisma.users.findFirst({
 			where: {
 				id: {
-					equals: get(global_USERID)
+					equals: userID
 				}
 			},
 			select: {
@@ -288,7 +258,9 @@ export const actions = {
 			}
 		});
 
-		user?.favorites.every((fav) => {
+		if (!user) throw error(404, 'Account not found');
+
+		user.favorites.every((fav) => {
 			if (fav.for === 'subjects') {
 				if (mode === 'set') {
 					//@ts-ignore
@@ -303,7 +275,7 @@ export const actions = {
 
 		let updatedUser = await prisma.users.update({
 			where: {
-				id: get(global_USERID)
+				id: userID
 			},
 			data: {
 				favorites: user?.favorites
@@ -312,7 +284,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!updatedUser)
 			return invalid(500, {
 				message: 'Error setting as favorite in database',
@@ -360,7 +331,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!upatedUser)
 			return invalid(500, {
 				message: 'Failed to return data but is added to favorites, please reload',
@@ -379,7 +349,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!updatedWorkspace)
 			return invalid(500, {
 				message: 'Database failure to update workspace',
@@ -399,14 +368,17 @@ export const actions = {
 				boards: true
 			}
 		});
-
-		const allBoardsConditions = deletedWorkspace.boards.map((id) => {
-			return { id };
-		});
+		if (!deletedWorkspace)
+			return invalid(404, {
+				message: 'Failed to delete workspace please try again later or reload the page',
+				reason: 'databaseError'
+			});
 
 		const allDeletedBoards = await prisma.boards.deleteMany({
 			where: {
-				OR: allBoardsConditions
+				OR: deletedWorkspace.boards.map((id) => {
+					return { id };
+				})
 			}
 		});
 
@@ -421,19 +393,21 @@ export const actions = {
 		const data = await request.formData();
 		const workspaceID = data.get('id')?.toString();
 		const mode = data.get('mode')?.toString();
+		const userID = data.get('userID')?.toString();
 
 		let user = await prisma.users.findFirst({
 			where: {
 				id: {
-					equals: get(global_USERID)
+					equals: userID
 				}
 			},
 			select: {
 				favorites: true
 			}
 		});
+		if (!user) throw error(404, 'Account not found');
 
-		user?.favorites.every((fav) => {
+		user.favorites.every((fav) => {
 			if (fav.for === 'workspaces') {
 				if (mode === 'set') {
 					//@ts-ignore
@@ -448,7 +422,7 @@ export const actions = {
 
 		let updatedUser = await prisma.users.update({
 			where: {
-				id: get(global_USERID)
+				id: userID
 			},
 			data: {
 				favorites: user?.favorites
@@ -457,7 +431,6 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!updatedUser.id)
 			return invalid(404, {
 				message: 'Database failure to return data that is updated please reload',
@@ -469,6 +442,7 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const description = data.get('description')?.toString();
 		const status = data.get('status')?.toString();
+		const oldStatus = data.get('oldStatus')?.toString();
 		//@ts-ignore
 		const level = parseInt(data.get('level')?.toString());
 		const dueDateTime = data.get('dueDateTime')?.toString();
@@ -487,25 +461,59 @@ export const actions = {
 				status: status
 			},
 			select: {
-				id: true
+				id: true,
+				status: true
 			}
 		});
+		if (!updatedTask.id) return invalid(500, { message: 'Update failure on the task', reason: 'databaseError' });
 
-		if (!updatedTask.id)
-			return invalid(500, { message: 'Update failure on the task', reason: 'databaseError' });
-
-		const updatedBoard = await prisma.boards.update({
-			where: {
-				id: status
-			},
-			data: {
-				tasks: {
-					push: updatedTask.id
+		if (oldStatus !== status) {
+			let toUpdateBoard1 = await prisma.boards.findFirst({
+				where: {
+					//@ts-ignore
+					id: oldStatus
+				},
+				select: {
+					id: true,
+					tasks: true
 				}
-			}
-		});
+			});
+			if (!toUpdateBoard1) throw error(404, 'Board to update not found');
 
-		if(!updatedBoard) return invalid(500, {message: 'Updated board data failed to fetch please reload', reason: 'databaseError'})
+			toUpdateBoard1.tasks = toUpdateBoard1.tasks.filter((id) => id !== taskID);
+
+			const updatedBoard1 = await prisma.boards.update({
+				where: {
+					id: toUpdateBoard1.id
+				},
+				data: {
+					tasks: toUpdateBoard1.tasks
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!updatedBoard1) throw error(404, 'Failed to fetch updated board data');
+
+			const updatedBoard = await prisma.boards.update({
+				where: {
+					id: status
+				},
+				data: {
+					tasks: {
+						push: updatedTask.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!updatedBoard)
+				return invalid(500, {
+					message: 'Updated board data failed to fetch please reload',
+					reason: 'databaseError'
+				});
+		}
 	},
 	deleteTask: async ({ request }) => {
 		const data = await request.formData();
@@ -522,7 +530,6 @@ export const actions = {
 				status: true
 			}
 		});
-
 		if (!deletedTask.id)
 			return invalid(500, {
 				message: "Can't delete or remove task pleast try again later",
@@ -540,8 +547,7 @@ export const actions = {
 				id: true
 			}
 		});
-
-		if (!toUpdateBoard?.id)
+		if (!toUpdateBoard)
 			return invalid(404, {
 				message: 'Board that a task is in cannot be found, please try again',
 				reason: 'databaseError'
@@ -552,9 +558,10 @@ export const actions = {
 				id: toUpdateBoard.id
 			},
 			data: {
-				tasks: toUpdateBoard?.tasks.filter((id) => id !== deletedTask.id)
+				tasks: toUpdateBoard.tasks.filter((id) => id !== deletedTask.id)
 			}
 		});
+		if(!updatedBoard) throw error(404, 'Failed to fetch data of board, please try again later')
 
 		const deletedSUBTasks = prisma.tasks.deleteMany({
 			where: {

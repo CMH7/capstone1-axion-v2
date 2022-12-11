@@ -11,6 +11,7 @@
   const colors = ["primary", "link", "info", "success", "warning", "danger"]
   
   let updating = false
+  let innerWidth = 0
 
   $: boardNameError = $newBoardName === '' || $newBoardName.split(' ').join('').toLowerCase() === 'todo' || $newBoardName.split(' ').join('').toLowerCase() === 'inprogress' || $newBoardName.split(' ').join('').toLowerCase() === 'done'
 
@@ -63,6 +64,8 @@
     deleteBoardConfirmationModalActive.set(true)
   }
 </script>
+
+<svelte:window bind:innerWidth />
 
 <form id='{$selectedBoard.id}' class="is-hidden" action="?/updateBoard" use:enhance>
   <input type="text" bind:value={$newBoardName} name='name'>
