@@ -4,7 +4,7 @@
   import { Button, Icon, MaterialApp, Textarea, Select, ClickOutside, TextField, Checkbox, Avatar } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
   import { mdiAccountCircleOutline, mdiClose } from '@mdi/js'
-	import { navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import { Pulse } from 'svelte-loading-spinners'
@@ -103,6 +103,7 @@
   <input type="text" name='status' bind:value={$newTaskStatus}>
   <input type="text" name='dueDateTime' bind:value={toSendDueDateTime}>
   <input type="text" name='members' bind:value={toSendNewTaskMembers}>
+  <input type="text" name='creator' bind:value={$global_USERID}>
 </form>
 
 <div

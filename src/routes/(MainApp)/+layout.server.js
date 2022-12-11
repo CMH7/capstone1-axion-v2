@@ -1,14 +1,8 @@
 import prisma from '$lib/db';
-import { global_PASS, global_USERID, loading } from '$lib/stores/global.store';
-import { error, redirect } from '@sveltejs/kit';
-import bcryptjs from 'bcryptjs';
-import { get } from 'svelte/store';
+import { error } from '@sveltejs/kit';
 
 /** @type {import('./$types').LayoutServerLoad} */
 export async function load({ params }) {
-	loading.set(true)
-	if (!get(global_PASS)) throw redirect(303, '/Signin')
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -16,35 +10,23 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!user) throw error(404, 'Account not found')
-	if (!bcryptjs.compareSync(get(global_PASS), user.password)) throw error(402, 'Unauthorized accessing')
-
-	let notificationConditions = user.notifications.map(notifID => {return {id: notifID}})
-	let invitationConditions = user.invitations.map(invID => {return {id: invID}})
 
 	const notifications = await prisma.notifications.findMany({
 		where: {
-			OR: notificationConditions
+			OR: user.notifications.map(id => {return{id}})
 		}
 	})
 
 	const invitations = await prisma.invitations.findMany({
 		where: {
-			OR: invitationConditions
+			OR: user.invitations.map(id => {return{id}})
 		}
-	})
-
-	/**
-	 * @type {{id: string}[]} 
-	 * */
-	let notifFromPicConditions = notifications.map(notif => {
-		return {id: notif.for.userID}
 	})
 
 	let profiles = await prisma.users.findMany({
 		where: {
-			OR: notifFromPicConditions
+			OR: notifications.map(n => {return{id: n.for.userID}})
 		},
 		select: {
 			id: true,

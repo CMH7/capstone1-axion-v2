@@ -14,6 +14,7 @@
 	import { workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { newSubtaskDescription, newSubtaskDue, newSubtaskLevel, newSubtaskName, newSubtaskStatus } from '$lib/stores/subtask.store';
 	import helpers from '$lib/configs/helpers';
+	import bcryptjs from 'bcryptjs';
 
 
   /** 
@@ -849,6 +850,18 @@
   }
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)

@@ -1,13 +1,14 @@
 <script>
   //@ts-nocheck
+	import { goto } from '$app/navigation';
 	import TaskCard from '$lib/components/task/task-card.svelte';
-	import helpers from '$lib/configs/helpers';
-	import board from '$lib/models/board';
+	import helpers from '$lib/configs/helpers'
 	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
-  import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, modalChosenColor } from '$lib/stores/global.store';
+  import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, statuses, taskSettingsPanelActive } from '$lib/stores/task.store';
 	import { mdiFilter, mdiTune } from '@mdi/js';
+	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte';
 	import { Button, ExpansionPanel, ExpansionPanels, Icon } from 'svelte-materialify';
 
@@ -53,6 +54,7 @@
   let workspaceStatuses = []
   let innerWidth = 0
   let hide = false
+  //@ts-ignore
   let valueExp = []
   
   $: updates(data)
@@ -61,6 +63,7 @@
     hintText.set('Click the board name for the board settings (for custom boards only)')
   }
 
+  //@ts-ignore
   const boardClicked = (board) => {
     if(board.name === 'Todo' || board.name === 'In progress' || board.name === 'Done' || board.id.length != 1) return false
     statuses.set(workspaceStatuses.filter(ws => ws.statuses.some(y => y.value === board.id[0]))[0].statuses)
@@ -181,11 +184,25 @@
     })
   }
 
+  //@ts-ignore
   const handleRightClick = (task) => {
+    //@ts-ignore
     statuses.set(workspaceStatuses.filter(ws => ws.statuses.some(y => y.value === task.status))[0].statuses)
   }
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     currentIndex.set(1)
     $breadCrumbsItems = [{text: 'Assigned to me', href: '#'}]
     loadingScreen.set(false)

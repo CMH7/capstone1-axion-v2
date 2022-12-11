@@ -1,13 +1,8 @@
 import prisma from '$lib/db';
-import { error, redirect, invalid } from '@sveltejs/kit';
-import { get } from 'svelte/store';
-import { global_PASS } from '$lib/stores/global.store';
-import bcryptjs from 'bcryptjs';
+import { error, redirect, invalid } from '@sveltejs/kit'
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(303, '/Signin');
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -15,10 +10,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-
-	if (!user) throw error(404, 'Account not found');
-	if (!bcryptjs.compareSync(get(global_PASS), user.password))
-		throw error(402, 'Unauthorized accessing');
+	if (!user) throw error(404, 'Account not found')
 
 	const subject = await prisma.subjects.findFirst({
 		where: {
@@ -61,15 +53,9 @@ export async function load({ params }) {
 	});
 	if (!task) throw error(404, 'Subtask not found');
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let chatsConditions = task.conversations.map((id) => {
-		return { id };
-	});
 	const chats = await prisma.chats.findMany({
 		where: {
-			OR: chatsConditions
+			OR: task.conversations.map(id => {return{id}})
 		}
 	});
 
@@ -105,6 +91,12 @@ export async function load({ params }) {
 			id: {
 				equals: task.createdBy
 			}
+		},
+		select: {
+			id: true,
+			firstName: true,
+			lastName: true,
+			profile: true
 		}
 	});
 
@@ -114,7 +106,7 @@ export async function load({ params }) {
 	let chatChatSenders = [];
 	let chatChatSenders2 = await prisma.users.findMany({
 		where: {
-			OR: chats.map(chat => {return{id:chat.sender}})
+			OR: chats.map(chat => {return{id: chat.sender}})
 		},
 		select: {
 			id: true,
@@ -141,27 +133,15 @@ export async function load({ params }) {
 		});
 	});
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	const sub2TasksConditions = task.subtasks.map(id => {
-		return {id}
-	})
 	const subtasks = await prisma.tasks.findMany({
 		where: {
-			OR: sub2TasksConditions
+			OR: task.subtasks.map(id => {return{id}})
 		}
 	})
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let viewersConditions = task.viewers.map(id => {
-		return {id}
-	})
 	let viewers = await prisma.users.findMany({
 		where: {
-			OR: viewersConditions
+			OR: task.viewers.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -172,15 +152,9 @@ export async function load({ params }) {
 		}
 	});
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	let subtaskMembersConditions = task.members.map(id => {
-		return {id}
-	})
 	const members = await prisma.users.findMany({
 		where: {
-			OR: subtaskMembersConditions
+			OR: task.members.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -192,15 +166,9 @@ export async function load({ params }) {
 		}
 	});
 
-	/**
-	 * @type {{id: string}[]}
-	 */
-	const wsmConditions = workspace.members.map(id => {
-		return {id}
-	})
 	const workspaceMembers = await prisma.users.findMany({
 		where: {
-			OR: wsmConditions
+			OR: workspace.members.map(id => {return{id}})
 		},
 		select: {
 			id: true,
@@ -228,7 +196,6 @@ export const actions = {
 				}
 			}
 		})
-
 		if(!user) throw error(404, 'Account not found')
 
 		const user2 = await prisma.users.update({
@@ -241,9 +208,8 @@ export const actions = {
 				}
 			}
 		})
-		
 		if(!user2) throw redirect(301, 'my-profile')
-    global_PASS.set('')
+    
     throw redirect(301, '/Signin')
   },
 	taskRename: async ({ request }) => {

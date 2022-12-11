@@ -90,6 +90,7 @@
   <input type="text" name='description' bind:value={newTaskDesc}>
   <input type="number" name='level' bind:value={$newTaskLevel}>
   <input type="text" name='status' bind:value={$newTaskStatus}>
+  <input type="text" name='oldStatus' bind:value={$selectedTask.status}>
   <input type="text" name='dueDateTime' bind:value={toSendDueDateTime}>
   <input type="text" name='id' bind:value={$selectedTask.id}>
 </form>

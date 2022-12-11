@@ -1,13 +1,9 @@
+/* eslint-disable no-unused-vars */
 import prisma from '$lib/db';
-import { global_PASS } from '$lib/stores/global.store';
-import { error, invalid, redirect } from '@sveltejs/kit';
-import { get } from 'svelte/store';
-import bcryptjs from 'bcryptjs';
+import { error, invalid, redirect } from '@sveltejs/kit'
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
-	if (!get(global_PASS)) throw redirect(303, '/Signin');
-
 	const user = await prisma.users.findFirst({
 		where: {
 			email: {
@@ -15,10 +11,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-
-	if (!user) throw error(404, 'Account not found');
-	if (!bcryptjs.compareSync(get(global_PASS), user.password))
-		throw error(401, 'Unauthorized access');
+	if (!user) throw error(404, 'Account not found')
 
 	const subject = await prisma.subjects.findFirst({
 		where: {
@@ -27,7 +20,6 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!subject) throw error(404, 'Subject not found');
 
 	const workspace = await prisma.workspaces.findFirst({
@@ -37,7 +29,6 @@ export async function load({ params }) {
 			}
 		}
 	});
-
 	if (!workspace) throw error(404, 'Workspace cannot be found');
 
 	let members = await prisma.users.findMany({
@@ -59,7 +50,10 @@ export async function load({ params }) {
 
   members = members.reverse()
   
-  let otherUsers = await prisma.users.findMany({
+	const otherUsers = await prisma.users.findMany({
+		where: {
+			OR: members.map(u => {return{NOT: {id: u.id}}})
+		},
     select: {
       id: true,
       email: true,
@@ -69,10 +63,6 @@ export async function load({ params }) {
       profile: true,
       gender: true
     }
-  })
-
-  members.forEach(member => {
-    otherUsers = otherUsers.filter(user => user.id !== member.id)
   })
 
 	return { user, subject, workspace, members, otherUsers };
@@ -88,7 +78,6 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user) throw error(404, 'Account not found');
 
 		const user2 = await prisma.users.update({
@@ -101,9 +90,8 @@ export const actions = {
 				}
 			}
 		});
-
 		if (!user2) throw redirect(301, 'my-profile');
-		global_PASS.set('');
+		
 		throw redirect(301, '/Signin');
 	},
   removeMember: async ({ request, params }) => {
@@ -122,9 +110,7 @@ export const actions = {
 				lastName: true
 			}
 		});
-
-		if (!cUser)
-			return invalid(404, { message: 'Account not found please login', reason: 'databaseError' });
+		if (!cUser) return invalid(404, { message: 'Account not found please login', reason: 'databaseError' });
 
 		let userToRemove = await prisma.users.findFirst({
 			where: {
@@ -138,9 +124,7 @@ export const actions = {
 				lastName: true
 			}
 		});
-
-		if (!userToRemove)
-			return invalid(404, { message: 'Member data not found on database', reason: 'noaccount' });
+		if (!userToRemove) return invalid(404, { message: 'Member data not found on database', reason: 'noaccount' });
 
 		const subject = await prisma.subjects.findFirst({
 			where: {
@@ -152,9 +136,7 @@ export const actions = {
 				workspaces: true
 			}
 		});
-
-		if (!subject)
-			return invalid(404, { message: { message: 'Subject not found', reason: 'nosubject' } });
+		if (!subject) return invalid(404, { message: { message: 'Subject not found', reason: 'nosubject' } });
 
 		const toUpdateWorkspace = await prisma.workspaces.findFirst({
 			where: {
@@ -169,9 +151,7 @@ export const actions = {
 				id: true
 			}
 		});
-
-		if (!toUpdateWorkspace)
-			return invalid(404, { message: 'Workspace not found', reason: 'noworkspace' });
+		if (!toUpdateWorkspace) return invalid(404, { message: 'Workspace not found', reason: 'noworkspace' });
 
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
@@ -187,7 +167,6 @@ export const actions = {
 				members: true
 			}
 		});
-
 		if (!updatedWorkspace)
 			return invalid(404, {
 				message: 'Updated workspace cannot be found please reload',
@@ -196,29 +175,16 @@ export const actions = {
 
 		const allTaskID = await prisma.boards.findMany({
 			where: {
-				OR: toUpdateWorkspace.boards.map((id) => {
-					return { id };
-				})
+				OR: toUpdateWorkspace.boards.map((id) => {return { id };})
 			},
 			select: {
 				tasks: true
 			}
 		});
 
-		/** @type {{id: string}[]} */
-		let allTasks = [];
-		allTaskID.forEach((a) => {
-			allTasks = [
-				...allTasks,
-				...a.tasks.map((id) => {
-					return { id };
-				})
-			];
-		});
-
 		let allToUpdatedTasks = await prisma.tasks.findMany({
 			where: {
-				OR: allTasks
+				OR: allTaskID.map(at => {return{OR: at.tasks.map(id => {return{id}})}})
 			},
 			select: {
 				members: true,

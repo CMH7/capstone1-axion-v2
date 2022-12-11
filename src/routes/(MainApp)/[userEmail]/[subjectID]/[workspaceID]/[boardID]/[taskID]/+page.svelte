@@ -1,20 +1,19 @@
 <script>
   //@ts-nocheck
 	import { applyAction, deserialize, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
   import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
 	import { breadCrumbsItems, currentIndex, hintText, loadingScreen, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
-	import { activeTask, taskSettingsPanelActive } from '$lib/stores/task.store';
+	import { activeTask } from '$lib/stores/task.store';
 	import { mdiAccountOutline,mdiAccountPlusOutline, mdiBellCancelOutline, mdiBellCheckOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
   import { Icon, Avatar, MaterialApp, Tabs, Tab, Divider, Checkbox, Window, WindowItem, Textarea, Button, ClickOutside, TextField, Badge, Select } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
   import { Moon } from 'svelte-loading-spinners'
-	import { workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { newSubtaskDescription, newSubtaskDue, newSubtaskLevel, newSubtaskName, newSubtaskStatus } from '$lib/stores/subtask.store';
 	import helpers from '$lib/configs/helpers';
-
+	import bcryptjs from 'bcryptjs';
 
   /** 
    * @type {import('./$types').PageServerData}
@@ -849,6 +848,18 @@
   }
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)

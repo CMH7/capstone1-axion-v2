@@ -10,9 +10,11 @@
 	import models from '$lib/models';
 	import { confirmDeleteWorkspaceModalActive, newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 
+  export let data
+
   let updating = false
   let changes = 0
-  export let data
+  let innerWidth = 0
   
   $: isFavorite1 = data.user.favorites[1].ids.includes($selectedWorkspace.id)
   $: isFavorite = isFavorite1
@@ -69,11 +71,14 @@
   }
 </script>
 
+<svelte:window bind:innerWidth />
+
 <form id='formUpdateWorkspace' class="is-hidden" action="?/updateWorkspace" use:enhance>
   <input type="text" bind:value={$newWorkspaceName} name='name'>
   <input type="text" bind:value={$modalChosenColor} name='color'>
   <input type="text" bind:value={$selectedWorkspace.id} name='id'>
   <input type="text" bind:value={addFavorite} name='addFavorite'>
+  <input type="text" bind:value={$global_USERID} name='userID'>
 </form>
 
 <div

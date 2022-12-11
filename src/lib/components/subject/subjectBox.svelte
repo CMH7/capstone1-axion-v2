@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import models from '$lib/models';
-	import { loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store';
   import { Button, Icon } from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
@@ -135,6 +135,7 @@
 <form id='{subject.id}' action="?/updateFavoriteSubjects" class='is-hidden' use:enhance>
   <input type="text" bind:value={subject.id} name='id'>
   <input type="text" bind:value={mode} name='mode'>
+  <input type="text" bind:value={$global_USERID} name='userID'>
 </form>
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
