@@ -2,7 +2,7 @@
 import prisma from '$lib/db';
 import { invalid, redirect } from '@sveltejs/kit';
 import bcryptjs from 'bcryptjs'
-import * as sgMail from '@sendgrid/mail'
+import sgMail from '@sendgrid/mail'
 import constants from '$lib/configs/constants';
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
