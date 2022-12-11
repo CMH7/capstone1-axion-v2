@@ -95,6 +95,7 @@
           {#each navbarEndLinks as item}
             <a
               data-sveltekit-preload-code='eager'
+              on:click={() => menuActive = false}
               href="{item.href}" class="navbar-item has-text-centered {item.label === 'Signin' && !menuActive ? 'mr-3' : ''}"
             >
               {item.label}
@@ -103,6 +104,7 @@
     
           <a
             data-sveltekit-preload-code='eager'
+            on:click={() => menuActive = false}
             href="/Signup" class="navbar-item has-text-centered has-transition button is-size-7 is-success fredoka-reg"
           >
             Signup
