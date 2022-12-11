@@ -33,6 +33,7 @@
 	import { addWorkspacePanelActive, confirmDeleteWorkspaceModalActive, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { addTaskPanelActive, taskConfirmDeleteModalActive, taskSettingsPanelActive } from '$lib/stores/task.store';
 	import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationModalActive } from '$lib/stores/boards.store';
+	import helpers from '$lib/configs/helpers';
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -184,7 +185,11 @@
             <a
               data-sveltekit-preload-data="hover"
               data-sveltekit-preload-code='eager'
-              on:click={() => loadingScreen.set(true)}
+              disabled={$page.url.pathname === `/${data.user.email}/invitations`}
+              on:click={() => {
+                if($page.url.pathname === `/${data.user.email}/invitations`) return
+                loadingScreen.set(true)
+              }}
               href="/{data.user.email}/invitations">
               <Button
                 icon
@@ -232,6 +237,7 @@
               icon
               class="is-hidden-touch" 
               on:click={() => {
+                helpers.resetPanels()
                 showProfileMenu = !showProfileMenu
               }}
             >
@@ -251,13 +257,15 @@
                   data-sveltekit-preload-data="hover"
                   data-sveltekit-preload-code='eager'
                   href="/{data.user.email}/my-profile"
-                  on:click={() => loadingScreen.set(true)}
+                  disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
+                  on:click={() => {
+                    showProfileMenu = false
+                    if($currentIndex == 3) return
+                    loadingScreen.set(true)
+                    currentIndex.set(3)
+                  }}
                 >
                   <ListItem
-                    on:click={async () => {
-                      currentIndex.set(3)
-                      showProfileMenu = false
-                    }}
                     disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
                     active={$page.url.pathname === `/${data.user.email}/my-profile`}
                   >
@@ -295,13 +303,18 @@
                 data-sveltekit-preload-data="hover"
                 data-sveltekit-preload-code='eager'
                 href="{navItem.href}"
-                on:click={() => loadingScreen.set(true)}
+                on:click={() => {
+                  helpers.resetPanels()
+                  if($currentIndex == i) return
+                  loadingScreen.set(true)
+                  navClicked(i)
+                }}
+                disabled={$currentIndex == i}
               >
                 <ListItem
                   active={$currentIndex == i}
                   disabled={$currentIndex == i}
                   class="has-text-{$currentIndex == i ? '' : 'asdf'}{color} has-background-{$currentIndex == i ? '' : 'asdf'}{color}-light {$currentIndex == i && color === 'yellow-text text-darken-2' ? `yellow-text text-darken-2 yellow lighten-4` : $currentIndex == i ? color : ''} {navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
-                  on:click={() => {navClicked(i)}}
                 >
                   <span slot="prepend">
                     <!-- {#if navItem.name === 'My Profile' && $userData.profile} -->
@@ -330,7 +343,7 @@
       </NavigationDrawer>
   
       <Overlay {active} on:click={toggleNavigation} index={1} />
-      <Overlay opacity={1} bind:active={$loadingScreen} index={1} color='white'>
+      <Overlay opacity={1} bind:active={$loadingScreen} index={3} color='white'>
         <div class='maxmins-w-100p centerxy has-background-white'>
           <Pulse size={100} color='#13134e' />
         </div>

@@ -4,7 +4,7 @@
 	import { invalidateAll } from "$app/navigation";
 	import validators from "$lib/configs/validators";
 	import { notifs } from "$lib/stores/global.store";
-	import { mdiAccount, mdiEye, mdiEyeOff, mdiLock } from "@mdi/js";
+	import { mdiAccount, mdiEye, mdiEyeOff, mdiKey, mdiLock } from "@mdi/js";
 	import { onMount } from "svelte";
   import { Avatar, Button, Divider, Icon, MaterialApp, TextField } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
@@ -158,7 +158,7 @@
               class='mt-3 fredoka-reg'
             >
               <span slot='prepend'>
-                <Icon path={mdiLock} />
+                <Icon path={mdiKey} />
               </span>
               Password
             </TextField>

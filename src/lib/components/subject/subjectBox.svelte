@@ -51,10 +51,10 @@
   }
 
   const handleRightClick = () => {
-    subjectSettingsPanelActive.set(true)
     selectedSubject.set(subject)
     modalChosenColor.set(subject.color)
     newSubjectName.set(subject.name)
+    subjectSettingsPanelActive.set(true)
   }
 
   const startTimer = () => {

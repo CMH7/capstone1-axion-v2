@@ -9,13 +9,20 @@
 	import WorkspaceBoxPreview from '$lib/components/workspace/workspaceBoxPreview.svelte';
 	import { addTaskPanelActive } from '$lib/stores/task.store';
 	import { goto, invalidate } from '$app/navigation';
+	import helpers from '$lib/configs/helpers';
+	import { Icon, TextField } from 'svelte-materialify';
+	import { mdiMagnify } from '@mdi/js';
 
   /** 
    * @type {import('./$types').PageServerData}
    * */
   export let data
 
-  let innerWidth
+  let innerWidth = 0
+  let searchFor = ''
+
+  $: clientWorkspaces = data.workspaces
+  $: searchFor !== '' ? clientWorkspaces = clientWorkspaces.filter(cw => cw.name.toLowerCase().match(searchFor.toLowerCase())) : clientWorkspaces = data.workspaces
 
   onMount(async () => {
     currentIndex.set(0)
@@ -28,7 +35,7 @@
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}`}]
     hintText.set('Click the \'+\' icon to add new workspace and access to subject settings!')
     global_USERID.set(data.user.id)
-    addTaskPanelActive.set(false)
+    helpers.resetPanels()
     loadingScreen.set(false)
   })
 </script>
@@ -39,8 +46,18 @@
 </svelte:head>
 
 <div class="maxmins-w-100p is-flex is-flex-wrap-wrap {innerWidth < 571 ? "is-justify-content-center": "pl-3"}">
+  <div class='maxmins-w-100p mb-2'>
+    <div class='maxmins-w-{innerWidth < 571 ? '100p' : '250'}'>
+      <TextField dense outlined bind:value={searchFor}>
+        Search
+        <div slot='append'>
+          <Icon path={mdiMagnify} />
+        </div>
+      </TextField>
+    </div>
+  </div>
   <!-- Other Subjects -->
-  {#if data.workspaces.length == 0}
+  {#if clientWorkspaces.length == 0}
     {#if !$addWorkspacePanelActive && innerWidth > 570}
       <div class="section">
         <div class="container">
@@ -61,7 +78,7 @@
       </div>
     {/if}
   {:else}
-    {#each data.workspaces as workspace}
+    {#each clientWorkspaces as workspace}
       <WorkspaceBox {data} {workspace} />
     {/each}
     {#if $addWorkspacePanelActive && innerWidth > 570}

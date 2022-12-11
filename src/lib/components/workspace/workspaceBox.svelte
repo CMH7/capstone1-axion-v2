@@ -149,7 +149,7 @@
     on:click={() => {
       if(!favHovering) loadingScreen.set(true)
     }}
-    href="{favHovering ? '#' : `${$activeSubject.id}/${workspace.id}`}"
+    href="{favHovering ? '#' : `${data.subject.id}/${workspace.id}`}"
     class="{workspace.color === ' pink lighten-3' || workspace.color === 'black' || workspace.color === 'grey-light' || workspace.color === 'grey-lighter' ? 'has-text-grey-dark' : workspace.color === ' purple lighten-1' || workspace.color === 'grey' ? 'has-text-white' :  ''}"
   >
     <div

@@ -13,6 +13,7 @@
   import { Moon } from 'svelte-loading-spinners'
 	import { workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { newSubtaskDescription, newSubtaskDue, newSubtaskLevel, newSubtaskName, newSubtaskStatus } from '$lib/stores/subtask.store';
+	import helpers from '$lib/configs/helpers';
 
 
   /** 
@@ -777,7 +778,7 @@
     }else{
       $notifs = [...$notifs, {
         msg: 'Task remove assignment failed',
-        type: `${result.data.reason === 'databaseError' ? 'stayError' : 'error'}`,
+        type: `${result.data?.reason === 'databaseError' ? 'stayError' : 'error'}`,
         id: `${(Math.random() * 999) + 1}`
       }]
     }
@@ -868,10 +869,9 @@
       color: data.board.color
     }
     statuses = data.statuses
-    workspaceSettingsPanelActive.set(false)
-    taskSettingsPanelActive.set(false)
     newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
     loadingScreen.set(false)
+    helpers.resetPanels()
   })
 </script>
 
@@ -966,7 +966,7 @@
 <div>
   <div class="columns is-mobile is-multiline is-relative">
     <!-- right side -->
-    <div style="transform-origin: top center; border-top: 1px solid rgba(0, 0, 0, 0.3)" class='has-background-white column is-8-desktop is-6-tablet is-12-mobile has-transition {innerWidth > 768 ? '' : $navDrawerActive || $notifCenterOpen ? '' : 'z-2'} {showOptions ? 'rot-x-90 pos-abs' : 'rot-x-0'}'>
+    <div style="transform-origin: top center; border-top: 1px solid rgba(0, 0, 0, 0.3)" class='has-background-white column is-8-desktop is-6-tablet is-12-mobile has-transition {innerWidth > 768 ? '' : $navDrawerActive || $notifCenterOpen ? 'z-1' : 'z-3'} {showOptions ? 'rot-x-90 pos-abs' : 'rot-x-0'}'>
   
       <!-- name, level, favorite, subtasks count, options -->
       <div class="columns is-mobile is-multiline">

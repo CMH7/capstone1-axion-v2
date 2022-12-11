@@ -1,6 +1,7 @@
 <script>
   // @ts-nocheck
-	import { breadCrumbsItems, loadingScreen } from '$lib/stores/global.store';
+	import helpers from '$lib/configs/helpers';
+	import { breadCrumbsItems, global_USERID, loadingScreen } from '$lib/stores/global.store';
 	import { onMount } from 'svelte'
 
   /** @type {import('./$types').PageServerData}*/
@@ -9,6 +10,8 @@
   onMount(() => {
     $breadCrumbsItems = [{text: 'My profile', href: '#'}]
     loadingScreen.set(false)
+    global_USERID.set(data.user.id)
+    helpers.resetPanels()
   })
 </script>
 

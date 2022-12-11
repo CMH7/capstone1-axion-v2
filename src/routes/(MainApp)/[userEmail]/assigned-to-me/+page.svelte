@@ -1,10 +1,11 @@
 <script>
   //@ts-nocheck
 	import TaskCard from '$lib/components/task/task-card.svelte';
+	import helpers from '$lib/configs/helpers';
 	import board from '$lib/models/board';
 	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
-  import { breadCrumbsItems, currentIndex, hintText, loadingScreen, modalChosenColor } from '$lib/stores/global.store';
+  import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, modalChosenColor } from '$lib/stores/global.store';
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, statuses, taskSettingsPanelActive } from '$lib/stores/task.store';
 	import { mdiFilter, mdiTune } from '@mdi/js';
 	import { onMount } from 'svelte';
@@ -51,9 +52,10 @@
    */
   let workspaceStatuses = []
   let innerWidth = 0
+  let hide = false
+  let valueExp = []
   
   $: updates(data)
-  
 
   const setHint = () => {
     hintText.set('Click the board name for the board settings (for custom boards only)')
@@ -92,6 +94,9 @@
     boardSettingsPanelActive.set(true)
   }
 
+  /**
+   * @param {import('./$types').PageServerData} data
+   */
   const updates = (data) => {
     boardTaskss = []
     taskMembers = []
@@ -133,9 +138,6 @@
         return true
       })
     })
-    let tempBT = boardTaskss.filter(bt => bt.name === 'Done')[0]
-    boardTaskss = boardTaskss.filter(bt => bt.name !== 'Done')
-    boardTaskss = [...boardTaskss, tempBT]
 
     data.tasks.forEach((task) => {
       taskMembers = [...taskMembers, { taskID: task.id, members: [] }];
@@ -187,6 +189,8 @@
     currentIndex.set(1)
     $breadCrumbsItems = [{text: 'Assigned to me', href: '#'}]
     loadingScreen.set(false)
+    global_USERID.set(data.user.id)
+    helpers.resetPanels()
   })
 </script>
 
@@ -265,7 +269,7 @@
   {:else}
       <!-- mobile version -->
       <div class="column is-12">
-        <ExpansionPanels style='z-index: 0' popout multiple flat>
+        <ExpansionPanels bind:value={valueExp} style='z-index: 0' popout multiple flat>
           {#each boardTaskss as bt}
             <ExpansionPanel class='has-background-{bt.color}-light mb-2 is-flex is-flex-direction-column is-align-items-center'>
               <span
@@ -310,7 +314,8 @@
                     if(a.level < b.level) return 1
                     return 0
                   }) as task}
-                    <div on:contextmenu={() => handleRightClick(task)}>
+                    <!-- svelte-ignore a11y-click-events-have-key-events -->
+                    <div on:click={() => valueExp = []} on:contextmenu={() => handleRightClick(task)}>
                       <TaskCard {task} inDone={bt.name === 'Done'} data={
                           {
                             taskMembers,

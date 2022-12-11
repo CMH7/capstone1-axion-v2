@@ -420,8 +420,8 @@
 
     <!-- left sides -->
     <div class="column is-6-desktop is-12-tablet is-hidden-mobile">
-      <div class="maxmins-w-100p is-flex is-flex-direction-column is-align-items-center is-relative">
-        <div class="fredoka-reg  txt-size-30 pos-abs">
+      <div class="maxmins-w-100p maxmins-h-100p centerxy is-relative">
+        <div class="fredoka-reg  txt-size-30 pos-abs pos-t-30p">
           Signup to
         </div>
 
