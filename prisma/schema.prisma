@@ -1,135 +1,138 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider        = "mongodb"
+  url             = env("DATABASE_URL")
 }
 
 type InvitationsFrom {
-  email   String
-  id      String
-  name    String
-  profile String
+  email           String
+  id              String
+  name            String
+  profile         String
 }
 
 type InvitationsTo {
-  id   String
-  name String
+  id              String
+  name            String
 }
 
 type InvitationsWorkspace {
-  id   String
-  name String
+  id              String
+  name            String
 }
 
 type NotificationsFor {
-  self   Boolean
-  userID String
+  self            Boolean
+  userID          String
 }
 
 type NotificationsFromInterface {
-  interf       String
-  subInterface String
+  interf          String
+  subInterface    String
 }
 
 type UsersFavorites {
-  for String
-  ids String[]
+  for             String
+  ids             String[]
 }
 
 model boards {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  color   String
-  name    String
-  tasks   String[]
-  filter  String
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  color           String
+  name            String
+  tasks           String[]
+  filter          String
 }
 
 model chats {
-  id      String   @id @default(auto())  @map("_id") @db.ObjectId
-  sender  String
-  message String
-  deliveredTime DateTime  @db.Date
-  edited  Boolean
+  id              String   @id @default(auto())  @map("_id") @db.ObjectId
+  sender          String
+  message         String
+  deliveredTime   DateTime  @db.Date
+  edited          Boolean
 }
 
 model invitations {
-  id        String               @id @default(auto()) @map("_id") @db.ObjectId
-  from      InvitationsFrom
-  message   String
-  status    String
-  subjectID String
-  to        InvitationsTo
-  workspace InvitationsWorkspace
+  id              String               @id @default(auto()) @map("_id") @db.ObjectId
+  from            InvitationsFrom
+  message         String
+  status          String
+  subjectID       String
+  to              InvitationsTo
+  workspace       InvitationsWorkspace
 }
 
 model notifications {
-  id             String                     @id @default(auto()) @map("_id") @db.ObjectId
-  aMention       Boolean
-  anInvitation   Boolean
-  conversationID String
-  for            NotificationsFor
-  fromInterface  NotificationsFromInterface
-  fromTask       String
-  isRead         Boolean
-  message        String
+  id              String                     @id @default(auto()) @map("_id") @db.ObjectId
+  aMention        Boolean
+  anInvitation    Boolean
+  conversationID  String
+  for             NotificationsFor
+  fromInterface   NotificationsFromInterface
+  fromTask        String
+  isRead          Boolean
+  message         String
 }
 
 model subjects {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  color      String
-  name       String
-  owner      String
-  workspaces String[]
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  color           String
+  name            String
+  owner           String
+  workspaces      String[]
 }
 
 model tasks {
-  id            String         @id @default(auto()) @map("_id") @db.ObjectId
-  conversations String[]
-  createdBy     String
-  createdOn     DateTime       @db.Date
-  description   String
-  dueDateTime   DateTime       @db.Date
-  isSubtask     Boolean
-  level         Int
-  members       String[]
-  name          String
-  status        String
-  subtasks      String[]
-  viewers       String[]
-  subscribers   String[]
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  conversations   String[]
+  createdBy       String
+  createdOn       DateTime       @db.Date
+  description     String
+  dueDateTime     DateTime       @db.Date
+  isSubtask       Boolean
+  level           Int
+  members         String[]
+  name            String
+  status          String
+  subtasks        String[]
+  viewers         String[]
+  subscribers     String[]
 }
 
 model users {
-  id            String           @id @default(auto()) @map("_id") @db.ObjectId
-  age           Int
-  bio           String
-  course        String
-  email         String
-  favorites     UsersFavorites[]
-  firstName     String
-  gender        String
-  invitations   String[]
-  lastName      String
-  notifications String[]
-  password      String
-  profile       String
-  school        String
-  showTutorial  Boolean
-  subjects      String[]
-  verified      Boolean
-  year          Int
-  online        Boolean
+  id              String           @id @default(auto()) @map("_id") @db.ObjectId
+  age             Int
+  bio             String
+  course          String
+  email           String
+  favorites       UsersFavorites[]
+  firstName       String
+  gender          String
+  invitations     String[]
+  lastName        String
+  notifications   String[]
+  password        String
+  profile         String
+  school          String
+  showTutorial    Boolean
+  subjects        String[]
+  verified        Boolean
+  year            Int
+  online          Boolean
+  canBeInvited    Boolean
+  footerHints     Boolean
+  showStatistics  Boolean
 }
 
 model workspaces {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  admins  String[]
-  boards  String[]
-  color   String
-  members String[]
-  name    String
-  owner   String
+  id              String   @id @default(auto()) @map("_id") @db.ObjectId
+  admins          String[]
+  boards          String[]
+  color           String
+  members         String[]
+  name            String
+  owner           String
 }
