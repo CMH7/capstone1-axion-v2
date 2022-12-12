@@ -1,11 +1,14 @@
 <script>
-  //@ts-nocheck
-	import { breadCrumbsItems, global_PASS, global_USERID } from '$lib/stores/global.store';
-	import { mdiAccountOutline, mdiCancel, mdiEmail, mdiImageEditOutline, mdiKey, mdiPencil, mdiSendOutline } from '@mdi/js';
+  // @ts-nocheck
+	import { goto } from '$app/navigation';
+	import helpers from '$lib/configs/helpers';
+	import { breadCrumbsItems, global_USERID, loadingScreen, notifs } from '$lib/stores/global.store';
+	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte'
 	import { Avatar, Button, Icon, Switch, TextField, Tooltip } from 'svelte-materialify';
   import { Moon } from 'svelte-loading-spinners'
 	import { uploadPicModalActive } from '$lib/stores/myProfile.store';
+	import { mdiAccountOutline, mdiCancel, mdiEmail, mdiImageEditOutline, mdiKey, mdiPencil, mdiSendOutline } from '@mdi/js';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -22,8 +25,22 @@
   }
 
   onMount(() => {
-    global_USERID.set(data.user.id)
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     $breadCrumbsItems = [{text: 'My profile', href: '#'}]
+    loadingScreen.set(false)
+    global_USERID.set(data.user.id)
+    helpers.resetPanels()
   })
 </script>
 

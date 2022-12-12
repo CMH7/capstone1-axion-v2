@@ -1,18 +1,19 @@
 <script>
+  //@ts-nocheck
 	import { applyAction, deserialize, enhance } from '$app/forms';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
   import { activeBoard } from '$lib/stores/boards.store';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, hintText, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
-	import { activeTask, taskSettingsPanelActive } from '$lib/stores/task.store';
+	import { breadCrumbsItems, currentIndex, hintText, loadingScreen, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { activeTask } from '$lib/stores/task.store';
 	import { mdiAccountOutline,mdiAccountPlusOutline, mdiBellCancelOutline, mdiBellCheckOutline, mdiCancel, mdiChat,mdiCheck,mdiChevronDown,mdiChevronUp,mdiClose,mdiCogOutline,mdiEyeOutline,mdiFileUpload, mdiLeadPencil,mdiMagnify,mdiPencil,mdiPlus,mdiSend,mdiSourceBranch,mdiStar, mdiStarOutline, mdiText, mdiTrashCan } from '@mdi/js';
 	import { onMount } from 'svelte';
   import { Icon, Avatar, MaterialApp, Tabs, Tab, Divider, Checkbox, Window, WindowItem, Textarea, Button, ClickOutside, TextField, Badge, Select } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
   import { Moon } from 'svelte-loading-spinners'
-	import { workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { newSubtaskDescription, newSubtaskDue, newSubtaskLevel, newSubtaskName, newSubtaskStatus } from '$lib/stores/subtask.store';
-
+	import helpers from '$lib/configs/helpers';
+	import bcryptjs from 'bcryptjs';
 
   /** 
    * @type {import('./$types').PageServerData}
@@ -776,7 +777,7 @@
     }else{
       $notifs = [...$notifs, {
         msg: 'Task remove assignment failed',
-        type: `${result.data.reason === 'databaseError' ? 'stayError' : 'error'}`,
+        type: `${result.data?.reason === 'databaseError' ? 'stayError' : 'error'}`,
         id: `${(Math.random() * 999) + 1}`
       }]
     }
@@ -847,6 +848,19 @@
   }
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
+    currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)
     activeBoard.set(data.board)
@@ -866,9 +880,9 @@
       color: data.board.color
     }
     statuses = data.statuses
-    workspaceSettingsPanelActive.set(false)
-    taskSettingsPanelActive.set(false)
     newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
+    loadingScreen.set(false)
+    helpers.resetPanels()
   })
 </script>
 
@@ -963,7 +977,7 @@
 <div>
   <div class="columns is-mobile is-multiline is-relative">
     <!-- right side -->
-    <div style="transform-origin: top center; border-top: 1px solid rgba(0, 0, 0, 0.3)" class='has-background-white column is-8-desktop is-6-tablet is-12-mobile has-transition {innerWidth > 768 ? '' : $navDrawerActive || $notifCenterOpen ? '' : 'z-2'} {showOptions ? 'rot-x-90 pos-abs' : 'rot-x-0'}'>
+    <div style="transform-origin: top center; border-top: 1px solid rgba(0, 0, 0, 0.3)" class='has-background-white column is-8-desktop is-6-tablet is-12-mobile has-transition {innerWidth > 768 ? '' : $navDrawerActive || $notifCenterOpen ? 'z-1' : 'z-3'} {showOptions ? 'rot-x-90 pos-abs' : 'rot-x-0'}'>
   
       <!-- name, level, favorite, subtasks count, options -->
       <div class="columns is-mobile is-multiline">

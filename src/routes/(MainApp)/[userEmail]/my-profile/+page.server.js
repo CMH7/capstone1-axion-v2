@@ -114,8 +114,8 @@ export const actions = {
 				}
 			}
 		})
-		if(!user2) throw redirect(301, 'my-profile')
-    
+		if (!user2) throw redirect(301, 'my-profile')
+		
     throw redirect(301, '/Signin')
 	},
 	newPic: async ({ request }) => {

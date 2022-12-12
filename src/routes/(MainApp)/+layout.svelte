@@ -2,8 +2,8 @@
   //@ts-nocheck
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
   import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
-	import { invalidateAll } from '$app/navigation';
-	import { breadCrumbsItems, hintText, loading, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs, currentIndex, global_USERID } from '$lib/stores/global.store';
 	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
 	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
@@ -28,6 +28,13 @@
 	import WorkspaceRemoveMemberConfirmationModal from '$lib/components/workspace/workspaceRemoveMemberConfirmationModal.svelte';
 	import WorkspaceDemoteWorkspaceAdmin from '$lib/components/workspace/workspaceDemoteWorkspaceAdmin.svelte';
 	import WorkspacePromoteWorkspaceMember from '$lib/components/workspace/workspacePromoteWorkspaceMember.svelte';
+  import { Pulse } from 'svelte-loading-spinners';
+	import { addSubjectPanelActive, confirmDeleteModalActive, subjectSettingsPanelActive } from '$lib/stores/subject.store';
+	import { addWorkspacePanelActive, confirmDeleteWorkspaceModalActive, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
+	import { addTaskPanelActive, taskConfirmDeleteModalActive, taskSettingsPanelActive } from '$lib/stores/task.store';
+	import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationModalActive } from '$lib/stores/boards.store';
+	import helpers from '$lib/configs/helpers';
+  import bcryptjs from 'bcryptjs'
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -37,7 +44,6 @@
   let active = $navDrawerActive
   let innerWidth = 0
   let breadcrumbs = []
-  let currentIndex = 0
   let showProfileMenu = false
   let hint = true
   let removeHint = false
@@ -51,12 +57,14 @@
 
   breadCrumbsItems.subscribe(value => breadcrumbs = value)
 
+  $: color = navs[$currentIndex].color
+
   const toggleNavigation = () => {
     active = !active
     navDrawerActive.set(active)
   }
 
-  const navClicked = async (i, href) => {
+  const navClicked = async (i) => {
     if(i == 0) breadcrumbs = [{text: 'Subjects', href: `/${data.user.email}`}]
     if(i == 1) breadcrumbs = [{text: 'Assigned to me', href: `/${data.user.email}/assigned-to-me`}]
     if(i == 2) breadcrumbs = [{text: 'Favorites', href: `/${data.user.email}/favorites`}]
@@ -67,7 +75,7 @@
     }
     if(innerWidth < 571) active = false
     
-    currentIndex = i
+    currentIndex.set(i)
     // await goto(href, {replaceState: true})
   }
 
@@ -114,7 +122,19 @@
   }
 
   onMount(() => {
-    currentIndex = $breadCrumbsItems[0].text === 'Assigned to me' ? 1 : $breadCrumbsItems[0].text === 'Favorites' ? 2 : $breadCrumbsItems[0].text === 'My profile' ? 3 : 0
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
+    global_USERID.set(data.user.id)
   })
 </script>
 
@@ -179,15 +199,22 @@
             offsetX={23}
             offsetY={innerWidth < 426 ? 13 : 10}
           >
-            <Button
-              icon
-              on:click={e => {
-                invModalActive.set(true)
+            <a
+              data-sveltekit-preload-data="hover"
+              data-sveltekit-preload-code='eager'
+              disabled={$page.url.pathname === `/${data.user.email}/invitations`}
+              on:click={() => {
+                if($page.url.pathname === `/${data.user.email}/invitations`) return
+                loadingScreen.set(true)
               }}
-              class="mr-3 has-background-grey-{$invModalActive? 'dark': ''} p-2 is-flex is-justify-content-center is-align-items-center"
-            >
-              <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiAccountGroup} />
-            </Button>
+              href="/{data.user.email}/invitations">
+              <Button
+                icon
+                class="mr-3 has-background-grey-{$invModalActive? 'dark': ''} p-2 is-flex is-justify-content-center is-align-items-center"
+              >
+                <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiAccountGroup} />
+              </Button>
+            </a>
           </Badge>
         {/if}
   
@@ -225,8 +252,9 @@
             <!-- {!$sidebarActive?"is-hidden":""} -->
             <Button
               icon
-              class="is-hidden-touch has-transition p-2 rounded-circle" 
+              class="is-hidden-touch" 
               on:click={() => {
+                helpers.resetPanels()
                 showProfileMenu = !showProfileMenu
               }}
             >
@@ -242,13 +270,19 @@
             <div
               style='transform-origin: top center' class="pos-abs pos-t-65 pos-r-5 has-background-white-bis elevation-3 rounded-b maxmins-w-200 z-100 has-transition rot-x-{showProfileMenu ? '0' : '90'}">
               <List nav>
-                <a href="/{data.user.email}/my-profile">
+                <a
+                  data-sveltekit-preload-data="hover"
+                  data-sveltekit-preload-code='eager'
+                  href="/{data.user.email}/my-profile"
+                  disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
+                  on:click={() => {
+                    showProfileMenu = false
+                    if($currentIndex == 3) return
+                    loadingScreen.set(true)
+                    currentIndex.set(3)
+                  }}
+                >
                   <ListItem
-                    on:click={async () => {
-                      currentIndex = 3
-                      showProfileMenu = false
-                      // await goto(`/${data.user.email}/my-profile`, {replaceState: true})
-                    }}
                     disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
                     active={$page.url.pathname === `/${data.user.email}/my-profile`}
                   >
@@ -275,19 +309,29 @@
           </div>
       </AppBar>
   
-      <NavigationDrawer width={innerWidth < 571 ? '100%' : ''} fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
+      <NavigationDrawer width={innerWidth < 571 ? '100%' : '250px'} fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
         <List>
-          <ListItemGroup mandatory class='has-text-{navs[currentIndex].color} {navs[currentIndex].color}'>
+          <ListItemGroup mandatory>
             {#each navs as navItem, i}
               {#if navItem.name === "My Profile" || navItem.name === 'Logout'}
                 <Divider class="is-hidden-desktop p-0 m-0 my-1" />
               {/if}
-              <a href="{navItem.href}">
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                href="{navItem.href}"
+                on:click={() => {
+                  helpers.resetPanels()
+                  if($currentIndex == i) return
+                  loadingScreen.set(true)
+                  navClicked(i)
+                }}
+                disabled={$currentIndex == i}
+              >
                 <ListItem
-                  active={currentIndex == i}
-                  disabled={currentIndex == i}
-                  class="{navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
-                  on:click={() => {navClicked(i, navItem.href)}}
+                  active={$currentIndex == i}
+                  disabled={$currentIndex == i}
+                  class="has-text-{$currentIndex == i ? '' : 'asdf'}{color} has-background-{$currentIndex == i ? '' : 'asdf'}{color}-light {$currentIndex == i && color === 'yellow-text text-darken-2' ? `yellow-text text-darken-2 yellow lighten-4` : $currentIndex == i ? color : ''} {navItem.name === "My Profile" || navItem.name === 'Logout' ?"is-hidden-desktop":""}"
                 >
                   <span slot="prepend">
                     <!-- {#if navItem.name === 'My Profile' && $userData.profile} -->
@@ -299,7 +343,7 @@
                         Profile
                       </div>
                     {:else}
-                      <Icon size="35px" path={navItem.icon} />
+                      <Icon class='has-text-{$currentIndex == i ? '' : 'asdf'}{color} {$currentIndex == i ? '' : 'asdf'}{color}' size="35px" path={navItem.icon} />
                       <div class="txt-size-9 pb-2 {!active ? '' : 'is-hidden'}">
                         {navItem.name === 'Assigned to me' ? 'Assigned' : navItem.name}
                       </div>
@@ -315,37 +359,60 @@
         </List>
       </NavigationDrawer>
   
-      <Overlay {active} absolute on:click={toggleNavigation} index={1} />
+      <Overlay {active} on:click={toggleNavigation} index={1} />
+      <Overlay opacity={1} bind:active={$loadingScreen} index={3} color='white'>
+        <div class='maxmins-w-100p centerxy has-background-white'>
+          <Pulse size={100} color='#13134e' />
+        </div>
+      </Overlay>
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
-        <div class="hero-head">
+        <div class="hero-head z-{$addSubjectPanelActive || $subjectSettingsPanelActive || $confirmDeleteModalActive || $addWorkspacePanelActive || $workspaceSettingsPanelActive || $confirmDeleteWorkspaceModalActive || $addTaskPanelActive || $taskSettingsPanelActive || $taskConfirmDeleteModalActive || $navDrawerActive || $notifCenterOpen || $addBoardPanelActive || $boardSettingsPanelActive || $deleteBoardConfirmationModalActive ? '1' : '2'}">
           <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'pl-3' : ''}">
             {#if innerWidth < 571}
-              <a href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                on:click={() => loadingScreen.set(true)}
+                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
                 <Button 
                   icon
-                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Invitations' ? 'opacity-0p' : ''}'
                 >
                   <Icon path={mdiChevronLeft} />
                 </Button>
               </a>
-              <a href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
-                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                on:click={() => loadingScreen.set(true)}
+                href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
+                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Invitations' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
+              >
                 {$breadCrumbsItems[$breadCrumbsItems.length - 1].text}
               </a>
             {:else}
-              <a href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                on:click={() => loadingScreen.set(true)}
+                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
                 <Button
                   icon
-                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'is-hidden' : ''}'
+                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Invitations' ? 'opacity-0p' : ''}'
                 >
                   <Icon path={mdiChevronLeft} />
                 </Button>
               </a>
-              {#each breadcrumbs as crumb}
-                <a href='{crumb.href}'
-                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}">
+              {#each breadcrumbs as crumb, i}
+                <a
+                  data-sveltekit-preload-data="hover"
+                  data-sveltekit-preload-code='eager'
+                  on:click={() => loadingScreen.set(true)}
+                  href='{crumb.href}'
+                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' || crumb.text === 'Invitations' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
+                >
                   {crumb.text}
                 </a>
                 {#if breadcrumbs.length > 1 && crumb.text !== 'boards' && crumb.text !== 'view' && crumb.text !== 'members' && crumb.text !== 'manage members'}
@@ -409,7 +476,7 @@
     </MaterialApp>
   </div>
   {/if}
-  {#if currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
+  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
     <div class="z-90">
       <Fab {data} />
     </div>

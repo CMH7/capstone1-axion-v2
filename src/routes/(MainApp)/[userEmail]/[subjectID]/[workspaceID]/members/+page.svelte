@@ -1,8 +1,11 @@
 <script>
   //@ts-nocheck
+	import { goto } from '$app/navigation';
+	import helpers from '$lib/configs/helpers';
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, global_USERID, hintText, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { mdiAccountOutline, mdiMagnify } from '@mdi/js';
+	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte';
 	import { Card, CardSubtitle, CardTitle, Icon, MaterialApp, TextField } from 'svelte-materialify';
 
@@ -21,11 +24,25 @@
   }
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'members', href: `/${data.user.email}/${$activeSubject.id}/${$activeWorkspace.id}`}]
     hintText.set('Click the \'+\' to create task and more tools!')
     global_USERID.set(data.user.id)
+    loadingScreen.set(false)
+    helpers.resetPanels()
   })
 </script>
 

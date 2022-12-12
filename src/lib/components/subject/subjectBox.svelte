@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import models from '$lib/models';
-	import { modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store';
   import { Button, Icon } from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
@@ -51,10 +51,10 @@
   }
 
   const handleRightClick = () => {
-    subjectSettingsPanelActive.set(true)
     selectedSubject.set(subject)
     modalChosenColor.set(subject.color)
     newSubjectName.set(subject.name)
+    subjectSettingsPanelActive.set(true)
   }
 
   const startTimer = () => {
@@ -135,11 +135,20 @@
 <form id='{subject.id}' action="?/updateFavoriteSubjects" class='is-hidden' use:enhance>
   <input type="text" bind:value={subject.id} name='id'>
   <input type="text" bind:value={mode} name='mode'>
+  <input type="text" bind:value={$global_USERID} name='userID'>
 </form>
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
   <!-- SUBJECT BOX -->
-  <a href='{favHovering ? '#' : `/${data.user.email}/${subject.id}`}' class='{subject.color === ' pink lighten-3' || subject.color === 'black' || subject.color === 'grey-light' || subject.color === 'grey-lighter' ? 'has-text-grey-dark' : subject.color === ' purple lighten-1' || subject.color === 'grey' ? 'has-text-white' :  ''}'>
+  <a
+    data-sveltekit-preload-data="hover"
+    data-sveltekit-preload-code='eager'
+    on:click={() => {
+      if(!favHovering) loadingScreen.set(true)
+    }}
+    href='{favHovering ? '#' : `/${data.user.email}/${subject.id}`}'
+    class='{subject.color === ' pink lighten-3' || subject.color === 'black' || subject.color === 'grey-light' || subject.color === 'grey-lighter' ? 'has-text-grey-dark' : subject.color === ' purple lighten-1' || subject.color === 'grey' ? 'has-text-white' :  ''}'
+  >
     <div
       on:mouseenter={() => hoveringSubject(subject.id, true)}
       on:mouseleave={() => hoveringSubject('', false)}

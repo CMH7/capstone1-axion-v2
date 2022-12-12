@@ -14,6 +14,7 @@
 
   let updating = false
   let changes = 0
+  let innerWidth = 0
   
   $: isFavorite1 = data.user.favorites[0].ids.includes($selectedSubject.id)
   $: isFavorite = isFavorite1
@@ -69,6 +70,8 @@
     selectedSubject.set(models.subject)
   }
 </script>
+
+<svelte:window bind:innerWidth />
 
 <form id='formUpdateSubject' class="is-hidden" action="?/updateSubject" use:enhance>
   <input type="text" bind:value={$newSubjectName} name='name'>

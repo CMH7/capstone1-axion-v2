@@ -4,7 +4,7 @@
   import { Button, Icon, MaterialApp, Textarea, Select, ClickOutside, TextField, Checkbox, Avatar } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
   import { mdiAccountCircleOutline, mdiClose } from '@mdi/js'
-	import { navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import { Pulse } from 'svelte-loading-spinners'
@@ -89,6 +89,7 @@
     newTaskLevel.set(1)
     newTaskMembers.set([])
     newTaskDueDateTime.set(new Date())
+    group = []
   }
 
 </script>
@@ -102,10 +103,11 @@
   <input type="text" name='status' bind:value={$newTaskStatus}>
   <input type="text" name='dueDateTime' bind:value={toSendDueDateTime}>
   <input type="text" name='members' bind:value={toSendNewTaskMembers}>
+  <input type="text" name='creator' bind:value={$global_USERID}>
 </form>
 
 <div
-  class="has-transition z-{$notifCenterOpen || $navDrawerActive ? '1' : '2'} pos-abs p-2 pos-t-57 pos-r-0 {innerWidth < 571 ? 'min-h-fit-content' : 'maxmins-h-calc-100vh-65px'} maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addTaskPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$notifCenterOpen || $navDrawerActive ? '1' : '2'} pos-abs p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addTaskPanelActive ? innerWidth < 571 ? 'rot-x-90' : 'rot-y-90': innerWidth < 571 ? 'rot-x-0' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->

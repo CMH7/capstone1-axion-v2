@@ -1,11 +1,14 @@
 <script>
   //@ts-nocheck
 	import { activeSubject, activeWorkspace } from '$lib/stores/dashboard.store';
-	import { breadCrumbsItems, global_USERID, hintText } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { onMount } from 'svelte'
 	import BoardMobile from '$lib/components/board/board-mobile.svelte';
 	import BoardDesktop from '$lib/components/board/board-desktop.svelte';
 	import { newTaskMembers, newTaskStatus, statuses, workspaceMembers } from '$lib/stores/task.store';
+	import helpers from '$lib/configs/helpers';
+	import bcryptjs from 'bcryptjs';
+	import { goto } from '$app/navigation';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -13,6 +16,19 @@
   let innerWidth = 0
 
   onMount(() => {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Unauthorized accessing',
+          type: 'warn',
+          id: (Math.random() * 99) + 1
+        }
+      ]
+      goto('/Signin', {replaceState: true})
+      return
+    }
+    currentIndex.set(0)
     activeSubject.set(data.subject)
     activeWorkspace.set(data.workspace)
     $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'boards', href: '#'}]
@@ -22,6 +38,8 @@
     newTaskStatus.set($statuses.filter(status => status.name === 'Todo')[0].value)
     newTaskMembers.set([data.user.id])
     workspaceMembers.set(data.workspaceMembers)
+    helpers.resetPanels()
+    loadingScreen.set(false)
   })
 
 </script>
