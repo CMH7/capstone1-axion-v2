@@ -214,77 +214,76 @@
 <svelte:window bind:innerWidth />
 
 <div class="columns is-mobile {innerWidth < 571 ? 'is-multiline' : ''} overflow-x-auto {innerWidth < 571 ? '' : 'pl-3 pt-3'}">
-  {#if boardTaskss.length != 0}
-    {#if innerWidth > 570}
-      <!-- desktop version -->
-      {#each boardTaskss as bt}
-        <div
-          on:mouseenter={setHint}
-          class="column is-narrow"
-        >
-          <div class="is-flex is-justify-content-center">
-            <div class="notification pb-1 pt-2 maxmins-w-250 max-h-550 px-2 rounded elevation-1 has-background-{bt.color}-light">
-              <div class="maxmins-w-100p is-flex is-align-items-center is-justify-content-space-between mb-3">
-                <!-- Board Title -->
-                <!-- svelte-ignore a11y-click-events-have-key-events -->
-                <div
-                  on:click={() => boardClicked(bt)}
-                  class="fredoka-reg is-unselectable {bt.name === 'Todo' || bt.name === 'In progress' || bt.name === 'Done' ? '': 'is-clickable'} notification m-0 py-1 px-2 is-{bt.color} txt-size-14"
+  {#if innerWidth > 570}
+    <!-- desktop version -->
+    {#each boardTaskss as bt}
+      <div
+        on:mouseenter={setHint}
+        class="column is-narrow"
+      >
+        <div class="is-flex is-justify-content-center">
+          <div class="notification pb-1 pt-2 maxmins-w-250 max-h-550 px-2 rounded elevation-1 has-background-{bt.color}-light">
+            <div class="maxmins-w-100p is-flex is-align-items-center is-justify-content-space-between mb-3">
+              <!-- Board Title -->
+              <!-- svelte-ignore a11y-click-events-have-key-events -->
+              <div
+                on:click={() => boardClicked(bt)}
+                class="fredoka-reg is-unselectable {bt.name === 'Todo' || bt.name === 'In progress' || bt.name === 'Done' ? '': 'is-clickable'} notification m-0 py-1 px-2 is-{bt.color} txt-size-14"
+              >
+                {bt.name}
+              </div>
+
+              <!-- task count and filter button -->
+              <div class="is-flex is-align-items-center is-relative">
+
+                <!-- Task Count Text -->
+                <div class="fredoka-reg txt-size-12 is-unselectable">
+                  {bt.tasks.length}Task{bt.tasks.length > 1 ? 's' : ''}
+                </div>
+
+                <!-- filter icon -->
+                <!-- <Button
+                  icon
+                  size='small'
+                  on:click={() => {
+                    // if(data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length == 0) return
+                    // showFilter.set(true)
+                    // selectedBoard.set(board)
+                  }}
+                  class="ml-1 is-flex is-justify-content-center is-align-items-center has-transition"
                 >
-                  {bt.name}
-                </div>
+                  <Icon class='opacity-0p' size='18px' path={mdiFilter} />
+                </Button> -->
 
-                <!-- task count and filter button -->
-                <div class="is-flex is-align-items-center is-relative">
-
-                  <!-- Task Count Text -->
-                  <div class="fredoka-reg txt-size-12 is-unselectable">
-                    {bt.tasks.length}Task{bt.tasks.length > 1 ? 's' : ''}
-                  </div>
-
-                  <!-- filter icon -->
-                  <!-- <Button
-                    icon
-                    size='small'
-                    on:click={() => {
-                      // if(data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.filter(taska => taska.isSubtask == false).length == 0) return
-                      // showFilter.set(true)
-                      // selectedBoard.set(board)
-                    }}
-                    class="ml-1 is-flex is-justify-content-center is-align-items-center has-transition"
-                  >
-                    <Icon class='opacity-0p' size='18px' path={mdiFilter} />
-                  </Button> -->
-
-                  <!-- filter selection -->
-                  <!-- <TaskFilterDropdown {board} /> -->
-                </div>
+                <!-- filter selection -->
+                <!-- <TaskFilterDropdown {board} /> -->
               </div>
-              
-              <div style='overflow-y: auto;' class="max-h-500 maxmins-w-100p rounded is-flex is-flex-direction-column is-align-items-center">
-                {#each bt.tasks.sort((a, b) => {
-                  if(a.level > b.level) return -1
-                  if(a.level < b.level) return 1
-                  return 0
-                }) as task}
-                  <div on:contextmenu={() => handleRightClick(task)}>
-                    <TaskCard {task} inDone={bt.name === 'Done'} data={
-                        {
-                          taskMembers,
-                          workspace: data.workspaces.filter(workspace => workspace.boards.includes(task.status))[0],
-                          user: data.user,
-                          subject: data.subjects.filter(subject => subject.workspaces.includes(data.workspaces.filter(workspace => workspace.boards.includes(task.status))[0].id))[0]
-                        }
+            </div>
+            
+            <div style='overflow-y: auto;' class="max-h-500 maxmins-w-100p rounded is-flex is-flex-direction-column is-align-items-center">
+              {#each bt.tasks.sort((a, b) => {
+                if(a.level > b.level) return -1
+                if(a.level < b.level) return 1
+                return 0
+              }) as task}
+                <div on:contextmenu={() => handleRightClick(task)}>
+                  <TaskCard {task} inDone={bt.name === 'Done'} data={
+                      {
+                        taskMembers,
+                        workspace: data.workspaces.filter(workspace => workspace.boards.includes(task.status))[0],
+                        user: data.user,
+                        subject: data.subjects.filter(subject => subject.workspaces.includes(data.workspaces.filter(workspace => workspace.boards.includes(task.status))[0].id))[0]
                       }
-                    />
-                  </div>
-                {/each}
-              </div>
+                    }
+                  />
+                </div>
+              {/each}
             </div>
           </div>
         </div>
-      {/each}
-    {:else}
+      </div>
+    {/each}
+  {:else}
       <!-- mobile version -->
       <div class="column is-12">
         <ExpansionPanels bind:value={valueExp} style='z-index: 0' popout multiple flat>
@@ -351,10 +350,5 @@
           {/each}
         </ExpansionPanels>
       </div>
-    {/if}
-  {:else}
-    <div class='fredoka-reg'>
-      Nothing to show here
-    </div>
   {/if}
 </div>
