@@ -8,6 +8,7 @@
 	import { onMount } from "svelte";
   import { Avatar, Button, Divider, Icon, MaterialApp, TextField } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
+	import bcryptjs from "bcryptjs";
 
 
   let email = ''
@@ -30,8 +31,8 @@
   }
 
   const signin = () => {
-    if(!validators.isEmailValid(email)) return
-    if(!validators.isPassValid(password)) return
+    // if(!validators.isEmailValid(email)) return
+    // if(!validators.isPassValid(password)) return
     signingin = true
     handleSubmit()
   }
@@ -83,12 +84,10 @@
   }
 
   onMount(() => {
-    notifs.set([])
     startAnimation()
     if(localStorage.getItem('exmxaxixlx') && localStorage.getItem('xxx')) {
       email = localStorage.getItem('exmxaxixlx')
       password = localStorage.getItem('xxx')
-      console.log(email);
       signin()
     }
   })

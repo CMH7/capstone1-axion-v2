@@ -35,6 +35,10 @@
 	import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationModalActive } from '$lib/stores/boards.store';
 	import helpers from '$lib/configs/helpers';
   import bcryptjs from 'bcryptjs'
+	import UploadPicModal from '$lib/components/myProfile/uploadPicModal.svelte';
+	import ChangePassCodeModal from '$lib/components/myProfile/changePassCodeModal.svelte';
+	import ChangeEmailCodeModal from '$lib/components/myProfile/changeEmailCodeModal.svelte';
+	import DeleteAccountConfirmationModal from '$lib/components/myProfile/deleteAccountConfirmationModal.svelte';
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -107,6 +111,7 @@
         type: 'success',
         id: `${(Math.random() * 999) + 1}`
       }]
+      localStorage.clear()
     }
 
     if (result.type === 'success') {
@@ -167,6 +172,11 @@
     <WorkspaceRemoveMemberConfirmationModal />
     <WorkspaceDemoteWorkspaceAdmin />
     <WorkspacePromoteWorkspaceMember />
+
+    <UploadPicModal {data} />
+    <ChangePassCodeModal {data} />
+    <ChangeEmailCodeModal {data} />
+    <DeleteAccountConfirmationModal {data} />
 
     <MaterialApp>
       <AppBar fixed class='maxmins-w-100p has-background-primary px-3 is-align-items-center'>
@@ -429,7 +439,7 @@
         </div>
   
         <!-- FOOTER -->
-        {#if removeHint}
+        {#if removeHint || !data.user.footerHints}
           <div class="hero-foot pl-3 pb-3 {innerWidth < 571 ? 'has-background-primary-dark2' : ''}">
             <div class="level">
               <div class="level-left">
@@ -473,10 +483,12 @@
           </div>
         {/if}
       </div>
+
     </MaterialApp>
   </div>
   {/if}
-  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' }
+
+  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' && $currentIndex !== 3 }
     <div class="z-90">
       <Fab {data} />
     </div>
