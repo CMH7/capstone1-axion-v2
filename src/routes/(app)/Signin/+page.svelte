@@ -4,11 +4,10 @@
 	import { invalidateAll } from "$app/navigation";
 	import validators from "$lib/configs/validators";
 	import { notifs } from "$lib/stores/global.store";
-	import { mdiAccount, mdiEye, mdiEyeOff, mdiKey, mdiLock } from "@mdi/js";
+	import { mdiAccount, mdiKey } from "@mdi/js";
 	import { onMount } from "svelte";
   import { Avatar, Button, Divider, Icon, MaterialApp, TextField } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
-	import bcryptjs from "bcryptjs";
 
 
   let email = ''
@@ -31,8 +30,8 @@
   }
 
   const signin = () => {
-    // if(!validators.isEmailValid(email)) return
-    // if(!validators.isPassValid(password)) return
+    if(!validators.isEmailValid(email)) return
+    if(!validators.isPassValid(password)) return
     signingin = true
     handleSubmit()
   }
