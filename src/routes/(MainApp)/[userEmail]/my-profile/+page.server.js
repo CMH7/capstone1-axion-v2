@@ -1,3 +1,4 @@
+//@ts-nocheck
 import { error, invalid, redirect } from '@sveltejs/kit'
 import prisma from '$lib/db'
 import uploadPic from '$lib/configs/helpers/uploadPic';
@@ -584,6 +585,7 @@ export const actions = {
 		})
 
 		const result2a = await prisma.$transaction(trs2)
+		if(!result2a) throw error(500, 'Too much proccesses in result2a');
 
 		// CHECK ON OTHER DATA
 		const allSendedChats = await prisma.chats.findMany({
