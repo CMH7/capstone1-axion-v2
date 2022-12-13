@@ -67,15 +67,13 @@ export const actions = {
 		});
     if (!user) return invalid(500, { message: 'Database error. Please try again' })
 
-    sgMail.send(constants.newMsg(
+    const mail = await sgMail.send(constants.newMsg(
       user.email,
       `${user.firstName} ${user.lastName}`,
       `https://axion-v2.herokuapp.com/verification/success/${user.id}`
-    )).then((res) => {
-      console.log(`Email verification sent to ${user.email}, ${res}`);
-    }).catch((err) => {
-      console.error(err);
-    });
+    ))
+
+    console.log(mail[0]);
 
     throw redirect(302, `/Signin`);
   }
