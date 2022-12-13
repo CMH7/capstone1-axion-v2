@@ -73,8 +73,6 @@ export const actions = {
       `https://axion-v2.herokuapp.com/verification/success/${user.id}`
     ))
 
-    console.log(mail[0]);
-
     throw redirect(302, `/Signin`);
   }
 }
