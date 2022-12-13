@@ -30,10 +30,5 @@ export default (
 	const userRef = ref(storage, `${userName}/${fileName}`);
 	const ups = uploadString(userRef, file, 'data_url', meta);
 
-  return ups
-	// ups.then((snapshot) => {
-	// 	getDownloadURL(userRef).then(async (url) => {
-	// 		// do here
-	// 	});
-	// });
+  return { userRef, ups }
 };

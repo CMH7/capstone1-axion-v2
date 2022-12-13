@@ -33,7 +33,7 @@ export const actions = {
         }
       }
     })
-    if(!user2) return invalid(409, { message: 'Try again, server error', reason: 'other' });
+    if (!user2) return invalid(409, { message: 'Try again, server error', reason: 'other' });
     throw redirect(302, `/${emailS}`);
 	}
 };
