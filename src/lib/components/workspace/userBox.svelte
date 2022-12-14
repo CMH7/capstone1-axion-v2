@@ -1,8 +1,6 @@
 <script>
-	import { enhance } from '$app/forms';
-	import { confirmationDemoteWorkspaceAdminModalActive, confirmationPromoteWorkspaceMemberModalActive, confirmationRemoveWorkspaceMemberModalActive, selectedMember } from '$lib/stores/workspace.store';
-
   //@ts-nocheck
+	import { confirmationDemoteWorkspaceAdminModalActive, confirmationPromoteWorkspaceMemberModalActive, confirmationRemoveWorkspaceMemberModalActive, selectedMember, workspaceInviteUserModalActive } from '$lib/stores/workspace.store';
 	import { mdiAccountOutline } from '@mdi/js';
   import { Card, Icon, CardTitle, CardSubtitle, CardActions, Button } from 'svelte-materialify'
 
@@ -23,12 +21,13 @@
   }
 
   const dpi = () => {
+    selectedMember.set(member)
     if(data.workspace.admins.includes(member.id)) {
-      selectedMember.set(member)
       confirmationDemoteWorkspaceAdminModalActive.set(true)
-    } else {
-      selectedMember.set(member)
+    } else if(!data.workspace.admins.includes(member.id) && data.workspace.members.includes(member.id)) {
       confirmationPromoteWorkspaceMemberModalActive.set(true)
+    } else {
+      workspaceInviteUserModalActive.set(true)
     }
   }
 </script>

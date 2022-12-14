@@ -39,6 +39,8 @@
 	import ChangePassCodeModal from '$lib/components/myProfile/changePassCodeModal.svelte';
 	import ChangeEmailCodeModal from '$lib/components/myProfile/changeEmailCodeModal.svelte';
 	import DeleteAccountConfirmationModal from '$lib/components/myProfile/deleteAccountConfirmationModal.svelte';
+	import WorkspaceInviteUserModal from '$lib/components/workspace/workspaceInviteUserModal.svelte';
+	import pusher from '$lib/configs/helpers/realtime';
 
   /**
    * @type {import('./$types').LayoutServerData}
@@ -140,10 +142,21 @@
       return
     }
     global_USERID.set(data.user.id)
+    helpers.pusher.connect()
+    let channel = helpers.pusher.subscribe(data.user.id)
+    channel.bind('updates', function(data) {
+      invalidateAll()
+    })
+    console.log('pusher connected');
   })
+
+  const unload = () => {
+    pusher.disconnect()
+    console.log('pusher disconnected');
+  }
 </script>
 
-<svelte:window bind:innerWidth />
+<svelte:window bind:innerWidth on:unload={unload} />
 
 <!-- make this form hidden always -->
 <form id="formlogout" action="?/logout" class="is-hidden" use:enhance></form>
@@ -172,6 +185,7 @@
     <WorkspaceRemoveMemberConfirmationModal />
     <WorkspaceDemoteWorkspaceAdmin />
     <WorkspacePromoteWorkspaceMember />
+    <WorkspaceInviteUserModal {data} />
 
     <UploadPicModal {data} />
     <ChangePassCodeModal {data} />

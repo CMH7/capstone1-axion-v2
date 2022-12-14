@@ -19,83 +19,106 @@ export async function load({ params }) {
 		}
 	});
 	if (!user) throw error(404, 'Account not found')
+	
+	let ownedWorkspacesCount = 0
+	let ownedSubjectsCount = 0
+	let joinedWorkspacesCount = 0
+	let createdTasksCount = 0
+	let assignedTasksCount = 0
+	let favoriteSubjectsCounts = 0
+	let favoriteWorkspacesCounts = 0
+	let favoriteTasksCounts = 0
 
-	const ownedSubjects = await prisma.subjects.findMany({
-		where: {
-			owner: {
-				equals: user.id
-			}
-		},
-		select: {
-			id: true
-		}
-	})
-	const ownedWorkspaces = await prisma.workspaces.findMany({
-		where: {
-			owner: {
-				equals: user.id
-			}
-		},
-		select: {
-			id: true
-		}
-	})
-	const joinedWorkspaces = await prisma.workspaces.findMany({
-		where: {
-			members: {
-				has: user.id
-			},
-			NOT: {
+	if (user.showStatistics) {
+		const ownedSubjects = await prisma.subjects.findMany({
+			where: {
 				owner: {
 					equals: user.id
 				}
+			},
+			select: {
+				id: true
 			}
-		},
-		select: {
-			id: true
-		}
-	})
-	const createdTasks = await prisma.tasks.findMany({
-		where: {
-			createdBy: {
-				equals: user.id
+		});
+		const ownedWorkspaces = await prisma.workspaces.findMany({
+			where: {
+				owner: {
+					equals: user.id
+				}
+			},
+			select: {
+				id: true
 			}
-		},
-		select: {
-			id: true
-		}
-	})
-	const assignedTasks = await prisma.tasks.findMany({
-		where: {
-			members: {
-				has: user.id
+		});
+		const joinedWorkspaces = await prisma.workspaces.findMany({
+			where: {
+				members: {
+					has: user.id
+				},
+				NOT: {
+					owner: {
+						equals: user.id
+					}
+				}
+			},
+			select: {
+				id: true
 			}
-		},
-		select: {
-			id: true,
-		}
-	})
+		});
+		const createdTasks = await prisma.tasks.findMany({
+			where: {
+				createdBy: {
+					equals: user.id
+				}
+			},
+			select: {
+				id: true
+			}
+		});
+		const assignedTasks = await prisma.tasks.findMany({
+			where: {
+				members: {
+					has: user.id
+				}
+			},
+			select: {
+				id: true
+			}
+		});
 
-	const ownedWorkspacesCount = ownedWorkspaces.length
-	const ownedSubjectsCount = ownedSubjects.length
-	const joinedWorkspacesCount = joinedWorkspaces.length
-	const createdTasksCount = createdTasks.length
-	const assignedTasksCount = assignedTasks.length
-	const favoriteSubjectsCounts = user.favorites[0].ids.length
-	const favoriteWorkspacesCounts = user.favorites[1].ids.length
-	const favoriteTasksCounts = user.favorites[2].ids.length
-	
-	return {
-		user,
-		ownedSubjectsCount,
-		ownedWorkspacesCount,
-		joinedWorkspacesCount,
-		createdTasksCount,
-		assignedTasksCount,
-		favoriteSubjectsCounts,
-		favoriteWorkspacesCounts,
-		favoriteTasksCounts
-	};
+		ownedWorkspacesCount = ownedWorkspaces.length
+		ownedSubjectsCount = ownedSubjects.length
+		joinedWorkspacesCount = joinedWorkspaces.length
+		createdTasksCount = createdTasks.length
+		assignedTasksCount = assignedTasks.length
+		favoriteSubjectsCounts = user.favorites[0].ids.length
+		favoriteWorkspacesCounts = user.favorites[1].ids.length
+		favoriteTasksCounts = user.favorites[2].ids.length
+
+		return {
+			user,
+			ownedSubjectsCount,
+			ownedWorkspacesCount,
+			joinedWorkspacesCount,
+			createdTasksCount,
+			assignedTasksCount,
+			favoriteSubjectsCounts,
+			favoriteWorkspacesCounts,
+			favoriteTasksCounts
+		};
+	} else {
+		return {
+			user,
+			ownedSubjectsCount,
+			ownedWorkspacesCount,
+			joinedWorkspacesCount,
+			createdTasksCount,
+			assignedTasksCount,
+			favoriteSubjectsCounts,
+			favoriteWorkspacesCounts,
+			favoriteTasksCounts
+		};
+	}
 }
 
 /** @type {import('./$types').Actions} */

@@ -1,6 +1,7 @@
 <script>
   //@ts-nocheck
 	import { goto } from '$app/navigation';
+	import NothingFound from '$lib/components/nothingFound.svelte';
 	import SubjectBox from '$lib/components/subject/subjectBox.svelte';
 	import TaskCard from '$lib/components/task/task-card.svelte';
 	import WorkspaceBox from '$lib/components/workspace/workspaceBox.svelte';
@@ -290,7 +291,7 @@
   }
 
   onMount(() => {
-      if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
+    if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
       $notifs = [
         ...$notifs,
         {
@@ -379,9 +380,7 @@
         </div>
         <div class='columns is-mobile is-multiline {innerWidth < 571 ? 'is-centered pt-4' : ''}'>
           {#if clientSubjects.length == 0}
-            <div class='column is narrow fredoka-reg'>
-              No subjects to show
-            </div>
+            <NothingFound />
           {:else}
             {#each clientSubjects as subject}
               <div class='column is-narrow {innerWidth < 571 ? 'py-0' : ''}'>
@@ -415,9 +414,7 @@
         </div>
         <div class='columns is-mobile is-multiline {innerWidth < 571 ? 'is-centered pt-4' : ''}'>
           {#if clientWorkspaces.length == 0}
-            <div class='column is narrow fredoka-reg'>
-              No workspaces to show
-            </div>
+            <NothingFound />
           {:else}
             {#each clientWorkspaces as workspace}
               <div class='column is-narrow {innerWidth < 571 ? 'py-0' : ''}'>
@@ -484,9 +481,7 @@
         </div>
         <div class='columns is-mobile is-multiline {innerWidth < 571 ? 'is-centered pt-4' : ''}'>
           {#if clientTasks.length == 0}
-            <div class='column is narrow fredoka-reg'>
-              No tasks to show
-            </div>
+            <NothingFound />
           {:else}
             {#each clientTasks as task}
               <div class='column is-narrow {innerWidth < 571 ? 'py-0' : ''}'>

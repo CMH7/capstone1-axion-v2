@@ -32,3 +32,5 @@ export let selectedMember = writable({
   online: false,
   gender: ''
 })
+
+export let workspaceInviteUserModalActive = writable(false)

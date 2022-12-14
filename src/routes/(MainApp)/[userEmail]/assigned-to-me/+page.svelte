@@ -1,6 +1,7 @@
 <script>
   //@ts-nocheck
 	import { goto } from '$app/navigation';
+	import NothingFound from '$lib/components/nothingFound.svelte';
 	import TaskCard from '$lib/components/task/task-card.svelte';
 	import helpers from '$lib/configs/helpers'
 	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
@@ -353,8 +354,6 @@
       </div>
     {/if}
   {:else}
-    <div class='fredoka-reg'>
-      Nothing to show here
-    </div>
+    <NothingFound />
   {/if}
 </div>

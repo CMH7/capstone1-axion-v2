@@ -12,11 +12,13 @@ export async function load({ params }) {
 	});
 	if (!user) throw error(404, 'Account not found')
 
-	const notifications = await prisma.notifications.findMany({
+	let notifications = await prisma.notifications.findMany({
 		where: {
 			OR: user.notifications.map(id => {return{id}})
 		}
 	})
+
+	notifications = notifications.reverse()
 
 	const invitations = await prisma.invitations.findMany({
 		where: {
