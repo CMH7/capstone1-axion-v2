@@ -133,8 +133,11 @@ export const actions = {
 
 		// @ts-ignore
 		const { userRef, ups } = uploadPic(userID, rawData, fileName, { contentType: fileType });
-		await ups;
+		const upres = await ups;
+		if (!upres) return invalid(500, { message: 'Server error file cannot be processed try again later', reason: 'databaseError' })
+		
 		const urla = await getDownloadURL(userRef);
+		if(urla === '') return invalid(500, {message: 'Server file processing done but data was not fetch please reload', reason: 'databaseError'})
 
 		const updatedUserProfile = await prisma.users.update({
 			where: {
