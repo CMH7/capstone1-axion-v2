@@ -23,6 +23,9 @@ export async function load({ params }) {
 
 	let workspaces = await prisma.workspaces.findMany({
 		where: {
+			members: {
+				has: user.id
+			},
 			OR: subject.workspaces.map(id => {return {id}})
 		},
 		select: {
@@ -54,10 +57,8 @@ export async function load({ params }) {
 		})
 		if (!updatedUser) return invalid(500, { message: 'Updated user not found please reload', reason: 'databaseError' })
 		
-		workspaces = workspaces.filter(workspace => workspace.members.includes(user.id))
 		return { workspaces, user, subject, aMember };
 	} else {
-		workspaces = workspaces.filter(workspace => workspace.members.includes(user.id))
 		aMember = true
 		return { workspaces, user, subject, aMember };
 	}

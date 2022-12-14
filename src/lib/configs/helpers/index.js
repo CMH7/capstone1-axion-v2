@@ -2,6 +2,7 @@ import { addBoardPanelActive, boardSettingsPanelActive, deleteBoardConfirmationM
 import { addSubjectPanelActive, confirmDeleteModalActive, subjectSettingsPanelActive } from "$lib/stores/subject.store"
 import { addTaskPanelActive, taskConfirmDeleteModalActive, taskSettingsPanelActive } from "$lib/stores/task.store"
 import { addWorkspacePanelActive, confirmationDemoteWorkspaceAdminModalActive, confirmationPromoteWorkspaceMemberModalActive, confirmationRemoveWorkspaceMemberModalActive, confirmDeleteWorkspaceModalActive, workspaceSettingsPanelActive } from "$lib/stores/workspace.store"
+import pusher from "./realtime"
 
 export default {
   resetPanels: () => {
@@ -20,5 +21,6 @@ export default {
     confirmationDemoteWorkspaceAdminModalActive.set(false)
     confirmationPromoteWorkspaceMemberModalActive.set(false)
     confirmationRemoveWorkspaceMemberModalActive.set(false)
-  }
+  },
+  pusher
 }

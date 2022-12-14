@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 import prisma from '$lib/db';
 import { error, invalid, redirect } from '@sveltejs/kit'
+import pusherServer from '$lib/configs/helpers/realtime2.server';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {
@@ -52,7 +53,8 @@ export async function load({ params }) {
   
 	const otherUsers = await prisma.users.findMany({
 		where: {
-			OR: members.map(u => {return{NOT: {id: u.id}}})
+			canBeInvited: true,
+			OR: members.map(u => { return { NOT: { id: u.id } } }),
 		},
     select: {
       id: true,
@@ -639,5 +641,118 @@ export const actions = {
 
     //@ts-ignore
     let secondBatchUpdateMembers = await prisma.$transaction(trs2)
-  }
+	},
+	inviteUser: async ({ request, params }) => {
+		const data = await request.formData()
+		const invitedUserID = data.get('iuID')?.toString()
+		const invitedUserName = data.get('iuName')?.toString()
+
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: params.userEmail
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				profile: true,
+				email: true
+			}
+		})
+		if (!cUser) throw error(404, 'Account not found')
+		
+		const workspace = await prisma.workspaces.findFirst({
+			where: {
+				id: {
+					equals: params.workspaceID
+				}
+			},
+			select: {
+				id: true,
+				name: true
+			}
+		})
+		if(!workspace) return invalid(404, {message: 'Error looking for workspace please reload.', reason: 'databaseError'})
+
+		const newInvitation = await prisma.invitations.create({
+			data: {
+				from: {
+					email: cUser.email,
+					id: cUser.id,
+					name: `${cUser.firstName} ${cUser.lastName}`,
+					profile: cUser.profile
+				},
+				message: `${cUser.firstName} ${cUser.lastName} invites ${invitedUserName} to their workspace ${workspace.name}`,
+				status: 'Pending',
+				subjectID: params.subjectID,
+				to: {
+					id: invitedUserID,
+					name: invitedUserName
+				},
+				workspace: {
+					id: params.workspaceID,
+					name: workspace.name
+				}
+			},
+			select: {
+				id: true
+			}
+		});
+		if (!newInvitation) return invalid(404, { message: 'Inviting process failed.', reason: 'databaseError' })
+
+		const newNotification = await prisma.notifications.create({
+			data: {
+				aMention: false,
+				anInvitation: false,
+				conversationID: '',
+				for: {
+					self: true,
+					userID: cUser.id
+				},
+				fromInterface: {
+					interf: '',
+					subInterface: ''
+				},
+				fromTask: '',
+				isRead: false,
+				message: `${cUser.firstName} ${cUser.lastName} invites ${invitedUserName} to their workspace ${workspace.name}`
+			},
+			select: {
+				id: true
+			}
+		});
+		if(!newNotification) return invalid(500, {message: 'Error generating notification', reason: 'databaseError'})
+		
+		const updatedUser1 = await prisma.users.update({
+			where: {
+				id: cUser.id
+			},
+			data: {
+				invitations: {
+					push: newInvitation.id
+				}
+			},
+			select: {
+				id: true
+			}
+		})
+		if (!updatedUser1) return invalid(500, { message: 'Invitation proccess stopped by server, please reload', reason: 'databaseError' })
+		
+		const updatedUser2 = await prisma.users.update({
+			where: {
+				id: invitedUserID
+			},
+			data: {
+				invitations: {
+					push: newInvitation.id
+				},
+				notifications: {
+					push: newNotification.id
+				}
+			}
+		})
+		if (!updatedUser2) return invalid(500, { message: 'Invitation proccess stopped by server, please reload', reason: 'databaseError' })
+		
+		pusherServer.trigger(invitedUserID, 'updates', {})
+	}
 }
