@@ -5,10 +5,10 @@
 	import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen, notifs } from '$lib/stores/global.store';
 	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte'
-	import { Avatar, Button, Icon, Select, Switch, Textarea, TextField, Tooltip } from 'svelte-materialify';
+	import { Avatar, Button, Icon, Select, Textarea, TextField, Tooltip } from 'svelte-materialify';
   import { Moon } from 'svelte-loading-spinners'
 	import { changeEmailCodeModalActive, changePassCodeModalActive, deleteAccoutConfirmationModalActive, newEmailNew, newPassword, uploadPicModalActive } from '$lib/stores/myProfile.store';
-	import { mdiAccountOutline, mdiEyeOff, mdiAccountRemove, mdiCancel, mdiCheck, mdiClose, mdiEmail, mdiEye, mdiImageEditOutline, mdiKey, mdiPencil, mdiSendOutline } from '@mdi/js';
+	import { mdiAccountOutline, mdiEyeOff, mdiAccountRemove, mdiCancel, mdiCheck, mdiEmail, mdiEye, mdiImageEditOutline, mdiKey, mdiPencil, mdiSendOutline } from '@mdi/js';
 	import constants from '$lib/configs/constants';
 	import validators from '$lib/configs/validators';
 	import { applyAction, deserialize, enhance } from '$app/forms';

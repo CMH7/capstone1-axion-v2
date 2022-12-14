@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 import prisma from '$lib/db';
 import { error, invalid, redirect } from '@sveltejs/kit'
-import pusherServer from '$lib/configs/helpers/realtime2.server';
+import pusherServer from '$lib/configs/helpers/realtime.server';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ params }) {

@@ -15,6 +15,8 @@
   /** @type {import('./$types').PageServerData}*/
   export let data
 
+  /** @type {import('@prisma/client').invitations[]}*/
+  let invitations = []
   let innerWidth = 0
   let currentInv = ''
   let processing = false
@@ -22,10 +24,9 @@
   let searchFor = ''
   let fromMe = true
   let fromOthers = true
-  let invitations = []
 
   $: update(data)
-  $: update = (data) => {
+  $: update = ( /** @type {import('./$types').PageServerData}*/ data) => {
     if(!fromMe && !fromOthers) {
       invitations = []
     } else if (fromMe && !fromOthers) {
