@@ -12,6 +12,7 @@
 	import { mdiMagnify } from '@mdi/js';
   import bcryptjs from 'bcryptjs'
 	import { goto } from '$app/navigation';
+	import NothingFound from '$lib/components/nothingFound.svelte';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -65,23 +66,11 @@
   <!-- Other Subjects -->
   {#if clientSubjects.length == 0}
     {#if !$addSubjectPanelActive && innerWidth > 570}
-      <div class="section">
-        <div class="container">
-          <p>
-            No subjects
-          </p>
-        </div>
-      </div>
+      <NothingFound />
     {:else if $addSubjectPanelActive && innerWidth > 570}
       <SubjectBoxPreview />
     {:else}
-      <div class="section">
-        <div class="container">
-          <p>
-            No subjects
-          </p>
-        </div>
-      </div>
+      <NothingFound />
     {/if}
   {:else}
     {#each clientSubjects as subject}

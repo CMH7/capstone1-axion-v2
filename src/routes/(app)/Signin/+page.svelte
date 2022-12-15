@@ -84,11 +84,6 @@
 
   onMount(() => {
     startAnimation()
-    if(localStorage.getItem('exmxaxixlx') && localStorage.getItem('xxx')) {
-      email = localStorage.getItem('exmxaxixlx')
-      password = localStorage.getItem('xxx')
-      signin()
-    }
   })
 </script>
 
@@ -129,7 +124,7 @@
             
             <TextField
               outlined
-              type='email'
+              type='text'
               {disabled}
               error={emailError}
               bind:value={email}

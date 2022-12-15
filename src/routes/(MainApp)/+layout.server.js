@@ -3,7 +3,7 @@ import { error } from '@sveltejs/kit';
 
 /** @type {import('./$types').LayoutServerLoad} */
 export async function load({ params }) {
-	const user = await prisma.users.findFirst({
+	let user = await prisma.users.findFirst({
 		where: {
 			email: {
 				equals: params.userEmail
@@ -11,6 +11,18 @@ export async function load({ params }) {
 		}
 	});
 	if (!user) throw error(404, 'Account not found')
+
+	if (!user.online) {
+		user = await prisma.users.update({
+			where: {
+				id: user.id
+			},
+			data: {
+				online: true
+			}
+		})
+		if (!user) throw error(404, 'Account not found');
+	}
 
 	let notifications = await prisma.notifications.findMany({
 		where: {

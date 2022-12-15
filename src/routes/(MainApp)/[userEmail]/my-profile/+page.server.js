@@ -775,5 +775,28 @@ export const actions = {
 		if(!deletedUser) return invalid(500, {message: 'Failed to delete account.', reason: 'databaseError'})
 
 		throw redirect(302, '/Signup')
+	},
+	resendVerification: async ({ params }) => {
+		const user = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true,
+				email: true
+			}
+		})
+		if(!user) throw error(404, 'Account not found')
+
+		const mail = await sgMail.send(constants.newMsg(
+      user.email,
+      `${user.firstName} ${user.lastName}`,
+      `http://www.axion.social/verification/success/${user.id}`
+		))
+		if(!mail) return invalid(500, {message: 'Error sending verification mail please try again', reason: 'databaseError'})
 	}
 };

@@ -7,7 +7,7 @@
 	import { onMount } from 'svelte'
 	import { Avatar, Button, Icon, Select, Textarea, TextField, Tooltip } from 'svelte-materialify';
   import { Moon } from 'svelte-loading-spinners'
-	import { changeEmailCodeModalActive, changePassCodeModalActive, deleteAccoutConfirmationModalActive, newEmailNew, newPassword, uploadPicModalActive } from '$lib/stores/myProfile.store';
+	import { changeEmailCodeModalActive, changePassCodeModalActive, deleteAccoutConfirmationModalActive, newEmailNew, newPassword, uploadPicModalActive, verificationResent } from '$lib/stores/myProfile.store';
 	import { mdiAccountOutline, mdiEyeOff, mdiAccountRemove, mdiCancel, mdiCheck, mdiEmail, mdiEye, mdiImageEditOutline, mdiKey, mdiPencil, mdiSendOutline } from '@mdi/js';
 	import constants from '$lib/configs/constants';
 	import validators from '$lib/configs/validators';
@@ -30,6 +30,7 @@
   let showTutorialUpdating = false
   let showStatisticsUpdating = false
   let footerHintsUpdating = false
+  let resendingVerification = false
 
   $: ogFirstName = data.user.firstName
   $: ogLastName = data.user.lastName
@@ -405,6 +406,48 @@
     }
   }
 
+  const resendVerification = async () => {
+    if(resendingVerification) return
+    if($verificationResent) return
+    resendingVerification = true
+
+    let form = document.getElementById('formResendVerification')
+    const data = new FormData(form);
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: data
+    });
+
+    /** @type {import('@sveltejs/kit').ActionResult} */
+    const result = deserialize(await response.text());
+
+    if(result.type === 'invalid') {
+      $notifs = [...$notifs, {
+        msg: result.data.message,
+        type: `${result.data.reason === 'databaseError' ? 'stayError' : 'error'}`,
+        id: `${(Math.random() * 999) + 1}`
+      }]
+      resendingVerification = false
+    }
+
+    if (result.type === 'success') {
+      // re-run all `load` functions, following the successful update
+      await invalidateAll();
+    }
+
+    applyAction(result);
+    if(result.type === 'success') {
+      $notifs = [...$notifs, {
+        msg: 'Verification resent successfully',
+        type: 'success',
+        id: `${(Math.random() * 999) + 1}`
+      }]
+      resendingVerification = false
+      verificationResent.set(true)
+    }
+  }
+
   onMount(() => {
     if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
       $notifs = [
@@ -423,6 +466,7 @@
     global_USERID.set(data.user.id)
     helpers.resetPanels()
     currentIndex.set(3)
+    verificationResent.set(data.user.verified)
   })
 </script>
 
@@ -477,6 +521,8 @@
 <form action="?/deleteUser" id='formDeleteUser' class='is-hidden' use:enhance>
   <input type="text" name='id' bind:value={data.user.id}>
 </form>
+
+<form action="?/resendVerification" id='formResendVerification' class='is-hidden' use:enhance></form>
 
 <div class="columns is-mobile is-multiline">
   <div class='column is-10-desktop is-10-desktop is-8-tablet is-12-mobile'>
@@ -914,7 +960,7 @@
                 v => v !== '' || 'Email cannot be empty',
                 v => validators.isEmailValid(v) || 'Email is not valid'
               ]}
-              messages={!data.user.verified ? ['Unverified | Click send to resend verification mail'] : []}
+              messages={!data.user.verified && !$verificationResent ? ['Unverified | Click send to resend verification mail'] : data.user.verified ? [] : ['Unverified']}
               color='indigo darken-4'
               class='fredoka-reg'
               id='emailField'
@@ -924,10 +970,14 @@
               </div>
               Email
               <div slot='append'>
-                {#if !data.user.verified}
+                {#if !data.user.verified && !$verificationResent}
                   <Tooltip bottom>
-                    <Button icon>
-                      <Icon path={mdiSendOutline} />
+                    <Button icon on:click={resendVerification}>
+                      {#if !resendingVerification}
+                        <Icon path={mdiSendOutline} />
+                      {:else}
+                        <Moon size={20} color='#000' />
+                      {/if}
                     </Button>
                     <div slot="tip">
                       <div class='fredoka-reg'>
@@ -946,35 +996,37 @@
               </div>
             </div>
           {/if}
-          <div class="column is-12 pt-0">
-            <div class='maxmins-w-100p is-flex is-justify-content-flex-end'>
-              {#if changeEmail}
-                <Button text size='small' class='has-background-grey has-text-white mr-3' on:click={() => {
-                  newEmail = data.user.email
-                  changeEmail = false
-                  document.getElementById('emailField').blur()
-                }}>
-                  Cancel
-                </Button>
-              {/if}
-              <Button text size='small' class='has-background-grey has-text-white' on:click={() => {
-                if(changeEmail) {
-                  changeEmailNow()
-                  return
-                }
-                changeEmail = true
-                document.getElementById('emailField').focus()
-              }}>
-                {#if !changeEmail && !$changeEmailCodeModalActive}
-                  Change email
-                {:else if $changeEmailCodeModalActive}
-                  <Moon color="#000" size={20} />
-                {:else}
-                  Save
+          {#if data.user.verified}
+            <div class="column is-12 pt-0">
+              <div class='maxmins-w-100p is-flex is-justify-content-flex-end'>
+                {#if changeEmail}
+                  <Button text size='small' class='has-background-grey has-text-white mr-3' on:click={() => {
+                    newEmail = data.user.email
+                    changeEmail = false
+                    document.getElementById('emailField').blur()
+                  }}>
+                    Cancel
+                  </Button>
                 {/if}
-              </Button>
+                <Button text size='small' class='has-background-grey has-text-white' on:click={() => {
+                  if(changeEmail) {
+                    changeEmailNow()
+                    return
+                  }
+                  changeEmail = true
+                  document.getElementById('emailField').focus()
+                }}>
+                  {#if !changeEmail && !$changeEmailCodeModalActive}
+                    Change email
+                  {:else if $changeEmailCodeModalActive}
+                    <Moon color="#000" size={20} />
+                  {:else}
+                    Save
+                  {/if}
+                </Button>
+              </div>
             </div>
-          </div>
+          {/if}
 
           <div class='column is-12 pb-0'>
             <TextField

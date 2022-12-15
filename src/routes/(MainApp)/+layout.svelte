@@ -153,6 +153,7 @@
   const unload = () => {
     pusher.disconnect()
     console.log('pusher disconnected');
+    logout()
   }
 </script>
 

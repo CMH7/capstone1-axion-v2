@@ -54,6 +54,7 @@ export async function load({ params }) {
 	const otherUsers = await prisma.users.findMany({
 		where: {
 			canBeInvited: true,
+			verified: true,
 			OR: members.map(u => { return { NOT: { id: u.id } } }),
 		},
     select: {

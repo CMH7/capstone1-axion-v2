@@ -12,6 +12,7 @@
 	import { Icon, TextField } from 'svelte-materialify';
 	import { mdiMagnify } from '@mdi/js';
 	import bcryptjs from 'bcryptjs';
+	import NothingFound from '$lib/components/nothingFound.svelte';
 
   /** 
    * @type {import('./$types').PageServerData}
@@ -71,23 +72,11 @@
   <!-- Other Subjects -->
   {#if clientWorkspaces.length == 0}
     {#if !$addWorkspacePanelActive && innerWidth > 570}
-      <div class="section">
-        <div class="container">
-          <p>
-            No workspaces
-          </p>
-        </div>
-      </div>
+      <NothingFound />
     {:else if $addWorkspacePanelActive && innerWidth > 570}
       <WorkspaceBoxPreview />
     {:else}
-      <div class="section">
-        <div class="container">
-          <p>
-            No workspaces
-          </p>
-        </div>
-      </div>
+      <NothingFound />
     {/if}
   {:else}
     {#each clientWorkspaces as workspace}
