@@ -11,3 +11,5 @@ export let newPassword = writable('')
 export let newEmailNew = writable('')
 
 export let deleteAccoutConfirmationModalActive = writable(false)
+
+export let verificationResent = writable(false)

@@ -12,6 +12,9 @@ export const actions = {
     const emailS = email?.toString()
     const passS = pass?.toString()
 
+    console.log(emailS);
+    console.log(passS);
+
     const user = await prisma.users.findFirst({
       where: {
         email: {

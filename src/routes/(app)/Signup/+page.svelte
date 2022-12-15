@@ -348,7 +348,7 @@
                       /** @param {string} v */ v => validators.containsLowerCase(v) || 'Password must have atleast 1 (one) lower cased letter',
                       /** @param {string} v */ v => validators.containsDigit(v) || 'Password must have atleast 1 (one) digit',
                       /** @param {string} v */ v => validators.containsSpecialChar(v) || 'Password must have atleast 1 (one) special characters: ~!$%^&*_=+}{\'?-',
-                      /** @param {string} v */ v => v === repassword || 'Password do not match with the password'
+                      /** @param {string} v */ v => v === repassword || 'Password do not match'
                     ]}
                     color='indigo darken-4'
                     class='fredoka-reg mb-4'
@@ -376,7 +376,7 @@
                     color='indigo darken-4'
                     class='fredoka-reg mb-4'
                   >
-                    Repassword
+                    Retype password
                   </TextField>
 
                   <!-- password notes -->
