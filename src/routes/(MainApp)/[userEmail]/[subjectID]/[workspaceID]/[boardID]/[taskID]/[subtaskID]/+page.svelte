@@ -1655,6 +1655,15 @@
           </div>
         </MaterialApp>
       </div>
+
+      <!-- task ID -->
+      <div class='column is-12 pt-1 pb-0 pl-0'>
+        <div class='maxmins-w-100p'>
+          <div class='tag is-info is-light fredoka-reg'>
+            Task ID: {data.task.id.substring(21, )}
+          </div>
+        </div>
+      </div>
     </div>
   
     <!-- left side -->

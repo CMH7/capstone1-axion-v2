@@ -8,6 +8,8 @@
 	import { addBoardPanelActive } from "$lib/stores/boards.store";
 
   export let data
+
+  $: boardTasks = data.boardTasks
 </script>
 {#each data.boards as board}
   {#if board.name === 'Done' && $addBoardPanelActive}
@@ -18,9 +20,9 @@
     {#if $addTaskPanelActive && $newTaskStatus === board.id}
       <TaskCardPreview />
     {/if}
-    {#each data.boardTasks as bt}
+    {#each boardTasks as bt}
       {#if bt.boardID === board.id}
-        {#each bt.bTasks.reverse() as task}
+        {#each bt.bTasks as task}
           <TaskCard {task} {data} />
         {/each}
       {/if}
