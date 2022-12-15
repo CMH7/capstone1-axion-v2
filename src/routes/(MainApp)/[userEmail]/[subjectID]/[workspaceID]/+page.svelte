@@ -98,6 +98,15 @@
       })
     }
 
+    if(searchFor !== '') {
+      boardTasks = boardTasks.map(bt => {
+        return {
+          boardID: bt.boardID,
+          bTasks: bt.bTasks.filter(t => `${searchFor.length >= 3 ? t.id.substring(21, ) : ''}${t.name}`.toLowerCase().match(searchFor.toLowerCase()))
+        }
+      })
+    }
+
     if(currentTaskSort == 1) {
       boardTasks = boardTasks.map(bt => {
         return {

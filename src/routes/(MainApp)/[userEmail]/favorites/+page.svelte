@@ -40,14 +40,9 @@
   let subjectJoined = true 
   let workspaceCreated = true
   let workspaceJoined = true
-  let taskCreated = true
-  let taskAssigned = true
-  let taskSubscribed = true
   let taskHigh = true
   let taskMedium = true
   let taskLow = true
-  let taskOverdue = true
-  let taskUpcoming = true
   let subjectSort = [
     {name: 'Ascending', value: 1},
     {name: 'Descending', value: 2}
@@ -154,6 +149,10 @@
         clientTasks = clientTasks.filter(ct => ct.level !== 1)
       }
 
+      if(searchFor !== '') {
+        clientTasks = clientTasks.filter(ct => `${searchFor.length >= 3 ? ct.id.substring(21, ):''}${ct.name}`.toLowerCase().match(searchFor.toLowerCase()))
+      }
+
       if(currentTaskSort == 1) {
         clientTasks.sort((a, b) => {
           if(a.name > b.name) return 1
@@ -200,10 +199,6 @@
           if(a.dueDateTime < b.dueDateTime) return -1
           return 0
         })
-      }
-
-      if(searchFor !== '') {
-        clientTasks = clientTasks.filter(ct => ct.name.toLowerCase().match(searchFor.toLowerCase()))
       }
     }
   }
