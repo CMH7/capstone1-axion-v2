@@ -981,6 +981,7 @@
   
       <!-- name, level, favorite, subtasks count, options -->
       <div class="columns is-mobile is-multiline">
+        
         <!-- name -->
         <div style='{innerWidth < 769 ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.3); margin-bottom: 3%' : ''}' class="column is-12-mobile is-flex is-justify-content-space-between is-align-items-center">
 
@@ -1651,6 +1652,15 @@
             </Window>
           </div>
         </MaterialApp>
+      </div>
+
+      <!-- task ID -->
+      <div class='column is-12 pt-1 pb-0 pl-0'>
+        <div class='maxmins-w-100p'>
+          <div class='tag is-info is-light fredoka-reg'>
+            Task ID: {data.task.id.substring(21, )}
+          </div>
+        </div>
       </div>
     </div>
   

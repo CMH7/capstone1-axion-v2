@@ -88,7 +88,7 @@ export async function load({ params }) {
 			...boardTasks,
 			{
 				boardID: board.id,
-				bTasks: allTasks.filter((task) => task.status === board.id)
+				bTasks: allTasks.filter((task) => task.status === board.id).reverse()
 			}
 		];
 	});

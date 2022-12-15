@@ -8,134 +8,6 @@
 	import TaskFilterDropdown from '../taskFilterDropdown.svelte';
 
   export let data
-
-  const sorts = [
-    {
-      prop: 'task name',
-      sortTo: [
-        {
-        type: 'A1',
-        label: 'A-Z'
-        },
-        {
-        type: 'A2',
-        label: 'Z-A'
-        }
-      ]
-    },
-    {
-      prop: 'task level',
-      sortTo: [
-        {
-        type: 'A3',
-        label: 'High-Low'
-        },
-        {
-        type: 'A4',
-        label: 'Low-High'
-        }
-      ]
-    },
-    {
-      prop: 'task due',
-      sortTo: [
-        {
-        type: 'A5',
-        label: 'Overdue-before due'
-        },
-        {
-        type: 'A6',
-        label: 'before due-Overdue'
-        }
-      ]
-    }
-  ]
-
-  /** 
-   * @param {string} filterMode
-   * @param {import('@prisma/client').tasks[]} tasks
-   * 
-   * @return {import('@prisma/client').tasks[]} sorted_or_filtered_tasks
-  */
-  const filterTasks = (filterMode, tasks) => {
-    if(filterMode === 'a1') {
-      return tasks.sort((a, b) => {
-        if(a.name.toLowerCase() > b.name.toLowerCase()) return 1
-        if(a.name.toLowerCase() < b.name.toLowerCase()) return -1
-        return 0
-      })
-    }
-    
-    if(filterMode === 'a2') {
-      return tasks.sort((a, b) => {
-        if(a.name.toLowerCase() < b.name.toLowerCase()) return 1
-        if(a.name.toLowerCase() > b.name.toLowerCase()) return -1
-        return 0
-      })
-    }
-
-    if( filterMode === 'a3') {
-      return tasks.sort((a, b) => {
-        if(a.level < b.level) return 1
-        if(a.level > b.level) return -1
-        return 0
-      })
-    }
-    
-    if( filterMode === 'a4') {
-      return tasks.sort((a, b) => {
-        if(a.level > b.level) return 1
-        if(a.level < b.level) return -1
-        return 0
-      })
-    }
-
-    if( filterMode === 'a5') {
-      /** @type {import('@prisma/client').tasks[]}*/
-      let dues = []
-      tasks.map(task => {
-        let time1 = new Date(task.dueDateTime).getTime()
-        let time2 = new Date().getTime()
-        let diffDays = (time1 - time2) / (1000 * 3600 * 24)
-        dues = [...dues, {id: task.id, diffDays}]
-      })
-      let dues2 = dues.sort((a,b) => {
-        if(a.diffDays > b.diffDays) return 1
-        if(a.diffDays < b.diffDays) return -1
-        return 0
-      })
-
-      let dues3 = dues2.map(due => {
-        return tasks.filter(task1 => task1.id === due.id)[0]
-      })
-      return dues3
-    }
-    
-    if( filterMode === 'a6') {
-      return tasks.sort((a, b) => {
-        if((new Date(a.dueDateTime).getTime() - new Date().getTime()) < (new Date(b.dueDateTime).getTime() - new Date().getTime())) return 1
-        if((new Date(a.dueDateTime).getTime() - new Date().getTime()) > (new Date(b.dueDateTime).getTime() - new Date().getTime())) return -1
-        return 0
-      })
-    }
-    
-    if( filterMode === 'b1') {
-      return tasks.filter(task => task.level == 3)
-    }
-
-    if( filterMode === 'b2') {
-      return tasks.filter(task => task.level == 2)
-    }
-
-    if( filterMode === 'B3') {
-      return tasks.filter(task => task.level == 1)
-    }
-  }
-
-  const changeFilter = () => {
-    showFilter.set(false)
-    console.log('Changed Filter!');
-  }
 </script>
 
 <div class="mt-3 column is-12">
@@ -175,39 +47,17 @@
                 Settings
               </Button>
             {/if}
-
-            {#if filterTasks(board.filter, data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks).length != 0}
-              <Button
-                on:click={e => {
-                  selectedBoard.set(board)
-                  showFilter.set(!$showFilter)
-                }}
-                depressed
-                size='x-small'
-                class='p-4 has-background-white fredoka-reg is-flex is-align-items-center'
-              >
-                <Icon size='15px' path={mdiFilter} class='mr-3' />
-                Filter
-              </Button>
-            {:else}
-              <Button depressed size='x-small' class='opacity-0p' >
-                <Icon size='15px' path={mdiFilter} class='mr-3' />
-                Filter
-              </Button>
-            {/if}
           </div>
 
-          <TaskFilterDropdown {board} />
-
           <div class="max-h-550 is-flex is-flex-direction-column is-align-items-center mt-6 overflow-y-auto">
-            {#if filterTasks(board.filter, data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks).length == 0}
+            {#if data.boardTasks.filter(bt => bt.boardID === board.id)[0].bTasks.length == 0}
               <div class="txt-size-11 fredoka-reg">
-                There's no task in here
+                No task
               </div>
             {:else}
               {#each data.boardTasks as bt}
                 {#if bt.boardID === board.id}
-                  {#each bt.bTasks.reverse() as task}
+                  {#each bt.bTasks as task}
                     {#if !task.isSubtask}
                       <!-- TASK CARD COMPONENT -->
                       <TaskCard {task} {data} />

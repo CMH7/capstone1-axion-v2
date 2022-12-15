@@ -9,17 +9,15 @@
   import { Card, Avatar, Tooltip, Divider } from 'svelte-materialify'
 
   /**
-   * @type {
-   *  {
-        id: string;
-        name: string;
-        level: number;
-        members: string[];
-        subtasks: string[];
-        dueDateTime: Date;
-        status: string;
-      }
-   * }
+   * @type {{
+        id: string,
+        name: string,
+        level: number,
+        members: string[],
+        subtasks: string[],
+        dueDateTime: Date,
+        status: string
+      }}
    */
   export let task
   export let data
