@@ -19,7 +19,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-	if (!subject) throw error(404, 'Subject not found');
+	if (!subject) throw redirect(303, `/${user.email}`);
 
 	const workspace = await prisma.workspaces.findFirst({
 		where: {
@@ -28,7 +28,9 @@ export async function load({ params }) {
 			}
 		}
 	});
-  if (!workspace) throw error(404, 'Workspace cannot be found');
+	if (!workspace) throw redirect(303, `/${user.email}/${subject.id}`);
+	
+	if (!workspace.members.includes(user.id)) throw redirect(303, `/${user.email}/${subject.id}`);
   
   let members = await prisma.users.findMany({
     where: {

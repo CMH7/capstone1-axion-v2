@@ -22,7 +22,6 @@
     newTaskName.set('')
     newTaskLevel.set(1)
     newTaskStatus.set('')
-    newTaskStatus.set('')
     newTaskDueDateTime.set(new Date())
     selectedBoard.set(board)
     newBoardName.set(board.name)

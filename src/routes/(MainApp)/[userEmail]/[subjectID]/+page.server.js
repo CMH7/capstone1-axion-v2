@@ -1,3 +1,4 @@
+import pusherServer from '$lib/configs/helpers/realtime.server';
 import prisma from '$lib/db';
 import { error, invalid, redirect } from '@sveltejs/kit'
 
@@ -95,7 +96,21 @@ export const actions = {
     const name = data.get('name')?.toString()
     const color = data.get('color')?.toString()
     const subjectID = data.get('id')?.toString()
-    const addFavorite = data.get('addFavorite')?.toString()
+		const addFavorite = data.get('addFavorite')?.toString()
+		
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true
+			}
+		})
+		if(!cUser) throw error(404, 'Account not found')
 
     const toUpdateUser = await prisma.users.findFirst({
       where: {
@@ -129,7 +144,6 @@ export const actions = {
         id: true
       }
     })
-
     if(!upatedUser) return invalid(500, {message: 'Failed to update favorites but is added to favorites, please reload', reason: 'databaseError'})
 
     const updatedSubject = await prisma.subjects.update({
@@ -141,19 +155,106 @@ export const actions = {
         color
       }
     })
-
     if(!updatedSubject) return invalid(500, {message: 'Failed to return favorites, please reload', reason: 'databaseError'})
+
+		const allWorkspaces = await prisma.workspaces.findMany({
+			where: {
+				OR: updatedSubject.workspaces.map(id => {return{id}})
+			}
+		})
+
+		/**
+		 * @type {string[]}
+		 */
+		let allWorkspacesMembers = []
+		allWorkspaces.forEach(w => {
+			allWorkspacesMembers = [
+				...allWorkspacesMembers,
+				...w.members
+			]
+		})
+
+		let trs1 = []
+		allWorkspacesMembers.forEach(m => {
+			if (m !== cUser.id) {
+				trs1 = [
+					...trs1,
+					prisma.notifications.create({
+						data: {
+							aMention: false,
+							anInvitation: false,
+							conversationID: '',
+							for: {
+								self: true,
+								userID: cUser.id
+							},
+							fromInterface: {
+								interf: '',
+								subInterface: ''
+							},
+							fromTask: '',
+							isRead: false,
+							message: `${cUser.firstName} ${cUser.lastName}(owner) updated the subject ${updatedSubject.name}`
+						},
+						select: {
+							id: true
+						}
+					})
+				]
+			}
+		})
+		const r1 = await prisma.$transaction(trs1)
+
+		let trs2 = []
+		let i = 0
+		allWorkspacesMembers.forEach(m => {
+			if (m !== cUser.id) {
+				trs2 = [
+					...trs2,
+					prisma.users.update({
+						where: {
+							id: m
+						},
+						data: {
+							notifications: {
+								push: r1[i].id
+							}
+						},
+						select: {
+							id: true
+						}
+					})
+				]
+				i++
+			}
+		})
+		const r2 = await prisma.$transaction(trs2)
+
+		pusherServer.trigger(allWorkspacesMembers.filter(m => m !== cUser.id), 'updates', {})
   },
-  deleteSubject: async ({ request }) => {
+  deleteSubject: async ({ request, params }) => {
     const data = await request.formData()
-    const subjectID = data.get('id')?.toString()
+		const subjectID = data.get('id')?.toString()
+		
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true
+			}
+		})
+		if(!cUser) throw error(404, 'Account not found')
 
     const deletedSubject = await prisma.subjects.delete({
       where: {
         id: subjectID
       }
     })
-
     if (!deletedSubject) return invalid(500, { message: 'Error in deleting subject, database related' })
     
     const users = await prisma.users.findMany({
@@ -181,10 +282,119 @@ export const actions = {
         }
       })
     })
+		const results = await prisma.$transaction(trs)
+		
+		const allWorkspaces = await prisma.workspaces.findMany({
+			where: {
+				OR: deletedSubject.workspaces.map(id => {return {id}})
+			}
+		})
+		const allBoards = await prisma.boards.findMany({
+			where: {
+				OR: allWorkspaces.map(w => {return {OR: w.boards.map(id => {return{id}})}})
+			}
+		})
+		const allTasks = await prisma.tasks.findMany({
+			where: {
+				OR: allBoards.map(b => {return {OR: b.tasks.map(id => {return{id}})}})
+			}
+		})
 
-    const results = await prisma.$transaction(trs)
+		/**
+		 * @type {string[]}
+		 */
+		let allWorkspacesMembers = []
+		allWorkspaces.forEach(w => {
+			allWorkspacesMembers = [
+				...allWorkspacesMembers,
+				...w.members
+			]
+		})
 
-    if(!results) return invalid(500, {message: 'Cannot delete this subject. Database operation failure occured'})
+		const allTaskConvo = prisma.chats.deleteMany({
+			where: {
+				OR: allTasks.map(t => {return{OR: t.conversations.map(id => {return{id}})}})
+			}
+		})
+		const allTaskRelatedNotifs = prisma.notifications.deleteMany({
+			where: {
+				OR: allTasks.map(t => {return {fromTask: t.id}})
+			}
+		})
+		const allDeletedTasks = prisma.tasks.deleteMany({
+			where: {
+				OR: allTasks.map(t => {return{id: t.id}})
+			}
+		});
+		const allDeletedBoards = prisma.boards.deleteMany({
+			where: {
+				OR: allBoards.map(b => {return{id: b.id}})
+			}
+		})
+		const allDeletedWorkspaces = prisma.workspaces.deleteMany({
+			where: {
+				OR: allWorkspaces.map(w => {return{id: w.id}})
+			}
+		})
+		const r1 = await prisma.$transaction([allTaskConvo, allTaskRelatedNotifs, allDeletedBoards, allDeletedTasks, allDeletedWorkspaces])
+
+		let trs2 = []
+		allWorkspacesMembers.forEach(m => {
+			if (m !== cUser.id) {
+				trs2 = [
+					...trs2,
+					prisma.notifications.create({
+					data: {
+						aMention: false,
+						anInvitation: false,
+						conversationID: '',
+						for: {
+							self: true,
+							userID: cUser.id
+						},
+						fromInterface: {
+							interf: '',
+							subInterface: ''
+						},
+						fromTask: '',
+						isRead: false,
+						message: `${cUser.firstName} ${cUser.lastName}(owner) deleted the subject ${deletedSubject.name}`
+					},
+					select: {
+						id: true
+					}
+					})
+				]
+			}
+		})
+		const r2 = await prisma.$transaction(trs2)
+
+		let i = 0
+		let trs3 = []
+		allWorkspacesMembers.forEach(m => {
+			if (m !== cUser.id) {
+				trs3 = [
+					...trs3,
+					prisma.users.update({
+					where: {
+						id: m
+					},
+					data: {
+						notifications: {
+							push: r2[i].id
+						}
+					},
+					select: {
+						id: true
+					}
+					})
+				]
+				i++
+			}
+		})
+		const r3 = await prisma.$transaction(trs3)
+		
+		pusherServer.trigger(allWorkspacesMembers.filter(m => m !== cUser.id), 'updates', {});
   },
   updateFavoriteSubjects: async ({ request }) => {
     const data = await request.formData()
@@ -371,12 +581,18 @@ export const actions = {
       },
       data: {
         favorites: toUpdateUser.favorites
-      },
-      select: {
-        id: true
       }
     })
     if(!upatedUser) return invalid(500, {message: 'Failed to return data but is added to favorites, please reload', reason: 'databaseError'})
+
+		const toUpdateWorkspace = await prisma.workspaces.findFirst({
+			where: {
+				id: {
+					equals: workspaceID
+				}
+			}
+		})
+		if(!toUpdateWorkspace) return invalid(404, {message: 'Current workspace not found'})
 
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
@@ -385,9 +601,6 @@ export const actions = {
 			data: {
 				name,
 				color
-			},
-			select: {
-				id: true
 			}
 		});
 		if (!updatedWorkspace)
@@ -395,34 +608,183 @@ export const actions = {
 				message: 'Database failure to update workspace',
 				reason: 'databaseError'
 			});
+		
+		if (toUpdateWorkspace.name !== updatedWorkspace.name || toUpdateWorkspace.color !== updatedWorkspace.color) {
+			if (updatedWorkspace.members.length > 1) {
+				let trs1 = []
+				updatedWorkspace.members.forEach(m => {
+					if (m !== toUpdateUser.id) {
+						trs1 = [
+							...trs1,
+							prisma.notifications.create({
+								data: {
+									aMention: false,
+									anInvitation: false,
+									conversationID: '',
+									for: {
+										self: true,
+										userID: toUpdateUser.id
+									},
+									fromInterface: {
+										interf: '',
+										subInterface: ''
+									},
+									fromTask: '',
+									isRead: false,
+									message: `${upatedUser.firstName} ${upatedUser.lastName} ${toUpdateWorkspace.name !== updatedWorkspace.name && toUpdateWorkspace.color !== updatedWorkspace.color ? `renamed the workspace from ${toUpdateWorkspace.name} to ${updatedWorkspace.name} and changed the color to ${updatedWorkspace.color}` : toUpdateWorkspace.name !== updatedWorkspace.name ? `renamed the workspace from ${toUpdateWorkspace.name} to ${updatedWorkspace.name}` : toUpdateWorkspace.color !== updatedWorkspace.color ? `changed the color of workspace ${toUpdateWorkspace.name} into ${updatedWorkspace.color}` : ''}`
+								},
+								select: {
+									id: true
+								}
+							})
+						]
+					}
+				})
+				const r1 = await prisma.$transaction(trs1)
+
+				let trs2 = []
+				let i = 0
+				updatedWorkspace.members.forEach(m => {
+					if (m !== upatedUser.id) {
+						trs2 = [
+							...trs2,
+							prisma.users.update({
+								where: {
+									id: m
+								},
+								data: {
+									notifications: {
+										push: r1[i].id
+									}
+								},
+								select: {
+									id: true
+								}
+							})
+						]
+						i++
+					}
+				})
+				const r2 = await prisma.$transaction(trs2)
+
+				pusherServer.trigger(updatedWorkspace.members, 'updates', {})
+			}
+		}
 	},
-	deleteWorkspace: async ({ request }) => {
+	deleteWorkspace: async ({ request, params }) => {
 		const data = await request.formData();
 		const workspaceID = data.get('id')?.toString();
 
 		const deletedWorkspace = await prisma.workspaces.delete({
 			where: {
 				id: workspaceID
-			},
-			select: {
-				id: true,
-				boards: true
 			}
 		});
 		if(!deletedWorkspace) return invalid(500, {message: 'Failed to delete workspace, please try again later', reason: 'databaseError'})
 
-		const allDeletedBoards = await prisma.boards.deleteMany({
+		const allBoards = await prisma.boards.findMany({
+			where: {
+				OR: deletedWorkspace.boards.map(id=>{return{id}})
+			}
+		})
+		const allTasks = await prisma.tasks.findMany({
+			where: {
+				OR: allBoards.map(b=>{return{OR:b.tasks.map(id=>{return{id}})}})
+			}
+		})
+
+		const allDeletedConvo = prisma.chats.deleteMany({
+			where: {
+				OR: allTasks.map(t=>{return{OR:t.conversations.map(id=>{return{id}})}})
+			}
+		})
+		const allDeletedTaskRelatedNotifs = prisma.notifications.deleteMany({
+			where: {
+				OR: allTasks.map(t => {return{fromTask: t.id}})
+			}
+		})
+		const allDeletedTasks = prisma.tasks.deleteMany({
+			where: {
+				OR: allTasks.map(t =>{return{id: t.id}})
+			}
+		})
+		const allDeletedBoards = prisma.boards.deleteMany({
 			where: {
 				OR: deletedWorkspace.boards.map(id => {return{id}})
 			}
 		});
 
-		if (allDeletedBoards.count < 3)
-			return invalid(404, {
-				message:
-					'Some boards are not deleted correctly please contact the developers on this issue',
-				reason: 'databaseError'
-			});
+		const r1 = await prisma.$transaction([allDeletedBoards, allDeletedConvo, allDeletedTasks, allDeletedTaskRelatedNotifs])
+
+		if (deletedWorkspace.members.length > 1) {
+			const cUser = await prisma.users.findFirst({
+				where: {
+					email: {
+						equals: params.userEmail
+					}
+				}
+			})
+			if (!cUser) return invalid(404, { message: 'Account not found please relogin or reload', reason: 'databaseError' })
+			
+			let trs2 = []
+			deletedWorkspace.members.forEach(m => {
+				if (m !== cUser.id) {
+					trs2 = [
+						...trs2,
+						prisma.notifications.create({
+							data: {
+								aMention: false,
+								anInvitation: false,
+								conversationID: '',
+								for: {
+									self: true,
+									userID: cUser.id
+								},
+								fromInterface: {
+									interf: '',
+									subInterface: ''
+								},
+								fromTask: '',
+								isRead: false,
+								message: `${cUser.firstName} ${cUser.lastName}(owner) deleted the workspace ${deletedWorkspace.name}`
+							},
+							select: {
+								id: true
+							}
+						})
+					]
+				}
+			})
+			const r2 = await prisma.$transaction(trs2)
+
+			let trs3 = []
+			let i = 0
+			deletedWorkspace.members.forEach(m => {
+				if (m !== cUser.id) {
+					trs3 = [
+						...trs3,
+						prisma.users.update({
+							where: {
+								id: m
+							},
+							data: {
+								notifications: {
+									push: r2[i].id
+								}
+							},
+							select: {
+								id: true
+							}
+						})
+					]
+					i++
+				}
+			})
+			const r3 = await prisma.$transaction(trs3)
+
+			pusherServer.trigger(deletedWorkspace.members, 'updates', {})
+		}
+
 	},
 	updateFavoriteWorkspaces: async ({ request }) => {
 		const data = await request.formData();

@@ -5,16 +5,18 @@
 	import { notifs } from '$lib/stores/global.store';
   import { Button, Dialog } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
-	import { confirmationDemoteWorkspaceAdminModalActive, selectedMember } from '$lib/stores/workspace.store';
+	import { workspaceLeaveModalActive } from '$lib/stores/workspace.store';
 	import { activeWorkspace } from '$lib/stores/dashboard.store';
 
-  let removing = false
+  export let data
 
-  const demoteAdmin = async () => {
-    if(removing) return
-    removing = true
+  let leaving = false
 
-    let form = document.getElementById('formDemoteAdmin')
+  const leaveWorkspace = async () => {
+    if(leaving) return
+    leaving = true
+
+    let form = document.getElementById('formleaveWorkspace')
     const data = new FormData(form);
 
     const response = await fetch(form.action, {
@@ -35,57 +37,37 @@
 
     if (result.type === 'success') {
       $notifs = [...$notifs, {
-        msg: 'Demoted successfully',
+        msg: 'Leaved successfully',
         type: 'success',
         id: `${(Math.random() * 999) + 1}`
       }]
-      activeWorkspace.set(result.data.workspace)
+      workspaceLeaveModalActive.set(false)
       // re-run all `load` functions, following the successful update
       await invalidateAll();
     }
 
     applyAction(result);
-    removing = false
-    selectedMember.set({
-      id: '',
-      online: false,
-      firstName: '',
-      lastName: '',
-      email: '',
-      profile: '',
-      gender: ''
-    })
-    confirmationDemoteWorkspaceAdminModalActive.set(false)
+    leaving = false
+    workspaceLeaveModalActive.set(false)
   }
 
   const close = () => {
-    confirmationDemoteWorkspaceAdminModalActive.set(false)
-    selectedMember.set({
-      email: '',
-      firstName: '',
-      lastName: '',
-      profile: '',
-      online: false,
-      gender: '',
-      id: ''
-    })
+    workspaceLeaveModalActive.set(false)
   }
 </script>
 
-<form id='formDemoteAdmin' class="is-hidden" action="?/demoteAdmin" use:enhance>
-  <input type="text" bind:value={$selectedMember.id} name='id'>
-</form>
+<form id='formleaveWorkspace' class="is-hidden" action="?/leaveWorkspace" use:enhance></form>
 
-<Dialog persistent bind:active={$confirmationDemoteWorkspaceAdminModalActive} class='p-2'>
+<Dialog persistent bind:active={$workspaceLeaveModalActive} class='p-2'>
   <div class="fredoka-reg txt-size-15">
-    Demoting {$selectedMember.gender === 'Male' ? 'him' : 'her'} in the workspace will remove {$selectedMember.gender === 'Male' ? 'his' : 'her'} priviledges on this workspace. <span class="txt-size-15 rounded p-1 has-background-danger-light has-text-danger-dark">demote {$selectedMember.firstName} {$selectedMember.firstName}</span>
+    Do you want to leave the workspace {data.workspace.name}? <br> <span class="txt-size-15 rounded p-1 has-background-danger-light has-text-danger-dark">leave {data.workspace.name}</span>
   </div>
   <div class="maxmins-w-100p is-flex is-justify-content-flex-end mt-6">
     <Button
       size='small'
       depressed
-      disabled={removing}
-      class='has-background-grey-lighter mr-3 {removing ? 'is-hidden' : ''}'
+      disabled={leaving}
+      class='has-background-grey-lighter mr-3 {leaving ? 'is-hidden' : ''}'
       on:click={close}
     >
       Cancel
@@ -94,10 +76,10 @@
       size='small'
       depressed
       class='has-background-grey-light'
-      disabled={removing}
-      on:click={demoteAdmin}
+      disabled={leaving}
+      on:click={leaveWorkspace}
     >
-      {#if !removing}
+      {#if !leaving}
         Confirm
       {:else}
         <Pulse size={20} color='#fff' />

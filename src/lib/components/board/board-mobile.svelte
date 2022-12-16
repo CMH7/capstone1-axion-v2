@@ -1,7 +1,8 @@
 <script>
   //@ts-nocheck
-	import { boardSettingsPanelActive, selectedBoard, showFilter } from '$lib/stores/boards.store';
+	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard, showFilter } from '$lib/stores/boards.store';
 	import { modalChosenColor } from '$lib/stores/global.store';
+	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, taskSettingsPanelActive } from '$lib/stores/task.store';
   import { mdiTune, mdiFilter } from '@mdi/js'
   import { ExpansionPanels, ExpansionPanel, Button, Icon } from 'svelte-materialify'
 	import TaskCard from '../task/task-card.svelte';
@@ -34,8 +35,15 @@
             {:else}
               <Button
                 on:click={e => {
-                if(board.name === 'Todo' || board.name === 'In progress' || board.name === 'Done') return
+                  if(board.name === 'Todo' || board.name === 'In progress' || board.name === 'Done') return
+                  taskSettingsPanelActive.set(false)
+                  addBoardPanelActive.set(false)
+                  newTaskName.set('')
+                  newTaskLevel.set(1)
+                  newTaskStatus.set('')
+                  newTaskDueDateTime.set(new Date())
                   selectedBoard.set(board)
+                  newBoardName.set(board.name)
                   modalChosenColor.set(board.color)
                   boardSettingsPanelActive.set(true)
                 }}

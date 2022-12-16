@@ -34,3 +34,5 @@ export let selectedMember = writable({
 })
 
 export let workspaceInviteUserModalActive = writable(false)
+
+export let workspaceLeaveModalActive = writable(false)

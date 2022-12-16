@@ -6,6 +6,7 @@
   import { Button, Dialog } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
 	import { confirmationPromoteWorkspaceMemberModalActive, selectedMember } from '$lib/stores/workspace.store';
+	import { activeWorkspace } from '$lib/stores/dashboard.store';
 
   let promoting = false
 
@@ -40,6 +41,7 @@
         type: 'success',
         id: `${(Math.random() * 999) + 1}`
       }]
+      activeWorkspace.set(result.data.workspace)
       // re-run all `load` functions, following the successful update
       await invalidateAll();
     }

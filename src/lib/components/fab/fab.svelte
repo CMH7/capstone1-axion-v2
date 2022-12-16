@@ -5,7 +5,7 @@
 	import { breadCrumbsItems, hintText, modalChosenColor } from '$lib/stores/global.store';
 	import { addSubjectPanelActive, newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store';
 	import { addTaskPanelActive } from '$lib/stores/task.store';
-	import { addWorkspacePanelActive, leaveWorkspacePanelActive, manageAdminPanelActive, manageMembersPanelActive, newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
+	import { addWorkspacePanelActive, leaveWorkspacePanelActive, manageAdminPanelActive, manageMembersPanelActive, newWorkspaceName, selectedWorkspace, workspaceLeaveModalActive, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
 	import { mdiAccountGroup, mdiAccountSettings, mdiAccountSupervisor, mdiApplicationSettings, mdiApplicationSettingsOutline, mdiExitRun, mdiPlus, mdiPlusBox, mdiServerPlus, mdiTextBoxPlus, mdiTextBoxPlusOutline } from '@mdi/js';
   import { Menu, Button, Icon, List, ListItem } from 'svelte-materialify'
   import { scale } from 'svelte/transition'
@@ -153,7 +153,7 @@
           </div>
 
           
-          {#if $activeSubject.owner === data.user.id || $activeWorkspace.admins.filter(admin => admin.id === data.user.id).length != 0}
+          {#if $activeSubject.owner === data.user.id || $activeWorkspace.admins.includes(data.user.id)}
             <div on:mouseenter={() => setHint('m-m')}>
               <a href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/manageMembers">
                 <ListItem>
@@ -187,7 +187,7 @@
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div
             on:mouseenter={() => setHint('l')}
-            on:click={e => leaveWorkspacePanelActive.set(true)}>
+            on:click={e => workspaceLeaveModalActive.set(true)}>
             <ListItem class='has-text-danger-dark'>
               <span slot="prepend">
                 <Icon path={mdiExitRun} />

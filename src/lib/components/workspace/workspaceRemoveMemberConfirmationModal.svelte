@@ -7,6 +7,7 @@
   import { Button, Dialog } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
 	import { confirmationRemoveWorkspaceMemberModalActive, confirmDeleteWorkspaceModalActive, newWorkspaceName, selectedMember, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
+	import { activeWorkspace } from '$lib/stores/dashboard.store';
 
   let removing = false
 
@@ -41,6 +42,7 @@
         type: 'success',
         id: `${(Math.random() * 999) + 1}`
       }]
+      activeWorkspace.set(result.data.workspace)
       // re-run all `load` functions, following the successful update
       await invalidateAll();
     }

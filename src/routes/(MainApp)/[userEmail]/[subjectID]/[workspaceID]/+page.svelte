@@ -11,6 +11,7 @@
 	import { goto } from '$app/navigation';
 	import { Checkbox, Icon, Select, TextField } from 'svelte-materialify';
 	import { mdiMagnify } from '@mdi/js';
+	import WorkspaceLeaveModal from '$lib/components/workspace/workspaceLeaveModal.svelte';
 
   /** @type {import('./$types').PageServerData}*/
   export let data
@@ -220,6 +221,8 @@
 </svelte:head>
 
 <svelte:window bind:innerWidth />
+
+<WorkspaceLeaveModal {data} />
 
 <div class="columns is-mobile is-multiline {innerWidth < 571 ? '' : 'pl-3 pt-3'}">
   <div class='column is-12 pt-0 is-mobile is-multiline'>
