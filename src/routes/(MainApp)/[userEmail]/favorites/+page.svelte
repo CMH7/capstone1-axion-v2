@@ -6,7 +6,7 @@
 	import TaskCard from '$lib/components/task/task-card.svelte';
 	import WorkspaceBox from '$lib/components/workspace/workspaceBox.svelte';
 	import helpers from '$lib/configs/helpers';
-  import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen, notifs } from '$lib/stores/global.store';
+  import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { statuses } from '$lib/stores/task.store';
 	import { mdiAlphaSBox, mdiAlphaTBox, mdiAlphaWBox, mdiMagnify } from '@mdi/js';
 	import bcryptjs from 'bcryptjs';
@@ -324,17 +324,17 @@
     <WindowItem style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='p-3'>
       <div class='maxmins-w-100p'>
         <div style='border-bottom: 1px solid rgba(0, 0, 0, 0.3)' class='maxmins-w-100p pb-2 mb-2 is-flex is-align-items-center is-flex-wrap-wrap'>
-          <div class='mr-6'>
+          <div on:mouseenter={() => hintText.set('Check or uncheck if it is created or not')} class='mr-6'>
             <Checkbox bind:checked={subjectCreated}>
               Created
             </Checkbox>
           </div>
-          <div class='mr-6'>
+          <div on:mouseenter={() => hintText.set('Check or uncheck if you are joined or not')} class='mr-6'>
             <Checkbox bind:checked={subjectJoined}>
               Joined
             </Checkbox>
           </div>
-          <div class='mr-6 {innerWidth < 571 ? 'mt-3 flex-grow-1' : ''}'>
+          <div on:mouseenter={() => hintText.set('Click on the sort by button for Ascending o Descending')} class='mr-6 {innerWidth < 571 ? 'mt-3 flex-grow-1' : ''}'>
             <Select dense outlined items={subjectSort} mandatory bind:value={currentSubjectSort}>
               Sort by
             </Select>
@@ -392,22 +392,22 @@
     <WindowItem style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='p-2'>
       <div class='maxmins-w-100p'>
         <div style='border-bottom: 1px solid rgba(0, 0, 0, 0.3)' class='maxmins-w-100p pb-2 mb-2 is-flex is-align-items-center is-flex-wrap-wrap'>
-          <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
+          <div on:mouseenter={() => hintText.set('Check on the high filter to view high priority boards')} class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
             <Checkbox bind:checked={taskHigh}>
               High
             </Checkbox>
           </div>
-          <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
+          <div on:mouseenter={() => hintText.set('Check on the medium filter to view medium priority board')} class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
             <Checkbox bind:checked={taskMedium}>
               Medium
             </Checkbox>
           </div>
-          <div class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
+          <div on:mouseenter={() => hintText.set('Check on the low filter to view low priority boards')} class='mr-{innerWidth < 571 ? '3 mb-2' : '6'}'>
             <Checkbox bind:checked={taskLow}>
               Low
             </Checkbox>
           </div>
-          <div class='mr-{innerWidth < 571 ? '3' : '6'} {innerWidth < 571 ? 'mt-3 maxmins-w-100p' : ''}'>
+          <div on:mouseenter={() => hintText.set('Click on sort by to change the sorting style')} class='mr-{innerWidth < 571 ? '3' : '6'} {innerWidth < 571 ? 'mt-3 maxmins-w-100p' : ''}'>
             <Select dense outlined items={taskSort} mandatory bind:value={currentTaskSort}>
               Sort by
             </Select>
@@ -418,7 +418,7 @@
             <NothingFound />
           {:else}
             {#each clientTasks as task}
-              <div class='column is-narrow {innerWidth < 571 ? 'py-0' : ''}'>
+              <div on:mouseenter={() => hintText.set('Click on a board to view the board details')}  class='column is-narrow {innerWidth < 571 ? 'py-0' : ''}'>
                 <div on:contextmenu={() => handleRightClick(task)}>
                   <TaskCard {task} data={
                       {

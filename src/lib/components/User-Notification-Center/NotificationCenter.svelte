@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
   import { Button, Icon } from "svelte-materialify"
-  import { notifCenterOpen } from '$lib/stores/global.store'
+  import { hintText, notifCenterOpen } from '$lib/stores/global.store'
   import { mdiNotificationClearAll, mdiRead } from "@mdi/js"
   import NotificationCard from "./Notification-card.svelte"
   import bcrypt from 'bcryptjs'
@@ -63,7 +63,7 @@
   </div>
 
   <!-- Notication Center Content -->
-  <div class="is-flex is-flex-direction-column maxmins-w-100p flex-grow-1 overflow-y-auto rounded">
+  <div on:mouseenter={() => hintText.set('Click on a notification to view the details')} class="is-flex is-flex-direction-column maxmins-w-100p flex-grow-1 overflow-y-auto rounded">
     {#each notifications.reverse() as notification}
       <NotificationCard {notification} profileb={notifFromPic.filter(nfp => nfp.notifID === notification.id)[0].profile} />
     {/each}
@@ -76,7 +76,7 @@
       class="is-flex is-justify-content-center is-align-items-center maxmins-w-35p"
     >
       <Icon size='15px' path={mdiRead} />
-      <div class="fredoka-reg ml-3 txt-size-11">
+      <div on:mouseenter={() => hintText.set('Click on the button read all to change the notification status to read')} class="fredoka-reg ml-3 txt-size-11">
         Read all
       </div>
     </Button>
@@ -88,7 +88,7 @@
       on:click={clearAllNotifs}
       class="is-flex is-justify-content-center is-align-items-center maxmins-w-35p">
       <Icon size='15px' path={mdiNotificationClearAll} />
-      <div class="fredoka-reg ml-3 txt-size-11">
+      <div on:mouseenter={() => hintText.set('Click the clear all button to clear notifications')} class="fredoka-reg ml-3 txt-size-11">
         Clear all
       </div>
     </Button>

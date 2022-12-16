@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
 	import models from '$lib/models';
-	import { global_USERID, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, hintText, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store';
   import { Button, Icon } from 'svelte-materialify'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
@@ -140,6 +140,7 @@
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
   <!-- SUBJECT BOX -->
+  <div on:mouseenter={() => hintText.set('Click a subject to view the workspace, Hold o Right click on a subject to view subject settings')}>
   <a
     data-sveltekit-preload-data="hover"
     data-sveltekit-preload-code='eager'
@@ -158,6 +159,7 @@
       class="has-transition notification rounded maxmins-h-110 is-relative elevation-1 {mouseEnter && currentSubject === subject.id ?`has-background-${$selectedSubject.id === subject.id && $subjectSettingsPanelActive ? $modalChosenColor : subject.color}-dark`:""} is-{$selectedSubject.id === subject.id && $subjectSettingsPanelActive ? $modalChosenColor : subject.color} {$selectedSubject.id === subject.id && $subjectSettingsPanelActive ? $modalChosenColor : subject.color === 'grey' ? `has-background-${$selectedSubject.id === subject.id && $subjectSettingsPanelActive ? $modalChosenColor : subject.color}` : ''} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
     >
       <div
+        on:mouseenter={() => hintText.set('Click the star icon to pick if this is a favorite or not')}
         on:mouseenter={e => hoveringFav(subject.id, true)}
         on:mouseleave={e => hoveringFav('', false)}
         class="pos-abs pos-r-0 pos-t-0"
@@ -178,6 +180,7 @@
         </Button>
       </div>
 
+
       <!-- subject name -->
       <p class="is-unselectable txt-size-14 pos-abs pos-r-10 pos-b-10 max-w-{innerWidth < 571 && innerWidth > 473 ? '180' : '200'} txt-overflow-ellipsis overflow-x-hidden mb-0">
         {#if $selectedSubject.id === subject.id && $subjectSettingsPanelActive}
@@ -188,4 +191,5 @@
       </p>
     </div>
   </a>
+  </div>
 </div>

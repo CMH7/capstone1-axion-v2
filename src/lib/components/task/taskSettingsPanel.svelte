@@ -4,7 +4,7 @@
   import { Button, Icon, MaterialApp, Textarea, Select, TextField } from 'svelte-materialify'
   import SveltyPicker from 'svelty-picker'
   import { mdiClose } from '@mdi/js'
-	import { navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { hintText, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import { Pulse } from 'svelte-loading-spinners'
@@ -105,6 +105,7 @@
       Task settings
     </div>
     
+    <div on:mouseenter={() => hintText.set('Click the X button to exit')}>
     <Button
       icon
       disabled={updating}
@@ -112,10 +113,11 @@
     >
       <Icon class='has-text-danger' path={mdiClose} />
     </Button>
+    </div>
   </div>
 
   <!-- task name -->
-  <div class="maxmins-w-100p mt-3">
+  <div on:mouseenter={() => hintText.set('Input to change task name')} class="maxmins-w-100p mt-3">
     <MaterialApp>
       <div class="has-background-white-bis">
         <TextField
@@ -138,7 +140,7 @@
   <!-- task description -->
   <div class="maxmins-w-100p mt-3">
     <MaterialApp>
-      <div class="has-background-white-bis">
+      <div on:mouseenter={() => hintText.set('Input your task description')} class="has-background-white-bis">
         <Textarea
           rows={2}
           outlined
@@ -155,7 +157,7 @@
   <!-- task level -->
   <div class="maxmins-w-100p mt-3">
     <MaterialApp>
-      <div class="has-background-white-bis">
+      <div on:mouseenter={() => hintText.set('Click priority to change to high, medium, low')} class="has-background-white-bis">
         <Select
           outlined
           items={levels}
@@ -173,7 +175,7 @@
   <!-- task status -->
   <div class="maxmins-w-100p mt-3">
     <MaterialApp>
-      <div class="has-background-white-bis">
+      <div on:mouseenter={() => hintText.set('Click status to change it to todo, in progress, done')} class="has-background-white-bis">
         <Select
           outlined
           mandatory
@@ -190,7 +192,7 @@
 
   <!-- due date time -->
   <div class="maxmins-w-100p mt-3">
-    <div style='border: 1px solid rgba(0, 0, 0, 0.4); overflow: hidden;' class='rounded'>
+    <div on:mouseenter={() => hintText.set('Click on the date to change the task date')} style='border: 1px solid rgba(0, 0, 0, 0.4); overflow: hidden;' class='rounded'>
       <SveltyPicker
           placeholder="Due date"
           inputClasses="maxmins-w-100p rounded px-2 py-4 fredoka-reg is-clickable"
@@ -205,6 +207,7 @@
 
   <div class='maxmins-w-100p flex-grow-1 is-flex is-flex-direction-column is-justify-content-flex-end'>
     <div class='maxmins-w-100p is-flex is-justify-content-space-between'>
+      <div on:mouseenter={() => hintText.set('Click delete if you want to delete the task')}>
       <Button
         depressed
         class='has-background-danger has-text-white {updating ? 'opacity-0p' : ''}'
@@ -212,6 +215,8 @@
       >
         Delete
       </Button>
+      </div>
+      <div on:mouseenter={() => hintText.set('click on update if you want to save your changes')}>
       <Button
         depressed
         class='has-background-grey-light has-text-white'
@@ -223,6 +228,7 @@
           <Pulse size={20} color='#fff' />
         {/if}
       </Button>
+      </div>
     </div>
   </div>
 
