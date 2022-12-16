@@ -174,7 +174,7 @@
       }
       if(draggedRight) deleteNotif()
     }}
-    class="{notification.isRead ? 'opacity-60p': ''} pos-l-{draggedRight ? '30' : draggedLeft ? 'n70': innerWidth < 571 ? 'n30' : '0'} is-relative maxmins-w-100p parent rounded maxmins-h-60 mb-2 {isDeleting? 'a': ''}is-clickable {!delHover ?  'has-background-grey-lighter' : 'has-background-danger-light'} has-transition">
+    class="{notification.isRead ? 'opacity-60p': ''} pos-l-{draggedRight ? '30' : draggedLeft ? 'n70': innerWidth < 571 ? 'n30' : '0'} is-relative maxmins-w-100p parent rounded min-h-fit-content mb-2 {isDeleting? 'a': ''}is-clickable {!delHover ?  'has-background-grey-lighter' : 'has-background-danger-light'} has-transition">
   
     <div class="is-flex is-align-items-center is-justify-content-space-between maxmins-h-100p p-1">
       <div class="is-flex is-align-items-center">

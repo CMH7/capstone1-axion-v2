@@ -872,7 +872,7 @@
       {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
       {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
       {text: data.parentTask.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
-      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}${data.parentTask.id}`},
+      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
       {text: 'view', href: '#'}
     ]
     oldDescriptionValue = data.task.description

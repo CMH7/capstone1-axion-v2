@@ -47,19 +47,20 @@ export async function load({ params }) {
 			profile: true
 		}
 	})
-
 	/** 
 	 * @type {{notifID: string, profile: string}[]} 
 	 * */
 	let notifFromPic = []
-
-	notifications.map(notif => {
-		profiles.map(profile => {
-			if (notifFromPic.filter(nfp => nfp.notifID === notif.id).length == 0) {
-				notifFromPic = [...notifFromPic, {notifID: notif.id, profile: profile.profile}]
+	notifications.forEach(notif => {
+		notifFromPic = [
+			...notifFromPic,
+			{
+				notifID: notif.id,
+				profile: profiles.filter(u => u.id === notif.for.userID)[0].profile
 			}
-		})
+		]
 	})
+	// console.log(notifFromPic);
 
 	return { user, notifications, invitations, notifFromPic };
 }

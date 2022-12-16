@@ -47,8 +47,28 @@
 
   const createTask = async () => {
     if(creating) return
-    if($newTaskName === '') return
-    if(!newTaskDueDateTime) return
+    if($newTaskName === '') {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Name cannot be empty',
+          type: 'error',
+          id: (Math.random() * 999) + 1
+        }
+      ]
+      return
+    }
+    if(!newTaskDueDateTime) {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Due date time cannot be empty',
+          type: 'error',
+          id: (Math.random() * 999) + 1
+        }
+      ]
+      return
+    }
     creating = true
 
     let form = document.getElementById('formAddTask')
