@@ -61,6 +61,7 @@
 
     if (result.type === 'success') {
       // re-run all `load` functions, following the successful update
+      notifCenterOpen.set(false)
       await invalidateAll();
     }
 
