@@ -19,7 +19,7 @@
     if(reading) return
     reading = true
 
-    if(!notification.isRead) {
+    if(notification.isRead) {
       if(notification.anInvitation) {
         await goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
       } else {
