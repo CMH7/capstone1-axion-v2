@@ -1579,15 +1579,15 @@
                 </div>
 
                 <!-- chat tools -->
-                <div style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='opacity-0p maxmins-w-100p is-flex is-align-items-center maxmins-h-5v'>
+                <div style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='maxmins-w-100p is-flex is-align-items-center maxmins-h-5v'>
                   <!-- upload -->
-                  <div class="maxmins-w-50 centerxy opacity-0p">
-                    <Button
+                  <div class="maxmins-w-20 centerxy opacity-0p">
+                    <!-- <Button
                       size='small'
                       icon
                     >
                       <Icon class='has-text-info opacity-0p' path={mdiFileUpload} />
-                    </Button>
+                    </Button> -->
                   </div>
 
                   <!-- chat input -->
