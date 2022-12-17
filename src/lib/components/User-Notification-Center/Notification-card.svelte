@@ -80,44 +80,6 @@
     delHover = false
   }
 
-  const transpo = () => {
-    // if(delHover || isDeleting || $isProcessing) return
-    // if(notification.anInvitation) {
-    //   if(!notification.isRead) setReadNotif()
-    //   invModalActive.set(true)
-    //   notifCenterOpen.set(false)
-    //   return
-    // }
-    // if(notification.fromTask || notification.aMention) {
-    //   if(!notification.isRead) setReadNotif()
-    //   currentInterface.set('Dashboard')
-    //   currentDashboardSubInterface.set('Boards')
-    //   $userData.subjects.every(subject => {
-    //     subject.workspaces.every(workspace => {
-    //       workspace.boards.every(board => {
-    //         board.tasks.every(task => {
-    //           if(task.id === notification.fromTask) {
-    //             activeSubject.set(subject)
-    //             activeWorkspace.set(workspace)
-    //             allBoards.set(workspace.boards)
-    //             activeTask.set(task)
-    //             $breadCrumbsItems = [{text: $activeSubject.name, href: '1'}, {text: $activeWorkspace.name, href: '2'}, {text: 'boards', href: '3'}]
-    //             return false
-    //           }
-    //           return true
-    //         })
-    //         return true
-    //       })
-    //       return true
-    //     })
-    //     return true
-    //   })
-    //   taskViewModalActive.set(true)
-    //   notifCenterOpen.set(false)
-    //   return
-    // }
-  }
-
   let innerWidth = 0
   let notifHovering = false
   let delHover = false
@@ -158,7 +120,7 @@
   
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
-    on:click={transpo}
+    on:click={setReadNotif}
     on:mouseenter={e => notifHovering = true}
     on:mouseleave={e => notifHovering = false}
     on:touchstart={e => {

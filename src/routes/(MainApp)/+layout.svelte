@@ -160,7 +160,7 @@
 <svelte:window bind:innerWidth on:unload={unload} />
 
 <!-- make this form hidden always -->
-<form id="formlogout" action="?/logout" class="is-hidden" use:enhance></form>
+<form id="formlogout" action="/{data.user.email}?/logout" class="is-hidden" use:enhance></form>
 
 {#if $loading}
 <LoadingScreen />

@@ -44,7 +44,7 @@ export const actions = {
 			}
 		});
 		if (!user2) throw redirect(301, 'my-profile');
-		throw redirect(301, '/Signin');
+		throw redirect(302, '/Signin');
 	},
 	createSubject: async ({ request }) => {
 		const data = await request.formData();
