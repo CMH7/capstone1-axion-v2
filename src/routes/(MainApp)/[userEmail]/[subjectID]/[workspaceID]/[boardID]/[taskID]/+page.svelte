@@ -1003,9 +1003,9 @@
       <div class="columns is-mobile is-multiline">
         
         <!-- name -->
-        <div style='{innerWidth < 769 ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.3); margin-bottom: 3%' : ''}' class="column is-12-mobile is-flex is-justify-content-space-between is-align-items-center">
+        <div style='{innerWidth < 769 ? 'border-bottom: 1px solid rgba(0, 0, 0, 0.3); margin-bottom: 3%' : ''}' on:mouseenter={() => hintText.set('Click the Pencil Icon to change the taskname')} class="column is-12-mobile is-flex is-justify-content-space-between is-align-items-center">
 
-          <div on:mouseenter={() => hintText.set('Hint text here')} class="fredoka-reg txt-size-{innerWidth < 571 ? '25' : '40'} has-text-grey-dark is-flex is-align-items-center txt-overflow-ellipsis overflow-x-hidden {taskNameEditing ? 'is-hidden' : ''}">
+          <div class="fredoka-reg txt-size-{innerWidth < 571 ? '25' : '40'} has-text-grey-dark is-flex is-align-items-center txt-overflow-ellipsis overflow-x-hidden {taskNameEditing ? 'is-hidden' : ''}">
             {data.task.name}
           </div>
 
@@ -1050,7 +1050,7 @@
         </div>
   
         <!-- level -->
-        <div class="column is-narrow-tablet is-3-mobile centerxy is-relative">
+        <div on:mouseenter={() => hintText.set('Click the Priority button to choose from low, medium and high')} class="column is-narrow-tablet is-3-mobile centerxy is-relative">
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- big -->
           <div
@@ -1142,6 +1142,7 @@
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- big -->
           <div
+            on:mouseenter={() => hintText.set('Click the Favorite button to pick if this is a favorite or not')}
             use:ClickOutside
             on:clickOutside={() => {
               if(innerWidth > 768) showFavorites = false
@@ -1241,6 +1242,7 @@
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <!-- big -->
           <div
+            on:mouseenter={() => hintText.set('Click on the Subtasks to view the number of subtasks in this task')}
             use:ClickOutside
             on:clickOutside={() => {
               if(innerWidth > 768) showSubCount = false
@@ -1301,7 +1303,7 @@
       <div class="column is-12">
         <div class="{innerWidth > 570 ? 'is-flex is-align-items-center' : ''} maxmins-w-100p">
           <!-- due date -->
-          <div style='border-right: 1px solid rgba(0, 0, 0, 0.3)' class='is-flex is-align-items-center'>
+          <div style='border-right: 1px solid rgba(0, 0, 0, 0.3)' on:mouseenter={() => hintText.set('Click on the Date to change the Due date of the task')} class='is-flex is-align-items-center'>
             <div class="fredoka-reg has-text-grey">
               Due:
             </div>
@@ -1395,32 +1397,50 @@
             {#if innerWidth < 571}
               <Tabs centered showArrows={false} icons class='grey-text' bind:value={currentWindow} fixedTabs>
                 <div slot="tabs">
-                  <Tab>
-                    <Icon path={mdiText} />
-                    <div class="fredoka-reg txt-size-10">
-                      Description
-                    </div>
-                  </Tab>
-                  <Tab>
-                    <Icon path={mdiChat} />
-                    <div class="fredoka-reg txt-size-10">
-                      Chats
-                    </div>
-                  </Tab>
-                  <Tab>
-                    <Icon path={mdiSourceBranch} />
-                    <div class="fredoka-reg txt-size-10">
-                      Subtasks
-                    </div>
-                  </Tab>
+                  <div on:mouseenter={() => hintText.set('Click on the Description button to add or update the task description')}>
+                    <Tab>
+                      <Icon path={mdiText} />
+                      <div class="fredoka-reg txt-size-10">
+                        Description
+                      </div>
+                    </Tab>
+                  </div>
+                  <div on:mouseenter={() => hintText.set('Click on the Chats button to chat with other people on the task')}>
+                    <Tab>
+                      <Icon path={mdiChat} />
+                      <div class="fredoka-reg txt-size-10">
+                        Chats
+                      </div>
+                    </Tab>
+                  </div>
+                  <div on:mouseenter={() => hintText.set('Click the Subtasks button to view the Subtasks of the task')}>
+                    <Tab>
+                      <Icon path={mdiSourceBranch} />
+                      <div on:mouseenter={() => hintText.set('Click the Subtasks button to view the Subtasks of the task')} class="fredoka-reg txt-size-10">
+                        Subtasks
+                      </div>
+                    </Tab>
+                  </div>
                 </div>
               </Tabs>
             {:else}
               <Tabs showArrows={false} centered grow class='grey-text' bind:value={currentWindow} fixedTabs>
                 <div slot='tabs'>
-                  <Tab>Description</Tab>
-                  <Tab>Chats</Tab>
-                  <Tab>Subtasks</Tab>
+                  <Tab>
+                    <div on:mouseenter={() => hintText.set('Click on the Description button to add or update the task description')}>
+                      Description
+                    </div>
+                    </Tab>
+                  <Tab>
+                    <div on:mouseenter={() => hintText.set('Click on the Chats button to chat with other people on the task')}>
+                    Chats
+                    </div>
+                  </Tab>
+                  <Tab>
+                    <div on:mouseenter={() => hintText.set('Click the Subtasks button to view the Subtasks of the task')}>
+                    Subtasks
+                    </div>
+                  </Tab>
                 </div>
               </Tabs>
             {/if}
@@ -1654,7 +1674,7 @@
                   {/each}
 
                   <!-- add subtask button -->
-                  <div class="pos-abs pos-r-10 pos-b-10">
+                  <div on:mouseenter={() => hintText.set('Click the add subtasks button to add subtasks')} class="pos-abs pos-r-10 pos-b-10">
                     <Button
                       size='{innerWidth < 571 ? 'x-small' : 'small'}'
                       fab={innerWidth < 571 ? true : false}
@@ -1707,6 +1727,7 @@
         <div class="column is-12-touch {innerWidth < 769 ? 'pr-0' : ''}">
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div
+            on:mouseenter={() => hintText.set('Click on the Status button to change the status to Todo, In progress or Done')}
             use:ClickOutside
             on:clickOutside={() => showStatuses = false}
             on:click={() => {
@@ -1759,6 +1780,7 @@
         <div class="column is-narrow-desktop is-6-touch {innerWidth < 769 ? 'pr-0' : ''}">
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div
+            on:mouseenter={() => hintText.set('Click on the Eye Icon to see the viewers of the task')}
             use:ClickOutside
             on:clickOutside={() => showViewers = false}
             on:click={() => showViewers = !showViewers}
@@ -1800,7 +1822,8 @@
         <!-- subscribe -->
         <div class='column is-6-touch'>
           <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div 
+          <div
+            on:mouseenter={() => hintText.set('Click the Bell Icon to subscribe or unsubscribe')} 
             class='tags has-addons mt-4 mb-0 is-clickable'
             on:click={subscribe}
           >
@@ -1830,7 +1853,7 @@
       <!-- Assignee/s label and add button -->
       <div class="columns my-0">
         <div class="column is-12">
-          <div class='maxmins-w-100p is-flex is-align-items-center is-justify-content-space-between'>
+          <div on:mouseenter={() => hintText.set('Click the Add Button to add new members on the task')} class='maxmins-w-100p is-flex is-align-items-center is-justify-content-space-between'>
             <div class='fredoka-reg'>
               Assignee/s
             </div>
@@ -1909,7 +1932,7 @@
         <div class="maxmins-w-100p is-flex is-justify-content-flex-end is-align-items-center">
           <Button size='small' depressed class='has-background-danger has-text-white' >
             <Icon path={mdiTrashCan} />
-            <div class='ml-3'>
+            <div on:mouseenter={() => hintText.set('Click the delete task button to delete this task')} class='ml-3'>
               Delete task
             </div>
           </Button>

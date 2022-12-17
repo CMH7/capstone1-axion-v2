@@ -1,7 +1,7 @@
 <script>
   //@ts-nocheck
   import { Button, Icon } from "svelte-materialify"
-  import { notifCenterOpen, notifs } from '$lib/stores/global.store'
+  import { notifCenterOpen, notifs, hintText } from '$lib/stores/global.store'
   import { mdiNotificationClearAll, mdiRead, mdiRobotLove } from "@mdi/js"
   import NotificationCard from "./Notification-card.svelte"
 	import { applyAction, deserialize, enhance } from "$app/forms";
@@ -131,7 +131,7 @@
       on:click={readAllNotifs}
     >
       <Icon size='15px' path={mdiRead} />
-      <div class="fredoka-reg ml-3 txt-size-11">
+      <div on:mouseenter={() => hintText.set('Click on the button read all to change the notification status to read')} class="fredoka-reg ml-3 txt-size-11">
         Read all
       </div>
     </Button>
@@ -144,7 +144,7 @@
       on:click={clearAllNotifs}
       class="is-flex is-justify-content-center is-align-items-center maxmins-w-35p {notifications.length > 0 ? '' : 'opacity-0p'}">
       <Icon size='15px' path={mdiNotificationClearAll} />
-      <div class="fredoka-reg ml-3 txt-size-11">
+      <div on:mouseenter={() => hintText.set('Click the clear all button to clear notifications')} class="fredoka-reg ml-3 txt-size-11">
         Clear all
       </div>
     </Button>

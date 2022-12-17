@@ -5,7 +5,7 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import NothingFound from '$lib/components/nothingFound.svelte';
 	import helpers from '$lib/configs/helpers';
-	import { breadCrumbsItems, currentIndex, global_USERID, loadingScreen, notifs } from '$lib/stores/global.store';
+	import { breadCrumbsItems, currentIndex, global_USERID, hintText, loadingScreen, notifs } from '$lib/stores/global.store';
 	import { mdiAccountOutline, mdiArrowLeftBold, mdiArrowRightBold, mdiMagnify } from '@mdi/js';
 	import bcryptjs from 'bcryptjs';
 	import { onMount } from 'svelte'
@@ -268,7 +268,7 @@
 
 <div class='columns is-mobile is-multiline'>
   <div class='column is-12'>
-    <div class='maxmins-w-100p is-flex is-flex-wrap-wrap is-align-items-center'>
+    <div on:mouseenter={() => hintText.set('Input the name, email etc. of your invitations')} class='maxmins-w-100p is-flex is-flex-wrap-wrap is-align-items-center'>
       <div class='maxmins-w-{innerWidth < 571 ? '100p' : '400'} mr-3'>
         <TextField bind:value={searchFor} color='grey' type='text' outlined dense class='fredoka-reg'>
           Search from name, email or workspace
@@ -278,7 +278,7 @@
         </TextField>
       </div>
 
-      <div class='mr-3 {innerWidth < 571 ? 'mt-3' : ''}'>
+      <div on:mouseenter={() => hintText.set('Check or uncheck if the invitation is for you')} class='mr-3 {innerWidth < 571 ? 'mt-3' : ''}'>
         <Checkbox color='green' bind:checked={fromMe} >
           <div class="fredoka-reg has-text-grey">
             From me
@@ -286,7 +286,7 @@
         </Checkbox>
       </div>
       
-      <div class=' {innerWidth < 571 ? 'mt-3' : ''}'>
+      <div on:mouseenter={() => hintText.set('Check or uncheck if the invitation is for others')} class=' {innerWidth < 571 ? 'mt-3' : ''}'>
         <Checkbox color='green' bind:checked={fromOthers} >
           <div class="fredoka-reg has-text-grey">
             From others

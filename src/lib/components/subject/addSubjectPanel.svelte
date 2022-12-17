@@ -3,7 +3,7 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, hintText, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
   import { addSubjectPanelActive, newSubjectName } from '$lib/stores/subject.store'
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
@@ -75,7 +75,8 @@
     <div class="fredoka-reg is-size-6-desktop is-size-7-touch">
       Add subject
     </div>
-  
+    
+    <div on:mouseenter={() => hintText.set('Click the X button to exit')}>
     <Button
       icon
       disabled={creating}
@@ -87,11 +88,12 @@
     >
       <Icon class='has-text-danger' path={mdiClose} />
     </Button>
+    </div>
   </div>
 
   <Divider class='mt-2' />
 
-  <div class="has-background-white-bis">
+  <div on:mouseenter={() => hintText.set('Input your subject name')} class="has-background-white-bis">
     <TextField
       outlined
       color='indigo darken-4'
@@ -112,7 +114,7 @@
 
   <div class="maxmins-w-100p is-flex is-justify-content-center is-flex-wrap-wrap">
     {#each constants.colors as color}
-      <div class="maxmins-w-30p centerxy min-h-fit-content py-3">
+      <div on:mouseenter={() => hintText.set('Click on the color you want for your subject')} class="maxmins-w-30p centerxy min-h-fit-content py-3">
         <Button
           fab
           depressed
@@ -128,7 +130,7 @@
   </div>
 
   <div class="maxmins-w-100p flex-grow-1 pr-3 pb-3 is-flex is-flex-direction-column is-justify-content-flex-end">
-    <div class="maxmins-w-100p is-flex is-justify-content-flex-end">
+    <div on:mouseenter={() => hintText.set('Click on create to create your subject')} class="maxmins-w-100p is-flex is-justify-content-flex-end">
       <Button
         depressed
         class='has-background-grey-light'

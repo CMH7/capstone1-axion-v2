@@ -7,7 +7,7 @@
   import { Moon } from 'svelte-loading-spinners'
   import { mdiStar, mdiStarOutline } from '@mdi/js'
 	import { newWorkspaceName, selectedWorkspace, workspaceSettingsPanelActive } from '$lib/stores/workspace.store';
-	import { global_USERID, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
+	import { global_USERID, hintText, loadingScreen, modalChosenColor, notifs } from '$lib/stores/global.store';
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
 	import { addSubjectPanelActive, subjectSettingsPanelActive } from '$lib/stores/subject.store';
@@ -144,6 +144,7 @@
 
 <div in:fade class="maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'} flex-shrink-0 mr-3 mb-3">
   <!-- WORKSPACE BOX -->
+  <div on:mouseenter={() => hintText.set('Click a workspace to view the board, Hold o Right click on a workspace to view workspace settings')}>
   <a
     data-sveltekit-preload-data="hover"
     data-sveltekit-preload-code='eager'
@@ -162,6 +163,7 @@
       class="has-transition notification rounded maxmins-h-110 is-relative elevation-1 {mouseEnter && currentWorkspace === workspace.id ?`has-background-${$selectedWorkspace.id === workspace.id && $workspaceSettingsPanelActive ? $modalChosenColor : workspace.color}-dark`:""} is-{$selectedWorkspace.id === workspace.id && $workspaceSettingsPanelActive ? $modalChosenColor : workspace.color} {$selectedWorkspace.id === workspace.id && $workspaceSettingsPanelActive ? $modalChosenColor : workspace.color === 'grey' ? `has-background-${$selectedWorkspace.id === workspace.id && $workspaceSettingsPanelActive ? $modalChosenColor : workspace.color}` : ''} is-clickable maxmins-w-{innerWidth < 571 && innerWidth >= 473 ? '200' : '230'}"
     >
       <div
+        on:mouseenter={() => hintText.set('Click the star icon to pick if this is a favorite or not')}
         on:mouseenter={e => hoveringFav(workspace.id, true)}
         on:mouseleave={e => hoveringFav('', false)}
         class="pos-abs pos-r-0 pos-t-0"
@@ -192,4 +194,5 @@
       </p>
     </div>
   </a>
+  </div>
 </div>

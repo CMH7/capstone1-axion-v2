@@ -3,7 +3,7 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, hintText, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider, Switch} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
@@ -90,7 +90,7 @@
     <div class="fredoka-reg is-size-6-desktop is-size-7-touch">
       Workspace settings
     </div>
-  
+    <div on:mouseenter={() => hintText.set('Click the X button to exit')}>
     <Button
       icon
       disabled={updating}
@@ -102,6 +102,7 @@
     >
       <Icon class='has-text-danger' path={mdiClose} />
     </Button>
+    </div>
   </div>
 
   <Divider class='mt-2 {$selectedWorkspace.owner !== $global_USERID ? 'mb-3' : ''}' />
@@ -114,7 +115,7 @@
     <Divider class='mt-3 mb-2' />
   {/if}
 
-  <div class="has-background-white-bis">
+  <div on:mouseenter={() => hintText.set('Input new workspace name if you want')} class="has-background-white-bis">
     <TextField
       outlined
       color='indigo darken-4'
@@ -133,7 +134,7 @@
     </TextField>
   </div>
 
-  <div class="maxmins-w-100p is-flex is-justify-content-center is-flex-wrap-wrap">
+  <div on:mouseenter={() => hintText.set('Click on a color to change the workspace color')} class="maxmins-w-100p is-flex is-justify-content-center is-flex-wrap-wrap">
     {#key size}
       {#each constants.colors as color}
         <div class="maxmins-w-30p centerxy min-h-fit-content py-3">
@@ -152,7 +153,7 @@
     {/key}
   </div>
 
-  <div class='maxmins-w-100p mt-6 p-3'>
+  <div on:mouseenter={() => hintText.set('Click on favorite if its your favorite workspace')} class='maxmins-w-100p mt-6 p-3'>
     <Switch color='yellow' inset bind:checked={isFavorite}>
       <div class="fredoka-reg">
         Favorite
@@ -161,15 +162,18 @@
   </div>
 
   <div class="maxmins-w-100p flex-grow-1 pr-3 pb-3 is-flex is-flex-direction-column is-justify-content-flex-end">
-    <div class="maxmins-w-100p is-flex is-justify-content-space-between">
-      <Button
-        depressed
-        class='has-background-danger{$selectedWorkspace.owner !== $global_USERID ? '-light' : ''} has-text-white {updating ? 'opacity-0p' : ''}'
-        disabled={$selectedWorkspace.owner !== $global_USERID || updating}
-        on:click={() => confirmDeleteWorkspaceModalActive.set(true)}
-      >
-        Delete
-      </Button>
+    <div class="maxmins-w-100p is-flex is-justify-content-space-between"> 
+      <div on:mouseenter={() => hintText.set('Click delete if you want to delete the workspace')}>
+        <Button
+          depressed
+          class='has-background-danger{$selectedWorkspace.owner !== $global_USERID ? '-light' : ''} has-text-white {updating ? 'opacity-0p' : ''}'
+          disabled={$selectedWorkspace.owner !== $global_USERID || updating}
+          on:click={() => confirmDeleteWorkspaceModalActive.set(true)}
+        >
+          Delete
+        </Button>
+      </div>
+      <div on:mouseenter={() => hintText.set('click on update if you want to save your changes')}>
       <Button
         depressed
         class='has-background-grey-light{$selectedWorkspace.owner !== $global_USERID ? 'er' : ''}'
@@ -182,6 +186,7 @@
           <Pulse size={20} color='#fff' />
         {/if}
       </Button>
+      </div>
     </div>
   </div>
 </div>
