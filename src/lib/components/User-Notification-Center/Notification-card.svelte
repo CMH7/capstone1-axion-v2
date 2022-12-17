@@ -5,7 +5,7 @@
   import { Moon, Pulse } from 'svelte-loading-spinners'
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { notifs } from '$lib/stores/global.store';
-	import { invalidateAll } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
 
   /** @type {import('@prisma/client').notifications}*/
   export let notification
@@ -19,12 +19,28 @@
     if(reading) return
     reading = true
 
+    if(notification.anInvitation) {
+      goto(`/${data.user.email}/invitation`, {replaceState: false})
+    } else {
+      if(notification.fromInterface.interf !== '') {
+        if(notification.fromInterface.subInterface !== '') {
+          if(notification.fromTask !== '') {
+            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`)
+          } else {
+            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`)
+          }
+        } else {
+          goto(`/${data.user.email}/${notification.fromInterface.interf}`)
+        }
+      }
+    }
+
     let form = document.getElementById(`formReadNotif${notification.id}`)
-    const data = new FormData(form);
+    const data2 = new FormData(form);
 
     const response = await fetch(form.action, {
       method: 'POST',
-      body: data
+      body: data2
     });
 
     /** @type {import('@sveltejs/kit').ActionResult} */
@@ -87,8 +103,6 @@
   let draggedLeft = false
   let draggedRightCount = 0
   let initPos = {x: 0, y: 0}
-
-  $: anInvitation = notification.anInvitation ? 'true' : 'false'
 </script>
 
 <svelte:window bind:innerWidth />
@@ -101,10 +115,6 @@
 
   <form action="/{data.user.email}?/readNotif" id='formReadNotif{notification.id}' class='is-hidden' use:enhance>
     <input type="text" name='notifID' bind:value={notification.id}>
-    <input type="text" name="anInvitation" bind:value={anInvitation}>
-    <input type="text" name="subjectID" bind:value={notification.fromInterface.interf}>
-    <input type="text" name="workspaceID" bind:value={notification.fromInterface.subInterface}>
-    <input type="text" name="taskID" bind:value={notification.fromTask}>
   </form>
 </div>
 

@@ -553,13 +553,9 @@ export const actions = {
 			}
 		})
 	},
-	readNotif: async ({ request, params }) => {
+	readNotif: async ({ request }) => {
 		const data = await request.formData()
 		const notifID = data.get('notifID')?.toString()
-		const anInvitation = data.get('anInvitation')?.toString()
-		const subjectID = data.get('subjectID')?.toString()
-		const workspaceID = data.get('workspaceID')?.toString()
-		const taskID = data.get('taskID')?.toString()
 
 		const updatedNotif = await prisma.notifications.update({
 			where: {
@@ -570,21 +566,5 @@ export const actions = {
 			}
 		})
 		if (!updatedNotif) return invalid(500, { message: 'Notification not read', reason: 'databaseError' })
-		
-		if (anInvitation === 'true') {
-			throw redirect(302, `/${params.userEmail}/invitations`)
-		} else {
-			if (subjectID !== '') {
-				if (workspaceID !== '') {
-					if (taskID !== '') {
-						throw redirect(302, `/${params.userEmail}/${subjectID}/${workspaceID}/${taskID}`)
-					} else {
-						throw redirect(302, `/${params.userEmail}/${subjectID}/${workspaceID}`)
-					}
-				} else {
-					throw redirect(302, `/${params.userEmail}/${subjectID}`);
-				}
-			}
-		}
 	}
 };
