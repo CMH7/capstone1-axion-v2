@@ -94,7 +94,7 @@
   </div>
 
   <div class="fredoka-reg txt-size-15 px-3">
-    Invite {$selectedMember.firstName} {$selectedMember.firstName} to the workspace?. <span class="txt-size-15 rounded p-1 has-background-success-light has-text-success-dark">Invite {$selectedMember.firstName} {$selectedMember.firstName}</span>
+    Invite {$selectedMember.firstName} {$selectedMember.lastName} to the workspace?. <span class="txt-size-15 rounded p-1 has-background-success-light has-text-success-dark">Invite {$selectedMember.firstName} {$selectedMember.lastName}</span>
   </div>
   <div class="maxmins-w-100p is-flex is-justify-content-flex-end mt-6">
     <Button

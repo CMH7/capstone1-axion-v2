@@ -1,123 +1,99 @@
 <script>
   //@ts-nocheck
-  import { breadCrumbsItems, invModalActive, notifCenterOpen, notifs } from '$lib/stores/global.store'
-  import {activeSubject, activeWorkspace} from '$lib/stores/dashboard.store'
   import { Avatar, Button, Icon } from 'svelte-materialify'
-  import { mdiAccountCircleOutline, mdiCircleSmall, mdiClose, mdiDotNet, mdiTrashCan } from '@mdi/js'
-  import { Pulse } from 'svelte-loading-spinners'
+  import { mdiAccountCircleOutline, mdiCircleSmall, mdiClose, mdiTrashCan } from '@mdi/js'
+  import { Moon, Pulse } from 'svelte-loading-spinners'
+	import { applyAction, deserialize, enhance } from '$app/forms';
+	import { notifs } from '$lib/stores/global.store';
+	import { goto, invalidateAll } from '$app/navigation';
 
   /** @type {import('@prisma/client').notifications}*/
   export let notification
-
+  export let data
   export let profileb = ''
 
-  const setReadNotif = () => {
-    // if($isProcessing || delHover) return
-    // isProcessing.set(true)
-    // fetch(`${constants.backURI}/User/notification?user=${$userData.id}&notification=${notification.id}`, {
-    //   method: 'GET',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   }
-    // }).then(async res => {
-    //   const { id } = await res.json()
-    //   let userDataCopy = $userData
-    //   userDataCopy.notifications.every(notification => {
-    //     if(notification.id === id) {
-    //       notification.isRead = true
-    //       return false
-    //     }
-    //     return true
-    //   })
-    //   userData.set(userDataCopy)
-    // }).catch(err => {
-    //   $notifs = [...$notifs, {
-    //     msg: `Error in seting isRead of the notificaton, ${err}`,
-    //     type: 'error',
-    //     id: bcrypt.hashSync(`${new Date().getMilliseconds() * (Math.random() * 1)}`, 13)
-    //   }]
-    //   console.error(err)
-    // }).finally(() => {
-    //   isProcessing.set(false)
-    // })
+  let removing = false
+  let reading = false
+
+  const setReadNotif = async () => {
+    if(reading) return
+    reading = true
+
+    if(notification.anInvitation) {
+      goto(`/${data.user.email}/invitation`, {replaceState: false})
+    } else {
+      if(notification.fromInterface.interf !== '') {
+        if(notification.fromInterface.subInterface !== '') {
+          if(notification.fromTask !== '') {
+            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`)
+          } else {
+            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`)
+          }
+        } else {
+          goto(`/${data.user.email}/${notification.fromInterface.interf}`)
+        }
+      }
+    }
+
+    let form = document.getElementById(`formReadNotif${notification.id}`)
+    const data2 = new FormData(form);
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: data2
+    });
+
+    /** @type {import('@sveltejs/kit').ActionResult} */
+    const result = deserialize(await response.text());
+
+    if(result.type === 'invalid') {
+      $notifs = [...$notifs, {
+        msg: result.data.message,
+        type: `${result.data.reason === 'databaseError' ? 'stayError' : 'error'}`,
+        id: `${(Math.random() * 999) + 1}`
+      }]
+    }
+
+    if (result.type === 'success') {
+      // re-run all `load` functions, following the successful update
+      await invalidateAll();
+    }
+
+    applyAction(result);
+    reading = false
   }
 
-  const deleteNotif = () => {
-    console.log('deleted');
-    // if(outerWidth > 570) {
-    //   if($isProcessing || !delHover) return
-    // }
-    // isProcessing.set(true)
-    // isDeleting = true
-    // fetch(`${constants.backURI}/User/delete/notification`, {
-    //   method: 'DELETE',
-    //   headers: {
-    //     'Content-Type': 'application/json'
-    //   },
-    //   body: JSON.stringify({
-    //     ids: {
-    //       user: $userData.id,
-    //       notification: notification.id
-    //     }
-    //   })
-    // }).then(async res => {
-    //   const { id } = await res.json()
-    //   let userDataCopy = $userData
-    //   userDataCopy.notifications = userDataCopy.notifications.filter(notificationa => notificationa.id != id)
-    //   userData.set(userDataCopy)
-    // }).catch(err => {
-    //   $notifs = [...$notifs, {
-    //     msg: `Error in deleting the notificaton, ${err}`,
-    //     type: 'error',
-    //     id: $notifs.length + 1
-    //   }]
-    //   console.error(err)
-    // }).finally(() => {
-    //   isProcessing.set(false)
-    //   draggedLeft = false
-    //   draggedRight = false
-    //   draggedRightCount = 0
-    //   isDeleting = false
-    //   if($userData.notifications.length === 0) notifCenterOpen.set(false)
-    // })
-  }
+  const deleteNotif = async () => {
+    if(removing) return
+    removing = true
 
-  const transpo = () => {
-    // if(delHover || isDeleting || $isProcessing) return
-    // if(notification.anInvitation) {
-    //   if(!notification.isRead) setReadNotif()
-    //   invModalActive.set(true)
-    //   notifCenterOpen.set(false)
-    //   return
-    // }
-    // if(notification.fromTask || notification.aMention) {
-    //   if(!notification.isRead) setReadNotif()
-    //   currentInterface.set('Dashboard')
-    //   currentDashboardSubInterface.set('Boards')
-    //   $userData.subjects.every(subject => {
-    //     subject.workspaces.every(workspace => {
-    //       workspace.boards.every(board => {
-    //         board.tasks.every(task => {
-    //           if(task.id === notification.fromTask) {
-    //             activeSubject.set(subject)
-    //             activeWorkspace.set(workspace)
-    //             allBoards.set(workspace.boards)
-    //             activeTask.set(task)
-    //             $breadCrumbsItems = [{text: $activeSubject.name, href: '1'}, {text: $activeWorkspace.name, href: '2'}, {text: 'boards', href: '3'}]
-    //             return false
-    //           }
-    //           return true
-    //         })
-    //         return true
-    //       })
-    //       return true
-    //     })
-    //     return true
-    //   })
-    //   taskViewModalActive.set(true)
-    //   notifCenterOpen.set(false)
-    //   return
-    // }
+    let form = document.getElementById(`formRemoveNotif${notification.id}`)
+    const data = new FormData(form);
+
+    const response = await fetch(form.action, {
+      method: 'POST',
+      body: data
+    });
+
+    /** @type {import('@sveltejs/kit').ActionResult} */
+    const result = deserialize(await response.text());
+
+    if(result.type === 'invalid') {
+      $notifs = [...$notifs, {
+        msg: result.data.message,
+        type: `${result.data.reason === 'databaseError' ? 'stayError' : 'error'}`,
+        id: `${(Math.random() * 999) + 1}`
+      }]
+    }
+
+    if (result.type === 'success') {
+      // re-run all `load` functions, following the successful update
+      await invalidateAll();
+    }
+
+    applyAction(result);
+    removing = false
+    delHover = false
   }
 
   let innerWidth = 0
@@ -127,10 +103,20 @@
   let draggedLeft = false
   let draggedRightCount = 0
   let initPos = {x: 0, y: 0}
-  let isDeleting = false
 </script>
 
 <svelte:window bind:innerWidth />
+
+<!-- FORMMSSSS -->
+<div class='is-hidden'>
+  <form action="/{data.user.email}?/removeNotif" id='formRemoveNotif{notification.id}' class='is-hidden' use:enhance>
+    <input type="text" name='notifID' bind:value={notification.id}>
+  </form>
+
+  <form action="/{data.user.email}?/readNotif" id='formReadNotif{notification.id}' class='is-hidden' use:enhance>
+    <input type="text" name='notifID' bind:value={notification.id}>
+  </form>
+</div>
 
 <div class="is-flex flex-shrink-0 is-align-items-center overflow-x-hidden">
   <div class="{innerWidth > 570 ? 'is-hidden' : ''} is-flex is-justify-content-center is-align-items-center is-relative pos-l-{draggedRight ? '15' : 'n40p'} has-transition">
@@ -144,7 +130,7 @@
   
   <!-- svelte-ignore a11y-click-events-have-key-events -->
   <div
-    on:click={transpo}
+    on:click={setReadNotif}
     on:mouseenter={e => notifHovering = true}
     on:mouseleave={e => notifHovering = false}
     on:touchstart={e => {
@@ -174,7 +160,7 @@
       }
       if(draggedRight) deleteNotif()
     }}
-    class="{notification.isRead ? 'opacity-60p': ''} pos-l-{draggedRight ? '30' : draggedLeft ? 'n70': innerWidth < 571 ? 'n30' : '0'} is-relative maxmins-w-100p parent rounded maxmins-h-60 mb-2 {isDeleting? 'a': ''}is-clickable {!delHover ?  'has-background-grey-lighter' : 'has-background-danger-light'} has-transition">
+    class="{notification.isRead ? 'opacity-60p': ''} pos-l-{draggedRight ? '30' : draggedLeft ? 'n70': innerWidth < 571 ? 'n30' : '0'} is-relative maxmins-w-100p parent rounded min-h-fit-content mb-2 {removing? 'a': ''}is-clickable {!delHover ?  'has-background-grey-lighter' : 'has-background-danger-light'} has-transition">
   
     <div class="is-flex is-align-items-center is-justify-content-space-between maxmins-h-100p p-1">
       <div class="is-flex is-align-items-center">
@@ -199,9 +185,9 @@
       <div
         on:mouseenter={e => delHover = true}
         on:mouseleave={e => delHover = false}
-        on:click={e => deleteNotif()}
+        on:click={deleteNotif}
       >
-        {#if !isDeleting}
+        {#if !removing}
           {#if !notification.isRead}
             <Button icon class="{delHover ? 'has-background-danger' : ''} has-transition is-flex is-align-items-center is-justify-content-center">
               {#if !notifHovering}
@@ -220,7 +206,7 @@
             {/if}
           {/if}
         {:else}
-          <Pulse size={10} color='#191a48' />
+          <Moon size={20} color='#000' />
         {/if}
       </div>
     </div>

@@ -160,7 +160,7 @@
 <svelte:window bind:innerWidth on:unload={unload} />
 
 <!-- make this form hidden always -->
-<form id="formlogout" action="?/logout" class="is-hidden" use:enhance></form>
+<form id="formlogout" action="/{data.user.email}?/logout" class="is-hidden" use:enhance></form>
 
 {#if $loading}
 <LoadingScreen />
@@ -265,7 +265,7 @@
                 <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiBell } />
               </Button>
             </Badge>
-            <NotificationCenter notifications={data.notifications} notifFromPic={data.notifFromPic} />
+            <NotificationCenter {data} notifications={data.notifications} notifFromPic={data.notifFromPic} />
           </div>
   
           <!-- profile -->

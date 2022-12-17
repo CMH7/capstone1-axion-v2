@@ -12,7 +12,7 @@
 
   let deleting = false
   let move = false
-  let moveToID = $statuses[0].value
+  let moveToID = $statuses[0]?.value
 
   $: moves = move ? 'move' : 'del'
 

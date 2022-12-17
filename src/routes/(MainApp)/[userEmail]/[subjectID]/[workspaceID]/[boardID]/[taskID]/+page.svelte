@@ -785,8 +785,28 @@
 
   const addSubtask = async () => {
     if(addingSubtask) return
-    if($newSubtaskName === '') return
-    if($newSubtaskDue === '') return 
+    if($newSubtaskName === '') {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Name cannot be empty',
+          type: 'error',
+          id: (Math.random() * 999) + 1
+        }
+      ]
+      return
+    }
+    if($newSubtaskDue === '') {
+      $notifs = [
+        ...$notifs,
+        {
+          msg: 'Due date cannot be empty',
+          type: 'error',
+          id: (Math.random() * 999) + 1
+        }
+      ]
+      return
+    } 
     addingSubtask = true
 
     let form = document.getElementById('formTaskAddSubtask')

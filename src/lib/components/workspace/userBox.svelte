@@ -69,24 +69,30 @@
     </CardSubtitle>
     <CardActions>
       <div class="maxmins-w-100p is-flex is-justify-content-space-between">
-        <Button
-          size='small'
-          outlined
-          disabled={data.workspace.owner === member.id || !data.workspace.members.includes(member.id)}
-          class='{data.workspace.owner === member.id || !data.workspace.members.includes(member.id) ? 'opacity-0p' : ''}'
-          on:click={removeMember}
-        >
-          Remove
-        </Button>
-        <Button
-          size='small'
-          outlined
-          disabled={data.workspace.owner === member.id}
-          class='{data.workspace.owner === member.id ? 'opacity-0p' : ''}'
-          on:click={dpi}
-        >
-          {data.workspace.admins.includes(member.id) ? 'Demote' : data.workspace.members.includes(member.id) ? 'Promote' : 'Invite'}
-        </Button>
+        {#if member.id !== data.user.id}
+          <Button
+            size='small'
+            outlined
+            disabled={data.workspace.owner === member.id || !data.workspace.members.includes(member.id)}
+            class='{data.workspace.owner === member.id || !data.workspace.members.includes(member.id) ? 'opacity-0p' : ''}'
+            on:click={removeMember}
+          >
+            Remove
+          </Button>
+          <Button
+            size='small'
+            outlined
+            disabled={data.workspace.owner === member.id || data.invitations.filter(inv => inv.workspace.id === data.workspace.id).filter(inv => inv.status === 'Pending').filter(inv => inv.to.id === member.id).length > 0}
+            class='{data.workspace.owner === member.id ? 'opacity-0p' : ''}'
+            on:click={dpi}
+          >
+            {data.workspace.admins.includes(member.id) ? 'Demote' : data.workspace.members.includes(member.id) ? 'Promote' : data.invitations.filter(inv => inv.workspace.id === data.workspace.id).filter(inv => inv.status === 'Pending').filter(inv => inv.to.id === member.id).length > 0 ? 'Invited' : 'Invite'}
+          </Button>
+        {:else}
+          <Button size='small' disabled class='opacity-0p'>
+            c
+          </Button>
+        {/if}
       </div>
     </CardActions>
   </Card>
