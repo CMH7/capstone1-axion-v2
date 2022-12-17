@@ -20,17 +20,17 @@
     reading = true
 
     if(notification.anInvitation) {
-      goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
+      await goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
     } else {
       if(notification.fromInterface.interf !== '') {
         if(notification.fromInterface.subInterface !== '') {
           if(notification.fromTask !== '') {
-            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`, {replaceState: true, invalidateAll: true})
+            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`, {replaceState: true, invalidateAll: true})
           } else {
-            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`, {replaceState: true, invalidateAll: true})
+            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`, {replaceState: true, invalidateAll: true})
           }
         } else {
-          goto(`/${data.user.email}/${notification.fromInterface.interf}`, {replaceState: true, invalidateAll: true})
+          await goto(`/${data.user.email}/${notification.fromInterface.interf}`, {replaceState: true, invalidateAll: true})
         }
       }
     }
