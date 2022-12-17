@@ -103,6 +103,26 @@
       return wm
     }
   })
+  $: activeSubject.set(data.subject)
+  $: activeWorkspace.set(data.workspace)
+  $: activeBoard.set(data.board)
+  $: activeTask.set(data.task)
+  $: $breadCrumbsItems = [
+      {text: data.subject.name, href: `/${data.user.email}`},
+      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
+      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
+      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
+      {text: 'view', href: '#'}
+    ]
+  $: oldDescriptionValue = data.task.description
+  $: description = data.task.description
+  $: newStatus = {
+      id: data.board.id,
+      name: data.board.name,
+      color: data.board.color
+    }
+  $: statuses = data.statuses
+  $: newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
 
   /**
    * @param {{id: string, name: string, color: string}} Astatus
@@ -881,26 +901,6 @@
       return
     }
     currentIndex.set(0)
-    activeSubject.set(data.subject)
-    activeWorkspace.set(data.workspace)
-    activeBoard.set(data.board)
-    activeTask.set(data.task)
-    $breadCrumbsItems = [
-      {text: data.subject.name, href: `/${data.user.email}`},
-      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
-      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
-      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
-      {text: 'view', href: '#'}
-    ]
-    oldDescriptionValue = data.task.description
-    description = data.task.description
-    newStatus = {
-      id: data.board.id,
-      name: data.board.name,
-      color: data.board.color
-    }
-    statuses = data.statuses
-    newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
     loadingScreen.set(false)
     helpers.resetPanels()
   })
@@ -1579,14 +1579,14 @@
                 </div>
 
                 <!-- chat tools -->
-                <div style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='maxmins-w-100p is-flex is-align-items-center maxmins-h-5v'>
+                <div style='border-top: 1px solid rgba(0, 0, 0, 0.3)' class='opacity-0p maxmins-w-100p is-flex is-align-items-center maxmins-h-5v'>
                   <!-- upload -->
-                  <div class="maxmins-w-50 centerxy">
+                  <div class="maxmins-w-50 centerxy opacity-0p">
                     <Button
                       size='small'
                       icon
                     >
-                      <Icon class='has-text-info' path={mdiFileUpload} />
+                      <Icon class='has-text-info opacity-0p' path={mdiFileUpload} />
                     </Button>
                   </div>
 

@@ -247,6 +247,7 @@
       ]
     })
   }
+  $: global_USERID.set(data.user.id)
 
   const handleRightClick = (task) => {
     statuses.set(workspaceStatuses.filter(ws => ws.statuses.some(y => y.value === task.status))[0].statuses)
@@ -268,7 +269,6 @@
     currentIndex.set(2)
     $breadCrumbsItems = [{text: 'Favorites', href: '#'}]
     loadingScreen.set(false)
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
   })
 </script>

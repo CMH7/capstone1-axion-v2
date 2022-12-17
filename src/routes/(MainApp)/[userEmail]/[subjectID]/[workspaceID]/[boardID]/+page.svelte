@@ -11,10 +11,20 @@
 	import bcryptjs from 'bcryptjs';
   import { onMount } from 'svelte';
 
-
   //@ts-nocheck
   /** @type {import('./$types').PageServerData}*/
   export let data
+
+  $: activeSubject.set(data.subject)
+  $: activeWorkspace.set(data.workspace)
+  $: activeBoard.set(data.board)
+  $: $breadCrumbsItems = [
+      {text: data.subject.name, href: `/${data.user.email}`},
+      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
+      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
+      {text: 'view', href: '#'}
+    ]
+  $: global_USERID.set(data.user.id)
 
   onMount(() => {
     if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
@@ -30,18 +40,8 @@
       return
     }
     currentIndex.set(0)
-    activeSubject.set(data.subject)
-    activeWorkspace.set(data.workspace)
-    activeBoard.set(data.board)
     activeTask.set(models.task)
-    $breadCrumbsItems = [
-      {text: data.subject.name, href: `/${data.user.email}`},
-      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
-      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
-      {text: 'view', href: '#'}
-    ]
     loadingScreen.set(false)
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
   })
 </script>

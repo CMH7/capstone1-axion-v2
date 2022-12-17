@@ -59,6 +59,8 @@
   $: showTutorialR = data.user.showTutorial ? 'off' : 'on'
   $: showStatisticsR = data.user.showStatistics ? 'off' : 'on'
   $: footerHintsR = data.user.footerHints ? 'off' : 'on'
+  $: global_USERID.set(data.user.id)
+  $: verificationResent.set(data.user.verified)
 
   const saveProfile = async () => {
     let changes = 0
@@ -463,10 +465,8 @@
     }
     $breadCrumbsItems = [{text: 'My profile', href: '#'}]
     loadingScreen.set(false)
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
     currentIndex.set(3)
-    verificationResent.set(data.user.verified)
   })
 </script>
 
@@ -1136,7 +1136,7 @@
           </div>
           
           <!-- showTutorial -->
-          <div class='column is-12 mt-3'>
+          <!-- <div class='column is-12 mt-3'>
             <div class='fredoka-reg tag'>
               Show tutorial
             </div>
@@ -1157,7 +1157,7 @@
                 {/if}
                </Button>
             </div>
-          </div>
+          </div> -->
           
           <!-- showStatistics -->
           <div class='column is-12 mt-3'>

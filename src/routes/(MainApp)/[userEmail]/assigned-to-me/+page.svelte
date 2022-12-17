@@ -59,6 +59,7 @@
   let valueExp = []
   
   $: updates(data)
+  $: global_USERID.set(data.user.id)
 
   const setHint = () => {
     hintText.set('Click the board name for the board settings (for custom boards only)')
@@ -207,7 +208,6 @@
     currentIndex.set(1)
     $breadCrumbsItems = [{text: 'Assigned to me', href: '#'}]
     loadingScreen.set(false)
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
   })
 </script>

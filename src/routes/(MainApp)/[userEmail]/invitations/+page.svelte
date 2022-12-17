@@ -51,6 +51,7 @@
       }
     }
   }
+  $: global_USERID.set(data.user.id)
 
   const declineInv = async () => {
     if(processing) return
@@ -232,7 +233,6 @@
     currentIndex.set(4)
     $breadCrumbsItems = [{text: 'Invitations', href: '#'}]
     loadingScreen.set(false)
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
   })
 </script>

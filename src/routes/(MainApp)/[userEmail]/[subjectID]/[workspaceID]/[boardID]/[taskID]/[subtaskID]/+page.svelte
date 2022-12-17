@@ -105,6 +105,27 @@
       return wm
     }
   })
+  $: activeSubject.set(data.subject)
+  $: activeWorkspace.set(data.workspace)
+  $: activeBoard.set(data.board)
+  $: activeTask.set(data.task)
+  $: $breadCrumbsItems = [
+      {text: data.subject.name, href: `/${data.user.email}`},
+      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
+      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
+      {text: data.parentTask.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
+      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
+      {text: 'view', href: '#'}
+    ]
+  $: oldDescriptionValue = data.task.description
+  $: description = data.task.description
+  $: newStatus = {
+      id: data.board.id,
+      name: data.board.name,
+      color: data.board.color
+    }
+  $: statuses = data.statuses
+  $: newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
 
   /**
    * @param {{id: string, name: string, color: string}} Astatus
@@ -863,27 +884,6 @@
       return
     }
     currentIndex.set(0)
-    activeSubject.set(data.subject)
-    activeWorkspace.set(data.workspace)
-    activeBoard.set(data.board)
-    activeTask.set(data.task)
-    $breadCrumbsItems = [
-      {text: data.subject.name, href: `/${data.user.email}`},
-      {text: data.workspace.name, href: `/${data.user.email}/${data.subject.id}`},
-      {text: data.board.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}`},
-      {text: data.parentTask.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
-      {text: data.task.name, href: `/${data.user.email}/${data.subject.id}/${data.workspace.id}/${data.parentTask.status}/${data.parentTask.id}`},
-      {text: 'view', href: '#'}
-    ]
-    oldDescriptionValue = data.task.description
-    description = data.task.description
-    newStatus = {
-      id: data.board.id,
-      name: data.board.name,
-      color: data.board.color
-    }
-    statuses = data.statuses
-    newSubtaskStatus.set(data.statuses.filter(b => b.name.toLowerCase() === 'todo')[0].id)
     loadingScreen.set(false)
     helpers.resetPanels()
   })

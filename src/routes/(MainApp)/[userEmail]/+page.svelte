@@ -22,6 +22,7 @@
 
   $: clientSubjects = data.subjects
   $: searchFor !== '' ? clientSubjects = clientSubjects.filter(cs => cs.name.toLowerCase().match(searchFor.toLowerCase())) : clientSubjects = data.subjects
+  $: global_USERID.set(data.user.id)
 
   onMount(() => {
     if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
@@ -41,7 +42,6 @@
     activeWorkspace.set(models.workspace)
     $breadCrumbsItems = [{text: 'Subjects', href: '#'}]
     hintText.set('Click the \'+\' icon to add new subject!')
-    global_USERID.set(data.user.id)
     loadingScreen.set(false)
     helpers.resetPanels()
   })

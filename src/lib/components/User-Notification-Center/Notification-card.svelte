@@ -4,7 +4,7 @@
   import { mdiAccountCircleOutline, mdiCircleSmall, mdiClose, mdiTrashCan } from '@mdi/js'
   import { Moon, Pulse } from 'svelte-loading-spinners'
 	import { applyAction, deserialize, enhance } from '$app/forms';
-	import { notifs } from '$lib/stores/global.store';
+	import { notifCenterOpen, notifs } from '$lib/stores/global.store';
 	import { goto, invalidateAll } from '$app/navigation';
 
   /** @type {import('@prisma/client').notifications}*/
@@ -20,19 +20,24 @@
     reading = true
 
     if(notification.anInvitation) {
-      goto(`/${data.user.email}/invitation`, {replaceState: false})
+      await goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
     } else {
       if(notification.fromInterface.interf !== '') {
         if(notification.fromInterface.subInterface !== '') {
           if(notification.fromTask !== '') {
-            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`)
+            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`, {replaceState: true, invalidateAll: true})
           } else {
-            goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`)
+            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`, {replaceState: true, invalidateAll: true})
           }
         } else {
-          goto(`/${data.user.email}/${notification.fromInterface.interf}`)
+          await goto(`/${data.user.email}/${notification.fromInterface.interf}`, {replaceState: true, invalidateAll: true})
         }
       }
+    }
+    notifCenterOpen.set(false)
+    if(notification.isRead) {
+      reading = false
+      return
     }
 
     let form = document.getElementById(`formReadNotif${notification.id}`)
@@ -187,7 +192,7 @@
         on:mouseleave={e => delHover = false}
         on:click={deleteNotif}
       >
-        {#if !removing}
+        {#if !removing && !reading}
           {#if !notification.isRead}
             <Button icon class="{delHover ? 'has-background-danger' : ''} has-transition is-flex is-align-items-center is-justify-content-center">
               {#if !notifHovering}

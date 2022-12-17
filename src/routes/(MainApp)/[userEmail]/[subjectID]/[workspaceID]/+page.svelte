@@ -186,6 +186,13 @@
       })
     }
   }
+  $: activeWorkspace.set(data.workspace)
+  $: activeSubject.set(data.subject)
+  $: $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'boards', href: '#'}]
+  $: workspaceMembers.set(data.workspaceMembers)
+  $: global_USERID.set(data.user.id)
+  $: statuses.set(data.statuses)
+  $: newTaskMembers.set([data.user.id])
 
   onMount(() => {
     if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
@@ -201,15 +208,8 @@
       return
     }
     currentIndex.set(0)
-    activeSubject.set(data.subject)
-    activeWorkspace.set(data.workspace)
-    $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'boards', href: '#'}]
     hintText.set('Click the \'+\' to create task and more tools!')
-    global_USERID.set(data.user.id)
-    statuses.set(data.statuses)
     newTaskStatus.set($statuses.filter(status => status.name === 'Todo')[0].value)
-    newTaskMembers.set([data.user.id])
-    workspaceMembers.set(data.workspaceMembers)
     helpers.resetPanels()
     loadingScreen.set(false)
   })

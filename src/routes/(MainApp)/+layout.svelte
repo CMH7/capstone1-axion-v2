@@ -64,6 +64,8 @@
   breadCrumbsItems.subscribe(value => breadcrumbs = value)
 
   $: color = navs[$currentIndex].color
+  $: global_USERID.set(data.user.id)
+  $: userID = data.user.id
 
   const toggleNavigation = () => {
     active = !active
@@ -141,9 +143,8 @@
       goto('/Signin', {replaceState: true})
       return
     }
-    global_USERID.set(data.user.id)
     helpers.pusher.connect()
-    let channel = helpers.pusher.subscribe(data.user.id)
+    let channel = helpers.pusher.subscribe(userID)
     channel.bind('updates', function(data) {
       invalidateAll()
     })

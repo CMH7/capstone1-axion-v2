@@ -24,6 +24,9 @@
 
   $: clientWorkspaces = data.workspaces
   $: searchFor !== '' ? clientWorkspaces = clientWorkspaces.filter(cw => cw.name.toLowerCase().match(searchFor.toLowerCase())) : clientWorkspaces = data.workspaces
+  $: activeSubject.set(data.subject)
+  $: $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}`}]
+  $: global_USERID.set(data.user.id)
 
   onMount(async () => {
     if(!bcryptjs.compareSync(localStorage.getItem('xxx'), data.user.password)) {
@@ -44,10 +47,7 @@
       goto(`/${data.user.email}`)
     }
     activeWorkspace.set(models.workspace)
-    activeSubject.set(data.subject)
-    $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}`}]
     hintText.set('Click the \'+\' icon to add new workspace and access to subject settings!')
-    global_USERID.set(data.user.id)
     helpers.resetPanels()
     loadingScreen.set(false)
   })

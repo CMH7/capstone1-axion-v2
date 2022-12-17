@@ -18,6 +18,10 @@
 
   $: members = data.members
   $: searchFor === '' ? members = data.members : members = members.filter(member => `${member.firstName}${member.lastName}${member.email}`.toLowerCase().match(searchFor.toLowerCase()))
+  $: activeSubject.set(data.subject)
+  $: activeWorkspace.set(data.workspace)
+  $: $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'members', href: `/${data.user.email}/${$activeSubject.id}/${$activeWorkspace.id}`}]
+  $: global_USERID.set(data.user.id)
 
   const keyDown = e => {
     if(e.keyCode == 8) members = data.members
@@ -36,15 +40,17 @@
       goto('/Signin', {replaceState: true})
       return
     }
-    activeSubject.set(data.subject)
-    activeWorkspace.set(data.workspace)
-    $breadCrumbsItems = [{text: $activeSubject.name, href: `/${data.user.email}/`}, {text: $activeWorkspace.name, href: `/${data.user.email}/${$activeSubject.id}`}, {text: 'members', href: `/${data.user.email}/${$activeSubject.id}/${$activeWorkspace.id}`}]
     hintText.set('Click the \'+\' to create task and more tools!')
-    global_USERID.set(data.user.id)
     loadingScreen.set(false)
     helpers.resetPanels()
   })
 </script>
+
+<svelte:head>
+  <title>
+    {data.workspace.name} | members
+  </title>
+</svelte:head>
 
 <svelte:window bind:innerWidth on:keydown={keyDown} />
 
