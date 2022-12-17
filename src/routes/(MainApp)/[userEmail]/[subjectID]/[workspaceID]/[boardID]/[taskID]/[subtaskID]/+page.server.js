@@ -200,8 +200,8 @@ export const actions = {
 					equals: params.userEmail
 				}
 			}
-		})
-		if(!user) throw error(404, 'Account not found')
+		});
+		if (!user) throw error(404, 'Account not found');
 
 		const user2 = await prisma.users.update({
 			where: {
@@ -212,15 +212,15 @@ export const actions = {
 					set: false
 				}
 			}
-		})
-		if (!user2) throw redirect(301, 'my-profile')
-		
-    throw redirect(301, '/Signin')
+		});
+		if (!user2) throw redirect(301, 'my-profile');
+
+		throw redirect(301, '/Signin');
 	},
 	taskRename: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const newName = data.get('name')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const newName = data.get('name')?.toString();
 
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
@@ -233,8 +233,12 @@ export const actions = {
 				name: true,
 				subscribers: true
 			}
-		})
-		if(!toUpdateTask) return invalid(500, {message: 'Current task is not found please reload', reason: 'databaseError'})
+		});
+		if (!toUpdateTask)
+			return invalid(500, {
+				message: 'Current task is not found please reload',
+				reason: 'databaseError'
+			});
 
 		const updatedTask = await prisma.tasks.update({
 			where: {
@@ -247,128 +251,10 @@ export const actions = {
 				id: true,
 				name: true
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Failed to update task name', reason: 'databaseError' })
-		
-		const workspace = await prisma.workspaces.findFirst({
-			where: {
-				id: {
-					equals: params.workspaceID
-				}
-			},
-			select: {
-				id: true,
-				members: true,
-				name: true
-			}
-		})
-		if (!workspace) return invalid(404, { message: 'Current workspace not found please reload', reason: 'databaseError' })
+		});
+		if (!updatedTask)
+			return invalid(500, { message: 'Failed to update task name', reason: 'databaseError' });
 
-		if (workspace.members.length > 1) {
-			const cUser = await prisma.users.findFirst({
-				where: {
-					email: {
-						equals: params.userEmail
-					}
-				},
-				select: {
-					id: true,
-					firstName: true,
-					lastName: true
-				}
-			});
-			if (!cUser) throw error(404, 'Account not found');
-
-			let trs1 = []
-			toUpdateTask.subscribers.forEach(s => {
-				if (s !== cUser.id) {
-					trs1 = [
-						...trs1,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: '',
-									subInterface: ''
-								},
-								fromTask: updatedTask.id,
-								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} renamed the task ${toUpdateTask.name} to ${updatedTask.name} in ${workspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					]
-				}
-			})
-			const r1 = await prisma.$transaction(trs1)
-	
-			let trs2 = []
-			let i = 0
-			toUpdateTask.subscribers.forEach(s => {
-				if (s !== cUser.id) {
-					trs2 = [
-						...trs2,
-						prisma.users.update({
-							where: {
-								id: s
-							},
-							data: {
-								notifications: {
-									push: r1[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					]
-					i++
-				}
-			})
-			const r2 = await prisma.$transaction(trs2)
-
-			pusherServer.trigger(workspace.members.filter(s => s !== cUser.id), 'updates', {})
-		}
-	},
-	taskNewLevel: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		//@ts-ignore
-		const newLevel = parseInt(data.get('level')?.toString())
-
-		const toUpdateTask = await prisma.tasks.findFirst({
-			where: {
-				id: {
-					equals: params.taskID
-				}
-			},
-			select: {
-				id: true,
-				subscribers: true,
-				level: true,
-				name: true
-			}
-		})
-		if(!toUpdateTask) return invalid(404, {message: 'Current task not found please reload', reason: 'databaseError'})
-
-		const updatedTask = await prisma.tasks.update({
-			where: {
-				id: taskID
-			},
-			data: {
-				level: newLevel
-			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Failed to update level of task please reload', reason: 'databaseError' })
-		
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -402,6 +288,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -417,12 +315,163 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} set the task ${toUpdateTask.name} to ${updatedTask.level == 1 ? 'lowest' : updatedTask.level == 2 ? 'medium' : 'highest'} priority in ${workspace.name}`
+								message: `${cUser.firstName} ${cUser.lastName} renamed the task ${toUpdateTask.name} to ${updatedTask.name} in ${workspace.name}`
+							},
+							select: {
+								id: true
+							}
+						})
+					];
+				}
+			});
+			const r1 = await prisma.$transaction(trs1);
+
+			let trs2 = [];
+			let i = 0;
+			toUpdateTask.subscribers.forEach((s) => {
+				if (s !== cUser.id) {
+					trs2 = [
+						...trs2,
+						prisma.users.update({
+							where: {
+								id: s
+							},
+							data: {
+								notifications: {
+									push: r1[i].id
+								}
+							},
+							select: {
+								id: true
+							}
+						})
+					];
+					i++;
+				}
+			});
+			const r2 = await prisma.$transaction(trs2);
+
+			pusherServer.trigger(
+				workspace.members.filter((s) => s !== cUser.id),
+				'updates',
+				{}
+			);
+		}
+	},
+	taskNewLevel: async ({ request, params }) => {
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		//@ts-ignore
+		const newLevel = parseInt(data.get('level')?.toString());
+
+		const toUpdateTask = await prisma.tasks.findFirst({
+			where: {
+				id: {
+					equals: params.taskID
+				}
+			},
+			select: {
+				id: true,
+				subscribers: true,
+				level: true,
+				name: true
+			}
+		});
+		if (!toUpdateTask)
+			return invalid(404, {
+				message: 'Current task not found please reload',
+				reason: 'databaseError'
+			});
+
+		const updatedTask = await prisma.tasks.update({
+			where: {
+				id: taskID
+			},
+			data: {
+				level: newLevel
+			}
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: 'Failed to update level of task please reload',
+				reason: 'databaseError'
+			});
+
+		const workspace = await prisma.workspaces.findFirst({
+			where: {
+				id: {
+					equals: params.workspaceID
+				}
+			},
+			select: {
+				id: true,
+				members: true,
+				name: true
+			}
+		});
+		if (!workspace)
+			return invalid(404, {
+				message: 'Current workspace not found please reload',
+				reason: 'databaseError'
+			});
+
+		if (workspace.members.length > 1) {
+			const cUser = await prisma.users.findFirst({
+				where: {
+					email: {
+						equals: params.userEmail
+					}
+				},
+				select: {
+					id: true,
+					firstName: true,
+					lastName: true
+				}
+			});
+			if (!cUser) throw error(404, 'Account not found');
+
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
+			let trs1 = [];
+			toUpdateTask.subscribers.forEach((s) => {
+				if (s !== cUser.id) {
+					trs1 = [
+						...trs1,
+						prisma.notifications.create({
+							data: {
+								aMention: false,
+								anInvitation: false,
+								conversationID: '',
+								for: {
+									self: true,
+									userID: cUser.id
+								},
+								fromInterface: {
+									interf: subject.id,
+									subInterface: workspace.id
+								},
+								fromTask: updatedTask.id,
+								isRead: false,
+								message: `${cUser.firstName} ${cUser.lastName} set the task ${
+									toUpdateTask.name
+								} to ${
+									updatedTask.level == 1 ? 'lowest' : updatedTask.level == 2 ? 'medium' : 'highest'
+								} priority in ${workspace.name}`
 							},
 							select: {
 								id: true
@@ -466,9 +515,9 @@ export const actions = {
 		}
 	},
 	taskSetFav: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const setFav = data.get('setFav')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const setFav = data.get('setFav')?.toString();
 
 		let cUser = await prisma.users.findFirst({
 			where: {
@@ -480,15 +529,15 @@ export const actions = {
 				id: true,
 				favorites: true
 			}
-		})
-		if(!cUser) throw error(404, 'Account not found')
+		});
+		if (!cUser) throw error(404, 'Account not found');
 
 		if (setFav === 'set') {
 			//@ts-ignore
-			cUser.favorites[2].ids.push(taskID)
+			cUser.favorites[2].ids.push(taskID);
 		} else {
 			//@ts-ignore
-			cUser.favorites[2].ids = cUser.favorites[2].ids.filter(id => id !== taskID)
+			cUser.favorites[2].ids = cUser.favorites[2].ids.filter((id) => id !== taskID);
 		}
 
 		const updatedUser = await prisma.users.update({
@@ -498,14 +547,18 @@ export const actions = {
 			data: {
 				favorites: cUser.favorites
 			}
-		})
+		});
 
-		if(!updatedUser) return invalid(500, {message: 'Can\'t fetch updated data please reload', reason: 'databaseError'})
+		if (!updatedUser)
+			return invalid(500, {
+				message: "Can't fetch updated data please reload",
+				reason: 'databaseError'
+			});
 	},
 	taskSetNewDue: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const newDue = data.get('newDue')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const newDue = data.get('newDue')?.toString();
 
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
@@ -536,9 +589,13 @@ export const actions = {
 			select: {
 				id: true
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
-		
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: "Can't fetch updated data please reload",
+				reason: 'databaseError'
+			});
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -572,6 +629,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -587,14 +656,12 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} set new due-date of task ${
-									toUpdateTask.name
-								} in ${workspace.name}`
+								message: `${cUser.firstName} ${cUser.lastName} set new due-date of task ${toUpdateTask.name} in ${workspace.name}`
 							},
 							select: {
 								id: true
@@ -638,10 +705,10 @@ export const actions = {
 		}
 	},
 	taskSetNewStatus: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const newStatus = data.get('status')?.toString()
-		const oldStatus = data.get('oldStatus')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const newStatus = data.get('status')?.toString();
+		const oldStatus = data.get('oldStatus')?.toString();
 
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
@@ -673,9 +740,13 @@ export const actions = {
 				id: true,
 				name: true
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
-		
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: "Can't fetch updated data please reload",
+				reason: 'databaseError'
+			});
+
 		let toUpdateOldBoard = await prisma.boards.findFirst({
 			where: {
 				id: {
@@ -687,10 +758,14 @@ export const actions = {
 				tasks: true,
 				name: true
 			}
-		})
-		if (!toUpdateOldBoard) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
-		
-		toUpdateOldBoard.tasks = toUpdateOldBoard.tasks.filter(id => id !== taskID)
+		});
+		if (!toUpdateOldBoard)
+			return invalid(500, {
+				message: "Can't fetch updated data please reload",
+				reason: 'databaseError'
+			});
+
+		toUpdateOldBoard.tasks = toUpdateOldBoard.tasks.filter((id) => id !== taskID);
 
 		const updatedOldBoard = await prisma.boards.update({
 			where: {
@@ -699,8 +774,9 @@ export const actions = {
 			data: {
 				tasks: toUpdateOldBoard.tasks
 			}
-		})
-		if(!updatedOldBoard) return invalid(500, {message: 'Failed to update leaving board', reason: 'databaseError'})
+		});
+		if (!updatedOldBoard)
+			return invalid(500, { message: 'Failed to update leaving board', reason: 'databaseError' });
 
 		const updatedBoard = await prisma.boards.update({
 			where: {
@@ -715,9 +791,10 @@ export const actions = {
 				id: true,
 				name: true
 			}
-		})
-		if(!updatedBoard) return invalid(500, {message: 'Failed to update receiving board', reason: 'databaseError'})
-		
+		});
+		if (!updatedBoard)
+			return invalid(500, { message: 'Failed to update receiving board', reason: 'databaseError' });
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -751,6 +828,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -766,8 +855,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
@@ -811,13 +900,13 @@ export const actions = {
 				workspace.members.filter((s) => s !== cUser.id),
 				'updates',
 				{}
-			)
+			);
 		}
 	},
 	taskSetDesc: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const desc = data.get('desc')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const desc = data.get('desc')?.toString();
 
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
@@ -849,9 +938,13 @@ export const actions = {
 				id: true,
 				name: true
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Can\'t fetch updated data please reload', reason: 'databaseError' })
-		
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: "Can't fetch updated data please reload",
+				reason: 'databaseError'
+			});
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -885,6 +978,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -900,8 +1005,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: toUpdateTask.id,
 								isRead: false,
@@ -949,9 +1054,9 @@ export const actions = {
 		}
 	},
 	taskSendChat: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const message = data.get('message')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const message = data.get('message')?.toString();
 
 		const cUser = await prisma.users.findFirst({
 			where: {
@@ -962,15 +1067,19 @@ export const actions = {
 			select: {
 				id: true
 			}
-		})
-		if(!cUser) throw error(404, 'Account not found')
+		});
+		if (!cUser) throw error(404, 'Account not found');
 
-		const today = new Date().toISOString()
-		
+		const today = new Date().toISOString();
+
 		const newChat = await prisma.chats.create({
 			data: {
 				//2022-12-03T13:12:32.864Z
-				deliveredTime: new Date(`${today.split('T')[0]}T${today.split('T')[1].split(':')[0]}:${today.split('T')[1].split(':')[1]}:00.000-08:00`),
+				deliveredTime: new Date(
+					`${today.split('T')[0]}T${today.split('T')[1].split(':')[0]}:${
+						today.split('T')[1].split(':')[1]
+					}:00.000-08:00`
+				),
 				edited: false,
 				//@ts-ignore
 				message,
@@ -980,8 +1089,9 @@ export const actions = {
 				id: true
 			}
 		});
-		if (!newChat) return invalid(404, { message: 'send but error in updating', reason: 'databaseError' })
-		
+		if (!newChat)
+			return invalid(404, { message: 'send but error in updating', reason: 'databaseError' });
+
 		const updatedTask = await prisma.tasks.update({
 			where: {
 				id: taskID
@@ -995,9 +1105,10 @@ export const actions = {
 				id: true,
 				subscribers: true
 			}
-		})
-		if (!updatedTask) return invalid(404, { message: 'send but error in updating task', reason: 'databaseError' });
-		
+		});
+		if (!updatedTask)
+			return invalid(404, { message: 'send but error in updating task', reason: 'databaseError' });
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1021,15 +1132,15 @@ export const actions = {
 				workspace.members.filter((s) => s !== cUser.id),
 				'updates',
 				{}
-			)
+			);
 		}
 	},
 	taskEditChat: async ({ request, params }) => {
-		const data = await request.formData()
-		const message = data.get('message')?.toString()
-		const chatID = data.get('chatID')?.toString()
+		const data = await request.formData();
+		const message = data.get('message')?.toString();
+		const chatID = data.get('chatID')?.toString();
 
-		const today = new Date().toISOString()
+		const today = new Date().toISOString();
 
 		const updatedChat = await prisma.chats.update({
 			where: {
@@ -1038,11 +1149,19 @@ export const actions = {
 			data: {
 				message: message,
 				edited: true,
-				deliveredTime: new Date(`${today.split('T')[0]}T${today.split('T')[1].split(':')[0]}:${today.split('T')[1].split(':')[1]}:00.000-08:00`),
+				deliveredTime: new Date(
+					`${today.split('T')[0]}T${today.split('T')[1].split(':')[0]}:${
+						today.split('T')[1].split(':')[1]
+					}:00.000-08:00`
+				)
 			}
-		})
-		if (!updatedChat) return invalid(404, { message: 'edited but error in updating task', reason: 'databaseError' });
-		
+		});
+		if (!updatedChat)
+			return invalid(404, {
+				message: 'edited but error in updating task',
+				reason: 'databaseError'
+			});
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1075,8 +1194,8 @@ export const actions = {
 				}
 			});
 			if (!updatedTask)
-				return invalid(404, { message: 'Current task not found', reason: 'dataaseError' })
-			
+				return invalid(404, { message: 'Current task not found', reason: 'dataaseError' });
+
 			const cUser = await prisma.users.findFirst({
 				where: {
 					email: {
@@ -1088,20 +1207,20 @@ export const actions = {
 					lastName: true,
 					firstName: true
 				}
-			})
-			if(!cUser) throw error(404, 'Account not found')
+			});
+			if (!cUser) throw error(404, 'Account not found');
 
 			pusherServer.trigger(
 				workspace.members.filter((s) => s !== cUser.id),
 				'updates',
 				{}
-			)
+			);
 		}
 	},
 	taskSubscribe: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const subsMode = data.get('subscribe')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const subsMode = data.get('subscribe')?.toString();
 
 		const cUser = await prisma.users.findFirst({
 			where: {
@@ -1114,8 +1233,8 @@ export const actions = {
 				firstName: true,
 				lastName: true
 			}
-		})
-		if(!cUser) throw error(404, 'Account not found')
+		});
+		if (!cUser) throw error(404, 'Account not found');
 
 		if (subsMode === 'sub') {
 			const updatedTask = await prisma.tasks.update({
@@ -1127,9 +1246,13 @@ export const actions = {
 						push: cUser.id
 					}
 				}
-			})
+			});
 
-			if(!updatedTask) return invalid(500, {message: 'Subscribing is not available right now please try again later', reason: 'databaseError'})
+			if (!updatedTask)
+				return invalid(500, {
+					message: 'Subscribing is not available right now please try again later',
+					reason: 'databaseError'
+				});
 		} else {
 			const toUpdateTask = await prisma.tasks.findFirst({
 				where: {
@@ -1140,21 +1263,25 @@ export const actions = {
 				select: {
 					subscribers: true
 				}
-			})
-			if (!toUpdateTask) throw error(404, 'Task not found')
-			
+			});
+			if (!toUpdateTask) throw error(404, 'Task not found');
+
 			const updatedTask = await prisma.tasks.update({
 				where: {
 					id: taskID
 				},
 				data: {
-					subscribers: toUpdateTask.subscribers.filter(id => id !== cUser.id)
+					subscribers: toUpdateTask.subscribers.filter((id) => id !== cUser.id)
 				},
 				select: {
 					id: true
 				}
-			})
-			if (!updatedTask) return invalid(500, { message: 'Unsubscribing is not available right now please try again later', reason: 'databaseError' })
+			});
+			if (!updatedTask)
+				return invalid(500, {
+					message: 'Unsubscribing is not available right now please try again later',
+					reason: 'databaseError'
+				});
 		}
 
 		const workspace = await prisma.workspaces.findFirst({
@@ -1184,9 +1311,9 @@ export const actions = {
 		}
 	},
 	taskAddAssignee: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const memberID = data.get('memberID')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const memberID = data.get('memberID')?.toString();
 
 		const updatedTask = await prisma.tasks.update({
 			where: {
@@ -1206,8 +1333,9 @@ export const actions = {
 				subscribers: true
 			}
 		});
-		if (!updatedTask) return invalid(500, { message: 'Error in adding new assignee', reason: 'databaseError' })
-		
+		if (!updatedTask)
+			return invalid(500, { message: 'Error in adding new assignee', reason: 'databaseError' });
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1241,7 +1369,7 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
-			if (updatedTask.subscribers.filter(s => s !== cUser.id).length != 0) {
+			if (updatedTask.subscribers.filter((s) => s !== cUser.id).length != 0) {
 				const addedMember = await prisma.users.findFirst({
 					where: {
 						id: {
@@ -1254,11 +1382,28 @@ export const actions = {
 						lastName: true,
 						gender: true
 					}
-				})
-				if (!addedMember) return invalid(404, { message: 'The user being added is not found please reload', reason: 'databaseError' })
-	
-				let trs1 = []
-				updatedTask.subscribers.forEach(s => {
+				});
+				if (!addedMember)
+					return invalid(404, {
+						message: 'The user being added is not found please reload',
+						reason: 'databaseError'
+					});
+
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
+				let trs1 = [];
+				updatedTask.subscribers.forEach((s) => {
 					if (s !== cUser.id) {
 						trs1 = [
 							...trs1,
@@ -1272,26 +1417,34 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
-									message: `${cUser.firstName} ${cUser.lastName} assigned ${s === memberID ? 'you' : `${cUser.id === addedMember.id ? `${addedMember.gender === 'Male' ? 'himself' : 'herself'}` : `${addedMember.firstName} ${addedMember.lastName}`} to the task ${updatedTask.name} in ${workspace.name}`}`
+									message: `${cUser.firstName} ${cUser.lastName} assigned ${
+										s === memberID
+											? 'you'
+											: `${
+													cUser.id === addedMember.id
+														? `${addedMember.gender === 'Male' ? 'himself' : 'herself'}`
+														: `${addedMember.firstName} ${addedMember.lastName}`
+											  } to the task ${updatedTask.name} in ${workspace.name}`
+									}`
 								},
 								select: {
 									id: true
 								}
 							})
-						]
+						];
 					}
-				})
+				});
 				if (trs1.length > 0) {
-					const r1 = await prisma.$transaction(trs1)
+					const r1 = await prisma.$transaction(trs1);
 
-					let trs2 = []
-					let i = 0
-					updatedTask.subscribers.forEach(s => {
+					let trs2 = [];
+					let i = 0;
+					updatedTask.subscribers.forEach((s) => {
 						if (s !== cUser.id) {
 							trs2 = [
 								...trs2,
@@ -1308,11 +1461,11 @@ export const actions = {
 										id: true
 									}
 								})
-							]
-							i++
+							];
+							i++;
 						}
-					})
-					const r2 = await prisma.$transaction(trs2)
+					});
+					const r2 = await prisma.$transaction(trs2);
 				}
 			}
 
@@ -1324,9 +1477,9 @@ export const actions = {
 		}
 	},
 	taskRemAssignee: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const memberID = data.get('memberID')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const memberID = data.get('memberID')?.toString();
 
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
@@ -1339,23 +1492,31 @@ export const actions = {
 				members: true
 			}
 		});
-		if (!toUpdateTask) return invalid(500, { message: 'Task cannot be found please reload', reason: 'databaseError' })
-		
+		if (!toUpdateTask)
+			return invalid(500, {
+				message: 'Task cannot be found please reload',
+				reason: 'databaseError'
+			});
+
 		const updatedTask = await prisma.tasks.update({
 			where: {
 				id: taskID
 			},
 			data: {
-				members: toUpdateTask.members.filter(id => id !== memberID)
+				members: toUpdateTask.members.filter((id) => id !== memberID)
 			},
 			select: {
 				id: true,
 				subscribers: true,
 				name: true
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Task cannot be found please reload', reason: 'databaseError' });
-		
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: 'Task cannot be found please reload',
+				reason: 'databaseError'
+			});
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1409,6 +1570,19 @@ export const actions = {
 						reason: 'databaseError'
 					});
 
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 				let trs1 = [];
 				toUpdateTask.subscribers.forEach((s) => {
 					if (s !== cUser.id) {
@@ -1424,12 +1598,20 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
-									message: `${cUser.firstName} ${cUser.lastName} removed assignment on ${s === memberID ? 'you' : `${cUser.id === addedMember.id ? `${addedMember.gender === 'Male' ? 'himself' : 'herself'}` : `${addedMember.firstName} ${addedMember.lastName}`} to the task ${updatedTask.name} in ${workspace.name}`}`
+									message: `${cUser.firstName} ${cUser.lastName} removed assignment on ${
+										s === memberID
+											? 'you'
+											: `${
+													cUser.id === addedMember.id
+														? `${addedMember.gender === 'Male' ? 'himself' : 'herself'}`
+														: `${addedMember.firstName} ${addedMember.lastName}`
+											  } to the task ${updatedTask.name} in ${workspace.name}`
+									}`
 								},
 								select: {
 									id: true
@@ -1476,15 +1658,15 @@ export const actions = {
 		}
 	},
 	taskAddSubtask: async ({ request, params }) => {
-		const data = await request.formData()
-		const taskID = data.get('id')?.toString()
-		const name = data.get('name')?.toString()
-		const desc = data.get('description')?.toString()
+		const data = await request.formData();
+		const taskID = data.get('id')?.toString();
+		const name = data.get('name')?.toString();
+		const desc = data.get('description')?.toString();
 		//@ts-ignore
-		const level = parseInt(data.get('level')?.toString())
-		const status = data.get('status')?.toString()
-		const due = data.get('due')?.toString()
-		const assignees = data.get('assignees')?.toString()
+		const level = parseInt(data.get('level')?.toString());
+		const status = data.get('status')?.toString();
+		const due = data.get('due')?.toString();
+		const assignees = data.get('assignees')?.toString();
 
 		const cUser = await prisma.users.findFirst({
 			where: {
@@ -1498,9 +1680,9 @@ export const actions = {
 				lastName: true,
 				profile: true
 			}
-		})
-		if (!cUser) throw error(404, 'Account not found')
-		
+		});
+		if (!cUser) throw error(404, 'Account not found');
+
 		let subscribees = assignees?.split(',')[0] !== '' ? assignees?.split(',') : [];
 
 		const newSubtask = await prisma.tasks.create({
@@ -1528,8 +1710,12 @@ export const actions = {
 				name: true
 			}
 		});
-		if(!newSubtask) return invalid(500, {message: 'Failed to create subtask, try again later', reason: 'databaseError'})
-		
+		if (!newSubtask)
+			return invalid(500, {
+				message: 'Failed to create subtask, try again later',
+				reason: 'databaseError'
+			});
+
 		const updatedTask = await prisma.tasks.update({
 			where: {
 				id: taskID
@@ -1539,9 +1725,13 @@ export const actions = {
 					push: newSubtask.id
 				}
 			}
-		})
-		if (!updatedTask) return invalid(500, { message: 'Creation success but failed to fetch data, please reload', reason: 'databaseError' })
-		
+		});
+		if (!updatedTask)
+			return invalid(500, {
+				message: 'Creation success but failed to fetch data, please reload',
+				reason: 'databaseError'
+			});
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1553,13 +1743,30 @@ export const actions = {
 				name: true,
 				members: true
 			}
-		})
-		if (!workspace) return invalid(404, { message: 'Current workspace cannot be found please reload', reason: 'databaseError' })
-		
+		});
+		if (!workspace)
+			return invalid(404, {
+				message: 'Current workspace cannot be found please reload',
+				reason: 'databaseError'
+			});
+
 		if (workspace.members.length > 1) {
 			if (updatedTask.subscribers.length > 1) {
-				let trs1 = []
-				updatedTask.subscribers.forEach(s => {
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
+				let trs1 = [];
+				updatedTask.subscribers.forEach((s) => {
 					if (s !== cUser.id) {
 						trs1 = [
 							...trs1,
@@ -1573,8 +1780,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
@@ -1584,14 +1791,14 @@ export const actions = {
 									id: true
 								}
 							})
-						]
+						];
 					}
-				})
-				const r1 = await prisma.$transaction(trs1)
+				});
+				const r1 = await prisma.$transaction(trs1);
 
-				let trs2 = []
-				let i = 0
-				updatedTask.subscribers.forEach(s => {
+				let trs2 = [];
+				let i = 0;
+				updatedTask.subscribers.forEach((s) => {
 					if (s !== cUser.id) {
 						trs2 = [
 							...trs2,
@@ -1608,14 +1815,18 @@ export const actions = {
 									id: true
 								}
 							})
-						]
-						i++
-					} 
-				})
-				const r2 = await prisma.$transaction(trs2)
+						];
+						i++;
+					}
+				});
+				const r2 = await prisma.$transaction(trs2);
 			}
 
-			pusherServer.trigger(workspace.members.filter(m => m !== cUser.id), 'updates', {})
+			pusherServer.trigger(
+				workspace.members.filter((m) => m !== cUser.id),
+				'updates',
+				{}
+			);
 		}
 	}
-}
+};

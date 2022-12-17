@@ -146,6 +146,7 @@ export const actions = {
 				}
 			},
 			select: {
+				id: true,
 				workspaces: true
 			}
 		});
@@ -242,8 +243,8 @@ export const actions = {
 								userID: cUser.id
 							},
 							fromInterface: {
-								interf: '',
-								subInterface: ''
+								interf: subject.id,
+								subInterface: updatedWorkspace.id
 							},
 							fromTask: '',
 							isRead: false,
@@ -349,70 +350,79 @@ export const actions = {
 		});
 		if (!updatedWorkspace) return invalid(204, {message: 'Workspace is updated but did not return updated data please reload', reason: 'databaseError'});
 
-		//@ts-ignore
-		let trs = [];
-    updatedWorkspace.members.forEach((member) => {
-      if (member !== cUser.id) {
-        trs = [
-          //@ts-ignore
-          ...trs,
-          prisma.notifications.create({
-            data: {
-              aMention: false,
-              anInvitation: false,
-              conversationID: '',
-              for: {
-                self: true,
-                userID: cUser.id
-              },
-              fromInterface: {
-                interf: '',
-                subInterface: ''
-              },
-              fromTask: '',
-              isRead: false,
-              //@ts-ignore
-              message: `${cUser.firstName} ${cUser.lastName} demoted ${toRemoveAdmin.id === member ? 'you' : `${toRemoveAdmin.firstName} ${toRemoveAdmin.lastName}`} as member in ${toUpdateWorkspace.name}`
-						},
-						select: {
-							id: true
-						}
-          })
-        ];
-      }
-		});
-		//@ts-ignore
-    let secondBatchNotifications = await prisma.$transaction(trs);
-		if(!secondBatchNotifications) return invalid(500, {message: 'Failed to generate notifications', reason: 'databaseError'})
-
-		//@ts-ignore
-		let trs2 = []
-		let i = 0
-    updatedWorkspace.members.forEach((id) => {
-      if (id !== cUser.id) { 
-        trs2 = [
-          //@ts-ignore
-          ...trs2,
-          prisma.users.update({
-            where: {
-              id
-            },
-            data: {
-              notifications: {
-                push: secondBatchNotifications[i].id
-              }
-            }
-          })
-				]
-				i++
-      }
-		});
-    //@ts-ignore
-		let updatedWorkspaceMembersNotifs = await prisma.$transaction(trs2)
-		if (!updatedWorkspaceMembersNotifs)
-			return invalid(500, { message: 'Failed to generate notifications', reason: 'databaseError' })
-		
-		pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+		if (updatedWorkspace.members.length > 1) {
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: updatedWorkspace.id
+					}
+				}
+			})
+			if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
+			//@ts-ignore
+			let trs = [];
+			updatedWorkspace.members.forEach((member) => {
+				if (member !== cUser.id) {
+					trs = [
+						//@ts-ignore
+						...trs,
+						prisma.notifications.create({
+							data: {
+								aMention: false,
+								anInvitation: false,
+								conversationID: '',
+								for: {
+									self: true,
+									userID: cUser.id
+								},
+								fromInterface: {
+									interf: subject.id,
+									subInterface: updatedWorkspace.id
+								},
+								fromTask: '',
+								isRead: false,
+								//@ts-ignore
+								message: `${cUser.firstName} ${cUser.lastName} demoted ${toRemoveAdmin.id === member ? 'you' : `${toRemoveAdmin.firstName} ${toRemoveAdmin.lastName}`} as member in ${toUpdateWorkspace.name}`
+							},
+							select: {
+								id: true
+							}
+						})
+					];
+				}
+			});
+			//@ts-ignore
+			let secondBatchNotifications = await prisma.$transaction(trs);
+	
+			//@ts-ignore
+			let trs2 = []
+			let i = 0
+			updatedWorkspace.members.forEach((id) => {
+				if (id !== cUser.id) { 
+					trs2 = [
+						//@ts-ignore
+						...trs2,
+						prisma.users.update({
+							where: {
+								id
+							},
+							data: {
+								notifications: {
+									push: secondBatchNotifications[i].id
+								}
+							}
+						})
+					]
+					i++
+				}
+			});
+			//@ts-ignore
+			let updatedWorkspaceMembersNotifs = await prisma.$transaction(trs2)
+			if (!updatedWorkspaceMembersNotifs)
+				return invalid(500, { message: 'Failed to generate notifications', reason: 'databaseError' })
+			
+			pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+		}
 
 		return {workspace: updatedWorkspace}
   },
@@ -485,69 +495,81 @@ export const actions = {
 		})
 		if(!toUpdatePromotedMember) return invalid(404, {message: 'Promoting an unknown user please try again later', reason: 'databaseError'})
 
-		let members = updatedWorkspace.members.filter(id => id !== cUser.id)
 
-    //@ts-ignore
-    let trs = []
-    members.forEach(id => {
-      trs = [
-				//@ts-ignore
-				...trs,
-				prisma.notifications.create({
-					data: {
-						aMention: false,
-						anInvitation: false,
-						conversationID: '',
-						for: {
-							self: true,
-							userID: cUser.id
-						},
-						fromInterface: {
-							interf: '',
-							subInterface: ''
-						},
-						fromTask: '',
-						isRead: false,
-						message: `${cUser.firstName} ${cUser.lastName} promoted ${toUpdatePromotedMember.id === id ? 'you' : `${toUpdatePromotedMember.firstName} ${toUpdatePromotedMember.lastName}`} as admin in ${updatedWorkspace.name}`
-					},
-					select: {
-						id: true
+		if (updatedWorkspace.members.length > 1) {
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: updatedWorkspace.id
 					}
-				})
-			];
-    })
+				},
+				select: {
+					id: true
+				}
+			})
+			if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
 
-    //@ts-ignore
-		let secondBatchNotifications = await prisma.$transaction(trs)
-		if(!secondBatchNotifications) return invalid(500, {message: 'Failed to generate notifications', reason: 'databaseError'})
-
-    //@ts-ignore
-		let trs2 = []
-		let i = 0
-    members.forEach((id) => {
-      trs2 = [
-        //@ts-ignore
-        ...trs2,
-        prisma.users.update({
-          where: {
-            id
-          },
-          data: {
-            notifications: {
-              push: secondBatchNotifications[i].id
-            }
-          }
-        })
-			]
-			i++
-    })
-
-    //@ts-ignore
-		let secondBatchUpdateMembers = await prisma.$transaction(trs2)
-		if (!secondBatchUpdateMembers)
-			return invalid(500, { message: 'Failed to generate notifications', reason: 'databaseError' });
-		
-		pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+			let members = updatedWorkspace.members.filter(id => id !== cUser.id)
+	
+			//@ts-ignore
+			let trs = []
+			members.forEach(id => {
+				trs = [
+					//@ts-ignore
+					...trs,
+					prisma.notifications.create({
+						data: {
+							aMention: false,
+							anInvitation: false,
+							conversationID: '',
+							for: {
+								self: true,
+								userID: cUser.id
+							},
+							fromInterface: {
+								interf: subject.id,
+								subInterface: updatedWorkspace.id
+							},
+							fromTask: '',
+							isRead: false,
+							message: `${cUser.firstName} ${cUser.lastName} promoted ${toUpdatePromotedMember.id === id ? 'you' : `${toUpdatePromotedMember.firstName} ${toUpdatePromotedMember.lastName}`} as admin in ${updatedWorkspace.name}`
+						},
+						select: {
+							id: true
+						}
+					})
+				];
+			})
+	
+			//@ts-ignore
+			let secondBatchNotifications = await prisma.$transaction(trs)
+	
+			//@ts-ignore
+			let trs2 = []
+			let i = 0
+			members.forEach((id) => {
+				trs2 = [
+					//@ts-ignore
+					...trs2,
+					prisma.users.update({
+						where: {
+							id
+						},
+						data: {
+							notifications: {
+								push: secondBatchNotifications[i].id
+							}
+						}
+					})
+				]
+				i++
+			})
+	
+			//@ts-ignore
+			let secondBatchUpdateMembers = await prisma.$transaction(trs2)
+			
+			pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+		}
 		
 		return {workspace: updatedWorkspace}
 	},
@@ -612,7 +634,7 @@ export const actions = {
 		const newNotification = await prisma.notifications.create({
 			data: {
 				aMention: false,
-				anInvitation: false,
+				anInvitation: true,
 				conversationID: '',
 				for: {
 					self: true,

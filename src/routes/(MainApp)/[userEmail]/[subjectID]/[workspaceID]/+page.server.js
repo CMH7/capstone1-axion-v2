@@ -255,6 +255,7 @@ export const actions = {
 				}
 			},
 			select: {
+				id: true,
 				name: true,
 				color: true,
 				members: true
@@ -265,6 +266,18 @@ export const actions = {
 				message: 'Database failure to update workspace',
 				reason: 'databaseError'
 			});
+		
+		const subject = await prisma.subjects.findFirst({
+			where: {
+				id: {
+					equals: params.subjectID
+				}
+			},
+			select: {
+				id: true
+			}
+		})
+		if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
 
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
@@ -306,8 +319,8 @@ export const actions = {
 										userID: upatedUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: toUpdateWorkspace.id
 									},
 									fromTask: '',
 									isRead: false,
@@ -711,6 +724,18 @@ export const actions = {
 			statMsg = `${updatedBoard1.name} to ${updatedBoard.name}`;
 		}
 
+		const subject = await prisma.subjects.findFirst({
+			where: {
+				id: {
+					equals: params.subjectID
+				}
+			},
+			select: {
+				id: true
+			}
+		});
+		if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				boards: {
@@ -752,8 +777,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
@@ -1095,6 +1120,18 @@ export const actions = {
 			});
 
 		if (updatedWorkspace.members.length > 1) {
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					id: {
+						equals: params.subjectID
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			updatedWorkspace.members.forEach((m) => {
 				if (m !== cUser.id) {
@@ -1110,8 +1147,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: updatedWorkspace.id
 								},
 								fromTask: '',
 								isRead: false,
@@ -1252,6 +1289,19 @@ export const actions = {
 
 		if (workspace.members.length > 1) {
 			if (toUpdateBoard.name !== updatedBoard.name || toUpdateBoard.color !== updatedBoard.color) {
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 				let trs1 = [];
 				workspace.members.forEach((m) => {
 					if (m !== cUser.id) {
@@ -1267,8 +1317,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: '',
 									isRead: false,
