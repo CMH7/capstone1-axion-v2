@@ -189,7 +189,7 @@ export const actions = {
 								userID: cUser.id
 							},
 							fromInterface: {
-								interf: '',
+								interf: updatedSubject.id,
 								subInterface: ''
 							},
 							fromTask: '',
@@ -611,6 +611,15 @@ export const actions = {
 		
 		if (toUpdateWorkspace.name !== updatedWorkspace.name || toUpdateWorkspace.color !== updatedWorkspace.color) {
 			if (updatedWorkspace.members.length > 1) {
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: updatedWorkspace.id
+						}
+					}
+				})
+				if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
+
 				let trs1 = []
 				updatedWorkspace.members.forEach(m => {
 					if (m !== toUpdateUser.id) {
@@ -626,8 +635,8 @@ export const actions = {
 										userID: toUpdateUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: toUpdateWorkspace.id
 									},
 									fromTask: '',
 									isRead: false,

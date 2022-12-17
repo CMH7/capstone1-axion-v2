@@ -142,7 +142,11 @@
           {/if}
 
           <div on:mouseenter={() => setHint('v-m')}>
-            <a href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/members">
+            <a
+              data-sveltekit-preload-data="hover"
+              data-sveltekit-preload-code='eager'
+              href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/members"
+            >
               <ListItem>
                 <span slot="prepend">
                   <Icon path={mdiAccountGroup} />
@@ -155,7 +159,11 @@
           
           {#if $activeSubject.owner === data.user.id || $activeWorkspace.admins.includes(data.user.id)}
             <div on:mouseenter={() => setHint('m-m')}>
-              <a href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/manageMembers">
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                href="/{data.user.email}/{$activeSubject.id}/{$activeWorkspace.id}/manageMembers"
+              >
                 <ListItem>
                   <span slot="prepend">
                     <Icon path={mdiAccountSettings} />

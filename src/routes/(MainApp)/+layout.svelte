@@ -265,7 +265,7 @@
                 <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiBell } />
               </Button>
             </Badge>
-            <NotificationCenter notifications={data.notifications} notifFromPic={data.notifFromPic} />
+            <NotificationCenter {data} notifications={data.notifications} notifFromPic={data.notifFromPic} />
           </div>
   
           <!-- profile -->

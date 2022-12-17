@@ -191,7 +191,7 @@ export const actions = {
 								userID: cUser.id
 							},
 							fromInterface: {
-								interf: '',
+								interf: updatedSubject.id,
 								subInterface: ''
 							},
 							fromTask: '',
@@ -487,5 +487,104 @@ export const actions = {
 				message: 'Error setting as favorite in database',
 				reason: 'databaseError'
 			});
+	},
+	removeNotif: async ({ request, params }) => {
+		const data = await request.formData()
+		const notifID = data.get('notifID')?.toString()
+
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			},
+			select: {
+				id: true,
+				notifications: true
+			}
+		})
+		if(!cUser) return invalid(404, {message: 'Account not found please try to reload', reason: 'databaseError'})
+
+		const deletedNotif = prisma.notifications.delete({
+			where: {
+				id: notifID
+			}
+		})
+		const updatedUser = prisma.users.update({
+			where: {
+				id: cUser.id
+			},
+			data: {
+				notifications: cUser.notifications.filter(id => id !== notifID)
+			}
+		})
+		const r1 = await prisma.$transaction([deletedNotif, updatedUser])
+	},
+	removeAllNotifs: async ({ request }) => {
+		const data = await request.formData()
+		const userID = data.get('id')?.toString()
+
+		const updatedUser = await prisma.users.update({
+			where: {
+				id: userID
+			},
+			data: {
+				notifications: []
+			}
+		})
+		if (!updatedUser) return invalid(404, { message: 'Error in deleting all notifications please try again', reason:  'databaseError'})
+	},
+	readAllNotifs: async ({ params }) => {
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			}
+		})
+		if (!cUser) return invalid(404, { message: 'Acount not found please reload', reason: 'databaseError' })
+		
+		const allUpdatedNotifications = await prisma.notifications.updateMany({
+			where: {
+				OR: cUser.notifications.map(id => {return{id}})
+			},
+			data: {
+				isRead: true
+			}
+		})
+	},
+	readNotif: async ({ request, params }) => {
+		const data = await request.formData()
+		const notifID = data.get('notifID')?.toString()
+		const anInvitation = data.get('anInvitation')?.toString()
+		const subjectID = data.get('subjectID')?.toString()
+		const workspaceID = data.get('workspaceID')?.toString()
+		const taskID = data.get('taskID')?.toString()
+
+		const updatedNotif = await prisma.notifications.update({
+			where: {
+				id: notifID
+			},
+			data: {
+				isRead: true
+			}
+		})
+		if (!updatedNotif) return invalid(500, { message: 'Notification not read', reason: 'databaseError' })
+		
+		if (anInvitation === 'true') {
+			throw redirect(302, `/${params.userEmail}/invitations`)
+		} else {
+			if (subjectID !== '') {
+				if (workspaceID !== '') {
+					if (taskID !== '') {
+						throw redirect(302, `/${params.userEmail}/${subjectID}/${workspaceID}/${taskID}`)
+					} else {
+						throw redirect(302, `/${params.userEmail}/${subjectID}/${workspaceID}`)
+					}
+				} else {
+					throw redirect(302, `/${params.userEmail}/${subjectID}`);
+				}
+			}
+		}
 	}
 };

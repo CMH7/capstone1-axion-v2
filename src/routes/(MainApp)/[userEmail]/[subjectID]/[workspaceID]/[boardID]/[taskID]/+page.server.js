@@ -68,7 +68,7 @@ export async function load({ params }) {
 			}
 		}
 	});
-	if (!task) throw error(404, 'Task cannot be found');
+	if (!task) throw redirect(303, `/${user.email}/${subject.id}/${workspace.id}`);
 
 	const addViewer = !task.viewers.includes(user.id)
 
@@ -289,6 +289,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			})
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' })
+
 			let trs1 = []
 			toUpdateTask.subscribers.forEach(s => {
 				if (s !== cUser.id) {
@@ -304,8 +316,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
@@ -412,6 +424,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -427,8 +451,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
@@ -582,6 +606,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -597,8 +633,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
@@ -761,6 +797,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -776,8 +824,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: updatedTask.id,
 								isRead: false,
@@ -895,6 +943,18 @@ export const actions = {
 			});
 			if (!cUser) throw error(404, 'Account not found');
 
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					workspaces: {
+						has: workspace.id
+					}
+				},
+				select: {
+					id: true
+				}
+			});
+			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
 			let trs1 = [];
 			toUpdateTask.subscribers.forEach((s) => {
 				if (s !== cUser.id) {
@@ -910,8 +970,8 @@ export const actions = {
 									userID: cUser.id
 								},
 								fromInterface: {
-									interf: '',
-									subInterface: ''
+									interf: subject.id,
+									subInterface: workspace.id
 								},
 								fromTask: toUpdateTask.id,
 								isRead: false,
@@ -1266,6 +1326,19 @@ export const actions = {
 					}
 				})
 				if (!addedMember) return invalid(404, { message: 'The user being added is not found please reload', reason: 'databaseError' })
+
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
 	
 				let trs1 = []
 				updatedTask.subscribers.forEach(s => {
@@ -1282,8 +1355,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
@@ -1418,6 +1491,19 @@ export const actions = {
 						message: 'The user being added is not found please reload',
 						reason: 'databaseError'
 					});
+				
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
 
 				let trs1 = [];
 				toUpdateTask.subscribers.forEach((s) => {
@@ -1434,8 +1520,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,
@@ -1568,6 +1654,19 @@ export const actions = {
 		
 		if (workspace.members.length > 1) {
 			if (updatedTask.subscribers.length > 1) {
+				const subject = await prisma.subjects.findFirst({
+					where: {
+						workspaces: {
+							has: workspace.id
+						}
+					},
+					select: {
+						id: true
+					}
+				});
+				if (!subject)
+					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+				
 				let trs1 = []
 				updatedTask.subscribers.forEach(s => {
 					if (s !== cUser.id) {
@@ -1583,8 +1682,8 @@ export const actions = {
 										userID: cUser.id
 									},
 									fromInterface: {
-										interf: '',
-										subInterface: ''
+										interf: subject.id,
+										subInterface: workspace.id
 									},
 									fromTask: updatedTask.id,
 									isRead: false,

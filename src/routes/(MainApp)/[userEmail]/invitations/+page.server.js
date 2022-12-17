@@ -111,7 +111,7 @@ export const actions = {
 		const newNotification = await prisma.notifications.create({
 			data: {
 				aMention: false,
-				anInvitation: false,
+				anInvitation: true,
 				conversationID: '',
 				for: {
 					self: true,
@@ -199,7 +199,7 @@ export const actions = {
 		const newNotification = await prisma.notifications.create({
 			data: {
 				aMention: false,
-				anInvitation: false,
+				anInvitation: true,
 				conversationID: '',
 				for: {
 					self: true,
@@ -349,6 +349,18 @@ export const actions = {
 		})
 		if (!updatedWorkspace) return invalid(404, { message: 'Workspace not found contact the owner about this', reason: 'workspaceNotFound' })
 		
+		const subject = await prisma.subjects.findFirst({
+			where: {
+				workspaces: {
+					has: updatedWorkspace.id
+				}
+			},
+			select: {
+				id: true
+			}
+		})
+		if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
+
 		const updatedInvitation = await prisma.invitations.update({
 			where: {
 				id: invitation.id
@@ -378,8 +390,8 @@ export const actions = {
 							userID: cUser.id
 						},
 						fromInterface: {
-							interf: '',
-							subInterface: ''
+							interf: subject.id,
+							subInterface: updatedWorkspace.id
 						},
 						fromTask: '',
 						isRead: false,
