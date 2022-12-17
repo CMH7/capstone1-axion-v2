@@ -19,23 +19,23 @@
     if(reading) return
     reading = true
 
-    if(notification.anInvitation) {
-      await goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
-    } else {
-      if(notification.fromInterface.interf !== '') {
-        if(notification.fromInterface.subInterface !== '') {
-          if(notification.fromTask !== '') {
-            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`, {replaceState: true, invalidateAll: true})
+    if(!notification.isRead) {
+      if(notification.anInvitation) {
+        await goto(`/${data.user.email}/invitations`, {replaceState: true, invalidateAll: true})
+      } else {
+        if(notification.fromInterface.interf !== '') {
+          if(notification.fromInterface.subInterface !== '') {
+            if(notification.fromTask !== '') {
+              await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}/${notification.fromTask}`, {replaceState: true, invalidateAll: true})
+            } else {
+              await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`, {replaceState: true, invalidateAll: true})
+            }
           } else {
-            await goto(`/${data.user.email}/${notification.fromInterface.interf}/${notification.fromInterface.subInterface}`, {replaceState: true, invalidateAll: true})
+            await goto(`/${data.user.email}/${notification.fromInterface.interf}`, {replaceState: true, invalidateAll: true})
           }
-        } else {
-          await goto(`/${data.user.email}/${notification.fromInterface.interf}`, {replaceState: true, invalidateAll: true})
         }
       }
-    }
-    notifCenterOpen.set(false)
-    if(notification.isRead) {
+      notifCenterOpen.set(false)
       reading = false
       return
     }
@@ -108,6 +108,9 @@
   let draggedLeft = false
   let draggedRightCount = 0
   let initPos = {x: 0, y: 0}
+
+  $: anInvitation = notification.anInvitation ? 'true' : 'false'
+
 </script>
 
 <svelte:window bind:innerWidth />
@@ -120,6 +123,10 @@
 
   <form action="/{data.user.email}?/readNotif" id='formReadNotif{notification.id}' class='is-hidden' use:enhance>
     <input type="text" name='notifID' bind:value={notification.id}>
+    <input type="text" name='anInvitation' bind:value={anInvitation}>
+    <input type="text" name='subjectID' bind:value={notification.fromInterface.interf}>
+    <input type="text" name='workspaceID' bind:value={notification.fromInterface.subInterface}>
+    <input type="text" name='taskID' bind:value={notification.fromTask}>
   </form>
 </div>
 
