@@ -132,7 +132,7 @@
 
 <svelte:window bind:innerWidth />
 
-<form id='{subject.id}' action="?/updateFavoriteSubjects" class='is-hidden' use:enhance>
+<form id='{subject.id}' action="/{data.user.email}?/updateFavoriteSubjects" class='is-hidden' use:enhance>
   <input type="text" bind:value={subject.id} name='id'>
   <input type="text" bind:value={mode} name='mode'>
   <input type="text" bind:value={$global_USERID} name='userID'>

@@ -11,23 +11,23 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 export const actions = {
   signup: async ({ request }) => {
     const data = await request.formData()
-    const firstName = data.get('firstName')
-    const lastName = data.get('lastName')
+    const firstName = data.get('firstName')?.toString()
+    const lastName = data.get('lastName')?.toString()
     const age = parseInt(data.get('age')?.toString())
-    const gender = data.get('gender')
+    const gender = data.get('gender')?.toString()
 
-    const school = data.get('school')
-    const course = data.get('course')
+    const school = data.get('school')?.toString()
+    const course = data.get('course')?.toString()
     const year = parseInt(data.get('year')?.toString())
 
-    const email = data.get('email')
-    const password = data.get('password')
+    const email = data.get('email')?.toString()
+    const password = data.get('password')?.toString()
     const passCopy = await bcryptjs.hash(password?.toString(), 13)
 
     const existing = await prisma.users.findFirst({
       where: {
         email: {
-          equals: email?.toString()
+          equals: email
         }
       },
       select: {
@@ -40,23 +40,20 @@ export const actions = {
 			data: {
 				age,
 				bio: '',
-				course: course?.toString(),
-				email: email?.toString(),
+				course,
+				email,
 				favorites: [
 					{ for: 'subjects', ids: [] },
 					{ for: 'workspaces', ids: [] },
 					{ for: 'tasks', ids: [] }
 				],
-				firstName: firstName?.toString(),
-				gender: gender?.toString(),
-				invitations: [],
-				lastName: lastName?.toString(),
-				notifications: [],
+				firstName: firstName,
+				gender,
+				lastName,
 				password: passCopy,
 				profile: '',
-				school: school?.toString(),
+				school,
 				showTutorial: true,
-				subjects: [],
 				verified: false,
 				year,
         online: false,

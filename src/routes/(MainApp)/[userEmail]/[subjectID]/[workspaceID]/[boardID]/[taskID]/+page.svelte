@@ -941,7 +941,6 @@
   <!-- task status form -->
   <form action="?/taskSetNewStatus" id='formTaskSetNewStatus' class='is-hidden' use:enhance>
     <input type="text" name='id' bind:value={data.task.id}>
-    <input type="text" name='oldStatus' bind:value={data.board.id}>
     <input type="text" name='status' bind:value={currentAstatus}>
   </form>
   
@@ -961,12 +960,6 @@
   <form action="?/taskEditChat" id='formTaskEditChat' class='is-hidden' use:enhance>
     <input type="text" name='message' bind:value={editedChatText}>
     <input type="text" name='chatID' bind:value={currentChat}>
-  </form>
-
-  <!-- task subscribe form -->
-  <form action="?/taskSubscribe" id='formTaskSubscribe' class='is-hidden' use:enhance>
-    <input type="text" name='id' bind:value={data.task.id}>
-    <input type="text" name='subscribe' bind:value={subsMode}>
   </form>
 
   <!-- task add assignee form -->
@@ -1253,13 +1246,13 @@
               Subtasks
             </div>
             <div class="tag m-0 is-info is-light is-relative">
-              {data.task.subtasks.length}
+              {data.subtaskCount}
               
               <div
                 style='transform-origin: top center;'
                 class="min-w-fit-content min-h-100p pos-abs pos-r-0 pos-t-100p has-background-white elevation-3 has-transition {$navDrawerActive ? '' : 'z-10'} {showSubCount ? 'rot-x-0' : 'rot-x-90'} ">
                 <div class='p-3 has-text-grey-dark fredoka-reg'>
-                  There {data.task.subtasks.length > 1 ? 'are' : 'is'} {data.task.subtasks.length} subtask{data.task.subtasks.length > 1 ? 's' : ''}
+                  There {data.subtaskCount > 1 ? 'are' : 'is'} {data.subtaskCount} subtask{data.subtaskCount > 1 ? 's' : ''}
                 </div>
               </div>
             </div>
@@ -1274,17 +1267,17 @@
             }}
             on:click={() => showSubCount = !showSubCount}
             class="is-hidden-tablet tag is-info is-relative is-clickable">
-            {data.task.subtasks.length}
+            {data.subtaskCount}
 
             <div
               style='transform-origin: top center;'
               class="min-w-fit-content min-h-100p pos-abs pos-{innerWidth < 571 ? 'r' : 'l'}-0 pos-t-100p has-background-white elevation-3 has-transition {$navDrawerActive ? '' : 'z-10'} {showSubCount ? 'rot-x-0' : 'rot-x-90'} ">
               <div class='p-3 has-text-grey-dark fredoka-reg'>
-                There {data.task.subtasks.length > 1 ? 'are' : 'is'} {data.task.subtasks.length} subtask{data.task.subtasks.length > 1 ? 's' : ''}
+                There {data.subtaskCount > 1 ? 'are' : 'is'} {data.subtaskCount} subtask{data.subtaskCount > 1 ? 's' : ''}
               </div>
             </div>
           </div>
-          <Divider  vertical class='pos-abs m-0 p-0 pos-t-0 pos-r-0 has-text-grey-light is-hidden-tablet' />
+          <Divider vertical class='pos-abs m-0 p-0 pos-t-0 pos-r-0 has-text-grey-light is-hidden-tablet' />
         </div>
   
         <!-- more option -->
@@ -1721,7 +1714,7 @@
       </div>
       <Divider class='m-0 {innerWidth > 768 ? 'is-hidden' : ''}' />
   
-      <!-- status and viewers and subscribe -->
+      <!-- status and viewers -->
       <div class="columns is-mobile is-multiline">
         <!-- status -->
         <div class="column is-12-touch {innerWidth < 769 ? 'pr-0' : ''}">
@@ -1777,7 +1770,7 @@
         </div>
         
         <!-- viewers -->
-        <div class="column is-narrow-desktop is-6-touch {innerWidth < 769 ? 'pr-0' : ''}">
+        <div class="column is-narrow-desktop is-12-touch {innerWidth < 769 ? 'pr-0' : ''}">
           <!-- svelte-ignore a11y-click-events-have-key-events -->
           <div
             on:mouseenter={() => hintText.set('Click on the Eye Icon to see the viewers of the task')}
@@ -1816,35 +1809,6 @@
               </div>
             </div>
 
-          </div>
-        </div>
-
-        <!-- subscribe -->
-        <div class='column is-6-touch'>
-          <!-- svelte-ignore a11y-click-events-have-key-events -->
-          <div
-            on:mouseenter={() => hintText.set('Click the Bell Icon to subscribe or unsubscribe')} 
-            class='tags has-addons mt-4 mb-0 is-clickable'
-            on:click={subscribe}
-          >
-            <div class='tag is-dark mb-0'>
-              {#if data.subscriber}
-                <Icon class='white-text' path={mdiBellCancelOutline} />
-              {:else}
-                <Icon class='white-text' path={mdiBellCheckOutline} />
-              {/if}
-            </div>
-            <div class='tag is-light mb-0 fredoka-reg'>
-              {#if !subscribing}
-                {#if !data.subscriber}
-                  Subscribe
-                {:else}
-                  Unsubscribe
-                {/if}
-              {:else}
-                <Moon size={20} color='#000' />
-              {/if}
-            </div>
           </div>
         </div>
       </div>

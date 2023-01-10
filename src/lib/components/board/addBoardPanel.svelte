@@ -2,7 +2,7 @@
   //@ts-nocheck
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidate, invalidateAll } from '$app/navigation';
-	import { modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { modalChosenColor, navDrawerActive, notifs } from '$lib/stores/global.store';
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
@@ -75,7 +75,7 @@
 </form>
 
 <div
-  class="has-transition z-{$notifCenterOpen || $navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addBoardPanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addBoardPanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->

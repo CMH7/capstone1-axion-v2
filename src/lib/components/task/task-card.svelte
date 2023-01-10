@@ -1,7 +1,6 @@
 <script>
-	import helpers from '$lib/configs/helpers';
-
   //@ts-nocheck
+	import helpers from '$lib/configs/helpers';
 	import models from '$lib/models';
 	import { boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { loadingScreen, modalChosenColor } from '$lib/stores/global.store';

@@ -8,8 +8,6 @@ export let breadCrumbsItems = writable([{ text: 'Subjects', href: '#' }])
 
 export let modalChosenColor = writable('primary')
 
-export let notifCenterOpen = writable(false)
-
 export let logoutModalActive = writable(false)
 
 export let invModalActive = writable(false)

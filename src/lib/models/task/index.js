@@ -1,8 +1,6 @@
 export default {
   id: '',
   members: [''],
-  subtasks: [''],
-  conversations: [''],
   viewers: [''],
   createdBy: '',
   createdOn: new Date(),
@@ -12,5 +10,4 @@ export default {
   level: 1,
   name: '',
   status: '',
-  subscribers: ['']
 }

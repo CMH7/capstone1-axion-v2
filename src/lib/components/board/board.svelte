@@ -1,10 +1,7 @@
 <script>
   //@ts-nocheck
-	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard, showFilter } from '$lib/stores/boards.store';
-	import { hintText, modalChosenColor } from '$lib/stores/global.store';
-  import { Button, Icon } from 'svelte-materialify'
-  import TaskFilterDropdown from '$lib/components/taskFilterDropdown.svelte';
-  import { mdiFilter } from '@mdi/js'
+	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
+	import { hintText, modalChosenColor } from '$lib/stores/global.store'
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, taskSettingsPanelActive } from '$lib/stores/task.store';
 
   /** @type {import('@prisma/client').boards}*/

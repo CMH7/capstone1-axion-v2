@@ -30,27 +30,23 @@ export async function load({ params }) {
 	let favoriteTasksCounts = 0
 
 	if (user.showStatistics) {
-		const ownedSubjects = await prisma.subjects.findMany({
+		const ownedSubjects = await prisma.subjects.count({
 			where: {
 				owner: {
 					equals: user.id
 				}
-			},
-			select: {
-				id: true
 			}
 		});
-		const ownedWorkspaces = await prisma.workspaces.findMany({
+
+		const ownedWorkspaces = await prisma.workspaces.count({
 			where: {
 				owner: {
 					equals: user.id
 				}
-			},
-			select: {
-				id: true
 			}
 		});
-		const joinedWorkspaces = await prisma.workspaces.findMany({
+
+		const joinedWorkspaces = await prisma.workspaces.count({
 			where: {
 				members: {
 					has: user.id
@@ -60,37 +56,31 @@ export async function load({ params }) {
 						equals: user.id
 					}
 				}
-			},
-			select: {
-				id: true
 			}
 		});
-		const createdTasks = await prisma.tasks.findMany({
+
+		const createdTasks = await prisma.tasks.count({
 			where: {
 				createdBy: {
 					equals: user.id
 				}
-			},
-			select: {
-				id: true
 			}
 		});
-		const assignedTasks = await prisma.tasks.findMany({
+
+		const assignedTasks = await prisma.tasks.count({
 			where: {
 				members: {
 					has: user.id
 				}
-			},
-			select: {
-				id: true
 			}
 		});
 
-		ownedWorkspacesCount = ownedWorkspaces.length
-		ownedSubjectsCount = ownedSubjects.length
-		joinedWorkspacesCount = joinedWorkspaces.length
-		createdTasksCount = createdTasks.length
-		assignedTasksCount = assignedTasks.length
+		ownedSubjectsCount = ownedSubjects
+		ownedWorkspacesCount = ownedWorkspaces
+		joinedWorkspacesCount = joinedWorkspaces
+		createdTasksCount = createdTasks
+		assignedTasksCount = assignedTasks
+
 		favoriteSubjectsCounts = user.favorites[0].ids.length
 		favoriteWorkspacesCounts = user.favorites[1].ids.length
 		favoriteTasksCounts = user.favorites[2].ids.length
@@ -123,30 +113,6 @@ export async function load({ params }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-	logout: async ({ params }) => {
-		const user = await prisma.users.findFirst({
-			where: {
-				email: {
-					equals: params.userEmail
-				}
-			}
-		});
-		if (!user) throw error(404, 'Account not found');
-
-		const user2 = await prisma.users.update({
-			where: {
-				id: user.id
-			},
-			data: {
-				online: {
-					set: false
-				}
-			}
-		});
-		if (!user2) throw redirect(301, 'my-profile');
-
-		throw redirect(301, '/Signin');
-	},
 	newPic: async ({ request }) => {
 		const data = await request.formData();
 		const rawData = data.get('rawData')?.toString();
@@ -462,6 +428,7 @@ export const actions = {
 		const data = await request.formData()
 		const userID = data.get('id')?.toString()
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				id: {
@@ -471,108 +438,126 @@ export const actions = {
 		})
 		if(!cUser) throw error(404, 'Account not found')
 
-		let trs1 = []
-		let trs2 = []
-		let trs3 = []
-		let trs4 = []
-		let trs5 = []
-		let trs6 = []
-
+		// get all created subjects
 		const allCreatedSubjects = await prisma.subjects.findMany({
 			where: {
 				owner: {
 					equals: userID
 				}
+			},
+			select: {
+				id: true
 			}
 		})
 
+		// get all created workspaces
 		const allCreatedWorkspaces = await prisma.workspaces.findMany({
 			where: {
-				OR: allCreatedSubjects.map(acs => {return{OR: acs.workspaces.map(id => {return{id}})}})
+				owner: {
+					equals: cUser.id
+				}
+			},
+			select: {
+				id: true
 			}
 		})
 
+		// get all boards
 		const allacwBoards = await prisma.boards.findMany({
 			where: {
 				OR: allCreatedWorkspaces.map(acw => {return{OR: acw.boards.map(id => {return{id}})}})
+			},
+			select: {
+				id: true
 			}
 		})
 
+		// get all tasks
 		const allBoardsTasks = await prisma.tasks.findMany({
 			where: {
-				OR: allacwBoards.map(ab=>{return{OR:ab.tasks.map(id=>{return{id}})}})
+				OR: allacwBoards.map(b => {
+					return {
+						status: {
+							equals: b.id
+						}
+					}
+				})
 			}
 		})
 
-		allCreatedWorkspaces.forEach(workspace => {
-			workspace.members.forEach(m => {
-				if (m !== userID) {
-					trs1 = [
-						...trs1,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: m
-								},
-								fromInterface: {
-									interf: '',
-									subInterface: ''
-								},
-								fromTask: '',
-								isRead: false,
-								message: `The owner deleted this workspace '${workspace.name}'`
-							},
-							select: {
-								id: true
-							}
-						})
-					]
-				}
-			})
-		})
-
+		// delete all chats
 		const deleteTasksChats = prisma.chats.deleteMany({
 			where: {
-				OR: allBoardsTasks.map(abt=>{return{OR:abt.conversations.map(id=>{return{id}})}})
+				OR: allBoardsTasks.map(t => {
+					return {
+						parentTask: {
+							equals: t.id
+						}
+					}
+				})
 			}
 		})
+
+		// delete all tasks
 		const deleteAllTasks = prisma.tasks.deleteMany({
 			where: {
 				OR: allBoardsTasks.map(abt=>{return{id:abt.id}})
 			}
 		})
+
+		// delete all boards
 		const deleteAllBoards = prisma.boards.deleteMany({
 			where: {
 				OR: allacwBoards.map(ab=>{return{id:ab.id}})
 			}
 		})
+
+		// delete all workspaces
 		const deleteAllWorkspaces = prisma.workspaces.deleteMany({
 			where: {
 				OR: allCreatedWorkspaces.map(acw=>{return{id:acw.id}})
 			}
 		})
+
+		// delete all subjects
 		const deleteAllSubjects = prisma.subjects.deleteMany({
 			where: {
 				OR: allCreatedSubjects.map(acs=>{return{id:acs.id}})
 			}
 		})
-		const deleteAllNotifications = prisma.notifications.deleteMany({
+		
+		// delete all logs that the commiter is the current user
+		const deleteLogs = prisma.logs.deleteMany({
 			where: {
-				OR: cUser.notifications.map(id => {return{id}})
+				commiter: cUser.id
 			}
 		})
+
+		// delete all invitation
 		const deleteAllInvitations = prisma.invitations.deleteMany({
 			where: {
-				OR: cUser.invitations.map(id => {return{id}})
+				OR: [
+					{
+						from: {
+							is: {
+								id: {
+									equals: cUser.id
+								}
+							}
+						}
+					},
+					{
+						to: {
+							is: {
+								id: {
+									equals: cUser.id
+								}
+							}
+						}
+					}
+				]
 			}
 		})
-		
-		const result1 = await prisma.$transaction(trs1)
-		if (!result1) throw error(500, 'Too much proccesses in result1');
 
 		const result2 = await prisma.$transaction([
 			deleteTasksChats,
@@ -580,93 +565,12 @@ export const actions = {
 			deleteAllBoards,
 			deleteAllWorkspaces,
 			deleteAllSubjects,
-			deleteAllNotifications,
+			deleteLogs,
 			deleteAllInvitations
 		]);
 		if (!result2) throw error(500, 'Too much proccesses in result2');
 
-		let i = 0
-		allCreatedWorkspaces.forEach(w => {
-			w.members.forEach(m => {
-				if (m !== userID) {
-					trs2 = [
-						...trs2,
-						prisma.users.update({
-							where: {
-								id: m
-							},
-							data: {
-								notifications: {
-									push: result1[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					]
-					i++
-				}
-			})
-		})
-
-		const result2a = await prisma.$transaction(trs2)
-		if(!result2a) throw error(500, 'Too much proccesses in result2a');
-
 		// CHECK ON OTHER DATA
-		const allSendedChats = await prisma.chats.findMany({
-			where: {
-				sender: {
-					equals: userID
-				}
-			},
-			select: {
-				id: true
-			}
-		});
-
-		const allTasksWithSendedChats = await prisma.tasks.findMany({
-			where: {
-				OR: allSendedChats.map((asc) => {
-					return { conversations: { has: asc.id } };
-				})
-			}
-		});
-
-		allTasksWithSendedChats.forEach((task) => {
-			let chats = task.conversations;
-			let newmembers = task.members.filter((id) => id !== userID);
-			let newviewers = task.viewers.filter((id) => id !== userID);
-			let newsubs = task.subscribers.filter((id) => id !== userID);
-			let newCreatedBy = task.members.filter((id) => id !== userID)[0];
-
-			allSendedChats.forEach((chat) => {
-				chats = chats.filter((ch) => ch !== chat.id);
-			});
-
-			trs3 = [
-				...trs3,
-				prisma.tasks.update({
-					where: {
-						id: task.id
-					},
-					data: {
-						conversations: chats,
-						members: newmembers,
-						viewers: newviewers,
-						subscribers: newsubs,
-						createdBy: newCreatedBy
-					},
-					select: {
-						id: true
-					}
-				})
-			];
-		});
-
-		const result3 = await prisma.$transaction(trs3)
-		if (!result3) throw error(500, 'Too much proccesses in result3')
-		
 		const deleteAllChatsSent = await prisma.chats.deleteMany({
 			where: {
 				sender: {
@@ -675,94 +579,6 @@ export const actions = {
 			}
 		});
 		if (!deleteAllChatsSent) throw error(500, 'Too much proccesses in result4');
-		
-		const allJoinedWorkspaces = await prisma.workspaces.findMany({
-			where: {
-				members: {
-					has: userID
-				}
-			}
-		})
-
-		allJoinedWorkspaces.forEach(workspace => {
-			let newmembers = workspace.members.filter(m => m !== userID)
-			let newadmins = workspace.admins.filter(a => a !== userID)
-
-			trs4 = [
-				...trs4,
-				prisma.workspaces.update({
-					where: {
-						id: workspace.id
-					},
-					data: {
-						members: newmembers,
-						admins: newadmins
-					},
-					select: {
-						id: true
-					}
-				})
-			]
-
-			newmembers.forEach(nm => {
-				trs5 = [
-					...trs5,
-					prisma.notifications.create({
-						data: {
-							aMention: false,
-							anInvitation: false,
-							conversationID: '',
-							for: {
-								self: true,
-								userID: nm
-							},
-							fromInterface: {
-								interf: '',
-								subInterface: ''
-							},
-							fromTask: '',
-							isRead: false,
-							message: `${cUser.firstName} ${cUser.lastName} (${cUser.email}) leaved ${workspace.name}`
-						},
-						select: {
-							id: true
-						}
-					})
-				]
-			})
-		})
-
-		const result5 = await prisma.$transaction(trs4)
-		if (!result5) throw error(500, 'Too much proccesses in result5');
-		
-		const result6 = await prisma.$transaction(trs5)
-		if (!result6) throw error(500, 'Too much proccesses in result5');
-
-		let o = 0
-		allJoinedWorkspaces.forEach(w => {
-			w.members.forEach(m => {
-				trs6 = [
-					...trs6,
-					prisma.users.update({
-						where: {
-							id: m
-						},
-						data: {
-							notifications: {
-								push: result6[o].id
-							}
-						},
-						select: {
-							id: true
-						}
-					})
-				]
-				o++
-			})
-		})
-
-		const result7 = await prisma.$transaction(trs6)
-		if (!result7) throw error(500, 'Too much proccesses in result7')
 
 		const deletedUser = await prisma.users.delete({
 			where: {

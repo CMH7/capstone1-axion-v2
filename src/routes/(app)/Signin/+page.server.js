@@ -28,9 +28,7 @@ export const actions = {
         id: user.id
       },
       data: {
-        online: {
-          set: true
-        }
+        online: true
       }
     })
     if (!user2) return invalid(409, { message: 'Try again, server error', reason: 'other' });

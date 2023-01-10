@@ -65,9 +65,12 @@ export async function load({ params }) {
 
 	const allTasks = await prisma.tasks.findMany({
 		where: {
-			OR: boards.map(board => {
+			OR: boards.map(b => {
 				return {
-					OR: board.tasks.map(id => {return{AND: {id, isSubtask: false}}})
+					AND: {
+						status: b.id,
+						isSubtask: false
+					}
 				}
 			})
 		},
@@ -76,7 +79,6 @@ export async function load({ params }) {
 			name: true,
 			level: true,
 			members: true,
-			subtasks: true,
 			dueDateTime: true,
 			status: true,
 			description: true
@@ -97,20 +99,9 @@ export async function load({ params }) {
 		];
 	});
 
-	/** 
-	 * @type {{id: string}[]} 
-	 * */
-	let allMembersConditions = [];
-	allTasks.map(task => {
-		task.members.map(memberID => {
-			if (allMembersConditions.filter(obj => obj.id === memberID).length == 0) {
-				allMembersConditions = [...allMembersConditions, {id: memberID}]
-			}
-		})
-	})
 	const allMembers = await prisma.users.findMany({
 		where: {
-			OR: allMembersConditions
+			OR: workspace.members.map(m => {return{id:m}})
 		},
 		select: {
 			id: true,
@@ -156,49 +147,13 @@ export async function load({ params }) {
 		})
 	})
 
-	const workspaceMembers = await prisma.users.findMany({
-		where: {
-			OR: workspace.members.map(id => {return {id}})
-		},
-		select: {
-			id: true,
-			firstName: true,
-			lastName: true,
-			profile: true,
-			online: true,
-			email: true
-		}
-	});
+	const workspaceMembers = allMembers
 
 	return { workspace, user, boards, subject, boardTasks, taskMembers, statuses, workspaceMembers };
 }
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-	logout: async ({ params }) => {
-		const user = await prisma.users.findFirst({
-			where: {
-				email: {
-					equals: params.userEmail
-				}
-			}
-		});
-		if (!user) throw error(404, 'Account not found');
-
-		const user2 = await prisma.users.update({
-			where: {
-				id: user.id
-			},
-			data: {
-				online: {
-					set: false
-				}
-			}
-		});
-		if (!user2) throw redirect(301, 'my-profile');
-
-		throw redirect(301, '/Signin');
-	},
 	updateWorkspace: async ({ request, params }) => {
 		const data = await request.formData();
 		const name = data.get('name')?.toString();
@@ -206,6 +161,7 @@ export const actions = {
 		const workspaceID = data.get('id')?.toString();
 		const addFavorite = data.get('addFavorite')?.toString();
 
+		// get the current user
 		const toUpdateUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -219,162 +175,108 @@ export const actions = {
 		});
 		if (!toUpdateUser) throw error(404, 'Account not found');
 
-		if (addFavorite?.match('add')) {
-			//@ts-ignore
-			toUpdateUser.favorites[1].ids.push(workspaceID);
-		} else if (addFavorite?.match('rem')) {
-			//@ts-ignore
-			toUpdateUser.favorites[1].ids = toUpdateUser.favorites[1].ids.filter(
-				(id) => id !== workspaceID
-			);
+		// determine if to add or remove or nothing
+		if (!addFavorite?.match('nothing')) {
+			if (addFavorite?.match('add')) {
+				//@ts-ignore
+				toUpdateUser.favorites[1].ids.push(workspaceID);
+			} else if (addFavorite?.match('rem')) {
+				//@ts-ignore
+				toUpdateUser.favorites[1].ids = toUpdateUser.favorites[1].ids.filter(
+					(id) => id !== workspaceID
+				);
+			}
+
+			const upatedUser = await prisma.users.update({
+				where: {
+					id: toUpdateUser.id
+				},
+				data: {
+					favorites: toUpdateUser.favorites
+				}
+			});
+			if (!upatedUser)
+				return invalid(500, {
+					message: 'Failed to return data but is added to favorites, please reload',
+					reason: 'databaseError'
+				});
 		}
 
-		const upatedUser = await prisma.users.update({
-			where: {
-				id: toUpdateUser.id
-			},
-			data: {
-				favorites: toUpdateUser.favorites
-			},
-			select: {
-				id: true,
-				firstName: true,
-				lastName: true
-			}
-		});
-		if (!upatedUser)
-			return invalid(500, {
-				message: 'Failed to update favorites but is added to favorites, please reload',
-				reason: 'databaseError'
-			});
-
+		// get the data of the workspace
 		const toUpdateWorkspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
 					equals: workspaceID
 				}
-			},
-			select: {
-				id: true,
-				name: true,
-				color: true,
-				members: true
 			}
 		});
-		if (!toUpdateWorkspace)
-			return invalid(500, {
-				message: 'Database failure to update workspace',
-				reason: 'databaseError'
-			});
-		
-		const subject = await prisma.subjects.findFirst({
-			where: {
-				id: {
-					equals: params.subjectID
+		if (!toUpdateWorkspace) return invalid(404, { message: 'Current workspace not found' });
+
+		// determine if there are changes in the workspace data
+		if (toUpdateWorkspace.name !== name || toUpdateWorkspace.color !== color) {
+			// update workspace data
+			const updatedWorkspace = await prisma.workspaces.update({
+				where: {
+					id: workspaceID
+				},
+				data: {
+					name,
+					color
 				}
-			},
-			select: {
-				id: true
-			}
-		})
-		if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
-
-		const updatedWorkspace = await prisma.workspaces.update({
-			where: {
-				id: workspaceID
-			},
-			data: {
-				name,
-				color
-			},
-			select: {
-				id: true,
-				name: true,
-				color: true
-			}
-		});
-		if (!updatedWorkspace)
-			return invalid(500, {
-				message: 'Database failure to update workspace',
-				reason: 'databaseError'
 			});
-
-		if (toUpdateWorkspace.members.length > 1) {
-			if (
-				toUpdateWorkspace.name !== updatedWorkspace.name ||
-				toUpdateWorkspace.color !== updatedWorkspace.color
-			) {
-				let trs1 = [];
-				toUpdateWorkspace.members.forEach((m) => {
-					if (m !== toUpdateUser.id) {
-						trs1 = [
-							...trs1,
-							prisma.notifications.create({
-								data: {
-									aMention: false,
-									anInvitation: false,
-									conversationID: '',
-									for: {
-										self: true,
-										userID: upatedUser.id
-									},
-									fromInterface: {
-										interf: subject.id,
-										subInterface: toUpdateWorkspace.id
-									},
-									fromTask: '',
-									isRead: false,
-									message: `${upatedUser.firstName} ${upatedUser.lastName} ${
-										toUpdateWorkspace.name !== updatedWorkspace.name &&
-										toUpdateWorkspace.color !== updatedWorkspace.color
-											? `renamed and changed the color of the workspace ${updatedWorkspace.name}`
-											: toUpdateWorkspace.name !== updatedWorkspace.name
-											? `renamed ${toUpdateWorkspace.name} to ${updatedWorkspace.name}`
-											: `changed the color to ${updatedWorkspace.color}`
-									}`
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-					}
+			if (!updatedWorkspace)
+				return invalid(500, {
+					message: 'Database failure to update workspace',
+					reason: 'databaseError'
 				});
-				const result1 = await prisma.$transaction(trs1);
 
-				let trs2 = [];
-				let i = 0;
-				toUpdateWorkspace.members.forEach((m) => {
-					if (m !== toUpdateUser.id) {
-						trs2 = [
-							...trs2,
-							prisma.users.update({
-								where: {
-									id: m
-								},
-								data: {
-									notifications: {
-										push: result1[i].id
-									}
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-						i++;
-					}
+			// create a log about it and logs it to all workspace members
+			const newlog = await prisma.logs.create({
+				data: {
+					commiter: toUpdateUser.id,
+					log: `${
+						toUpdateWorkspace.name !== name
+							? `renamed the workspace ${toUpdateWorkspace.name} to ${updatedWorkspace.name}`
+							: toUpdateWorkspace.color !== color
+							? `changed the color of the workspace ${updatedWorkspace.name} from ${toUpdateWorkspace.color} to ${updatedWorkspace.color}`
+							: `renamed the workspace ${toUpdateWorkspace.name} to ${updatedWorkspace.name}`
+					} and changed the color of the workspace ${updatedWorkspace.name} from ${
+						toUpdateWorkspace.color
+					} to ${updatedWorkspace.color}`,
+					logDate: new Date(),
+					type: 'workspace',
+					involve: updatedWorkspace.members
+				}
+			});
+			if (!newlog)
+				return invalid(500, {
+					message: 'Failed to log the process please try again later',
+					reason: 'databaseError'
 				});
-				const result2 = await prisma.$transaction(trs2);
-
-				pusherServer.trigger(toUpdateWorkspace.members, 'updates', {});
-			}
 		}
 	},
 	deleteWorkspace: async ({ request, params }) => {
 		const data = await request.formData();
 		const workspaceID = data.get('id')?.toString();
 
+		// get the current user
+		const cUser = await prisma.users.findFirst({
+			where: {
+				email: {
+					equals: params.userEmail
+				}
+			},
+			select: {
+				id: true
+			}
+		});
+		if (!cUser)
+			return invalid(404, {
+				message: 'Account not found please re log in or reload',
+				reason: 'databaseError'
+			});
+
+		// delete the workspace
 		const deletedWorkspace = await prisma.workspaces.delete({
 			where: {
 				id: workspaceID
@@ -386,43 +288,36 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// get all boards of the workspace
 		const allBoards = await prisma.boards.findMany({
 			where: {
-				OR: deletedWorkspace.boards.map((id) => {
-					return { id };
-				})
+				parentWorkspace: deletedWorkspace.id
 			}
 		});
+
+		// get all tasks from the all boards of the workspace
 		const allTasks = await prisma.tasks.findMany({
 			where: {
 				OR: allBoards.map((b) => {
 					return {
-						OR: b.tasks.map((id) => {
-							return { id };
-						})
+						status: b.id
 					};
 				})
 			}
 		});
 
+		// delete all chats in all tasks from the all boards of the workspace
 		const allDeletedConvo = prisma.chats.deleteMany({
 			where: {
 				OR: allTasks.map((t) => {
 					return {
-						OR: t.conversations.map((id) => {
-							return { id };
-						})
+						parentTask: t.id
 					};
 				})
 			}
 		});
-		const allDeletedTaskRelatedNotifs = prisma.notifications.deleteMany({
-			where: {
-				OR: allTasks.map((t) => {
-					return { fromTask: t.id };
-				})
-			}
-		});
+
+		// delete all tasks from all boards of the workspace
 		const allDeletedTasks = prisma.tasks.deleteMany({
 			where: {
 				OR: allTasks.map((t) => {
@@ -430,6 +325,8 @@ export const actions = {
 				})
 			}
 		});
+
+		// delete all boards of the workspace
 		const allDeletedBoards = prisma.boards.deleteMany({
 			where: {
 				OR: deletedWorkspace.boards.map((id) => {
@@ -438,85 +335,26 @@ export const actions = {
 			}
 		});
 
-		const r1 = await prisma.$transaction([
-			allDeletedBoards,
-			allDeletedConvo,
-			allDeletedTasks,
-			allDeletedTaskRelatedNotifs
-		]);
+		// execute the transaction of deletions
+		await prisma.$transaction([allDeletedBoards, allDeletedConvo, allDeletedTasks]);
 
-		if (deletedWorkspace.members.length > 1) {
-			const cUser = await prisma.users.findFirst({
-				where: {
-					email: {
-						equals: params.userEmail
-					}
-				}
+		// create a log for all member of the workspace
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `deleted the workspace ${deletedWorkspace.name}`,
+				logDate: new Date(),
+				type: 'workspace',
+				involve: deletedWorkspace.members
+			}
+		});
+		if (!newlog)
+			return invalid(500, {
+				message: 'Failed to log the process please try again later',
+				reason: 'databaseError'
 			});
-			if (!cUser)
-				return invalid(404, {
-					message: 'Account not found please relogin or reload',
-					reason: 'databaseError'
-				});
 
-			let trs2 = [];
-			deletedWorkspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs2 = [
-						...trs2,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: '',
-									subInterface: ''
-								},
-								fromTask: '',
-								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName}(owner) deleted the workspace ${deletedWorkspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-				}
-			});
-			const r2 = await prisma.$transaction(trs2);
-
-			let trs3 = [];
-			let i = 0;
-			deletedWorkspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs3 = [
-						...trs3,
-						prisma.users.update({
-							where: {
-								id: m
-							},
-							data: {
-								notifications: {
-									push: r2[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-					i++;
-				}
-			});
-			const r3 = await prisma.$transaction(trs3);
-
-			pusherServer.trigger(deletedWorkspace.members, 'updates', {});
-		}
+		pusherServer.trigger(deletedWorkspace.members, 'updates', {});
 	},
 	createTask: async ({ request, params }) => {
 		const data = await request.formData();
@@ -529,6 +367,7 @@ export const actions = {
 		const members = data.get('members')?.toString();
 		const creator = data.get('creator')?.toString();
 
+		// create new task
 		const newTask = await prisma.tasks.create({
 			data: {
 				//@ts-ignore
@@ -544,14 +383,12 @@ export const actions = {
 				name,
 				//@ts-ignore
 				status,
-				conversations: [],
 				//@ts-ignore
 				members: members?.length > 0 ? members?.split(',') : [],
 				subtasks: [],
 				//@ts-ignore
 				viewers: [creator],
-				//@ts-ignore
-				subscribers: [creator]
+				parentTask: ''
 			},
 			select: {
 				id: true
@@ -563,32 +400,15 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
-		const updatedBoard = await prisma.boards.update({
-			where: {
-				id: status
-			},
-			data: {
-				tasks: {
-					push: newTask.id
-				}
-			},
-			select: {
-				id: true
-			}
-		});
-		if (!updatedBoard.id)
-			return invalid(500, {
-				message: 'Task created but failed to be syncronized in boards, try again',
-				reason: 'databaseError'
-			});
-
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: params.workspaceID
 			},
 			select: {
 				id: true,
-				members: true
+				members: true,
+				name: true
 			}
 		});
 		if (!workspace)
@@ -596,6 +416,18 @@ export const actions = {
 				message: 'Current workspace is not found please reload',
 				reason: 'databaseError'
 			});
+		
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: creator,
+				log: `created new task named ${newTask.name} in workspace ${workspace.name}`,
+				logDate: new Date(),
+				type: 'task',
+				involve: workspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
 
 		if (workspace.members.length > 1) {
 			pusherServer.trigger(
@@ -619,6 +451,7 @@ export const actions = {
 		const dueDateTime = data.get('dueDateTime')?.toString();
 		const taskID = data.get('id')?.toString();
 
+		// get current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -628,6 +461,7 @@ export const actions = {
 		});
 		if (!cUser) throw error(404, 'Account not found');
 
+		// get task before updates
 		const toUpdateTask = await prisma.tasks.findFirst({
 			where: {
 				id: taskID
@@ -647,6 +481,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// update the task
 		const updatedTask = await prisma.tasks.update({
 			where: {
 				id: taskID
@@ -671,71 +506,25 @@ export const actions = {
 		if (!updatedTask.id)
 			return invalid(500, { message: 'Update failure on the task', reason: 'databaseError' });
 
+		// moves to new board/status
 		let statMsg = '';
 		if (oldStatus !== status) {
-			let toUpdateBoard1 = await prisma.boards.findFirst({
-				where: {
-					//@ts-ignore
-					id: oldStatus
-				},
-				select: {
-					id: true,
-					tasks: true
-				}
-			});
-			if (!toUpdateBoard1) throw error(404, 'Board to update not found');
-
-			toUpdateBoard1.tasks = toUpdateBoard1.tasks.filter((id) => id !== taskID);
-
-			const updatedBoard1 = await prisma.boards.update({
-				where: {
-					id: toUpdateBoard1.id
-				},
-				data: {
-					tasks: toUpdateBoard1.tasks
-				},
-				select: {
-					id: true,
-					name: true
-				}
-			});
-			if (!updatedBoard1) throw error(404, 'Failed to fetch updated board data');
-
-			const updatedBoard = await prisma.boards.update({
+			// get the new board
+			const updatedBoard = await prisma.boards.findFirst({
 				where: {
 					id: status
-				},
-				data: {
-					tasks: {
-						push: updatedTask.id
-					}
-				},
-				select: {
-					id: true,
-					name: true
 				}
 			});
 			if (!updatedBoard)
 				return invalid(500, {
-					message: 'Updated board data failed to fetch please reload',
+					message: 'Board not found please try again later',
 					reason: 'databaseError'
 				});
 
-			statMsg = `${updatedBoard1.name} to ${updatedBoard.name}`;
+			statMsg = `moved to ${updatedBoard.name}`
 		}
 
-		const subject = await prisma.subjects.findFirst({
-			where: {
-				id: {
-					equals: params.subjectID
-				}
-			},
-			select: {
-				id: true
-			}
-		});
-		if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
-
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				boards: {
@@ -754,6 +543,17 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `updated the task ${toUpdateTask.name} with a ${toUpdateTask.name !== updatedTask.name ? `new name of ${updatedTask.name}, ` : ''}${toUpdateTask.description !== updatedTask.description ? `new description, ` : ''}${toUpdateTask.dueDateTime !== updatedTask.dueDateTime ? `new due date-time of ${updatedTask.dueDateTime}, ` : ''}${toUpdateTask.level != updatedTask.level ? `new level/priority of ${updatedTask.level == 1 ? 'low' : updatedTask.level == 2 ? 'medium' : 'high'}, ` : ''}${toUpdateTask.status !== updatedTask.status ? `${statMsg} status, ` : ''} in ${workspace.name}`,
+				logDate: new Date(),
+				type: 'task',
+				involve: workspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
 		if (workspace.members.length > 1) {
 			if (
 				toUpdateTask.name !== updatedTask.name ||
@@ -762,108 +562,23 @@ export const actions = {
 				toUpdateTask.level != updatedTask.level ||
 				toUpdateTask.status !== updatedTask.status
 			) {
-				let trs1 = [];
-				workspace.members.forEach((m) => {
-					if (m !== cUser.id) {
-						trs1 = [
-							...trs1,
-							prisma.notifications.create({
-								data: {
-									aMention: false,
-									anInvitation: false,
-									conversationID: '',
-									for: {
-										self: true,
-										userID: cUser.id
-									},
-									fromInterface: {
-										interf: subject.id,
-										subInterface: workspace.id
-									},
-									fromTask: updatedTask.id,
-									isRead: false,
-									message: `${cUser.firstName} ${cUser.lastName} made an update to task ${
-										toUpdateTask.name
-									} => ${
-										toUpdateTask.name !== updatedTask.name ? `renamed to ${updatedTask.name}.` : ''
-									}, ${
-										toUpdateTask.description !== updatedTask.description
-											? 'sets new description'
-											: ''
-									}, ${
-										toUpdateTask.dueDateTime != updatedTask.dueDateTime ? 'sets new due date' : ''
-									} ${
-										toUpdateTask.level != updatedTask.level
-											? `sets priority to ${
-													updatedTask.level == 1
-														? 'lowest'
-														: updatedTask.level == 2
-														? 'medium'
-														: 'highest'
-											  }`
-											: ''
-									}, ${toUpdateTask.status !== updatedTask.status ? `move from ${statMsg}` : ''}`
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-					}
-				});
-				const result1 = await prisma.$transaction(trs1);
-				if (!result1)
-					return invalid(500, {
-						message: 'Failed to generate notifications.',
-						reason: 'databaseError'
-					});
-
-				let trs2 = [];
-				let i = 0;
-				workspace.members.forEach((m) => {
-					if (m !== cUser.id) {
-						trs2 = [
-							...trs2,
-							prisma.users.update({
-								where: {
-									id: m
-								},
-								data: {
-									notifications: {
-										push: result1[i].id
-									}
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-						i++;
-					}
-				});
-				const result2 = await prisma.$transaction(trs2);
-				if (!result2)
-					return invalid(500, {
-						message: 'Failed to generate notifications on members.',
-						reason: 'databaseError'
-					});
+				pusherServer.trigger(
+					workspace.members
+						.filter((m) => m !== cUser.id)
+						.map((m) => {
+							return m;
+						}),
+					'updates',
+					{}
+				);
 			}
-
-			pusherServer.trigger(
-				workspace.members
-					.filter((m) => m !== cUser.id)
-					.map((m) => {
-						return m;
-					}),
-				'updates',
-				{}
-			);
 		}
 	},
 	deleteTask: async ({ request, params }) => {
 		const data = await request.formData();
 		const taskID = data.get('id')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -878,80 +593,48 @@ export const actions = {
 		});
 		if (!cUser) throw error(404, 'Account not found');
 
+		// delete the task
 		const deletedTask = await prisma.tasks.delete({
 			where: {
 				id: taskID
-			},
-			select: {
-				conversations: true,
-				subtasks: true,
-				id: true,
-				status: true,
-				name: true
 			}
 		});
 		if (!deletedTask.id)
 			return invalid(500, {
-				message: "Can't delete or remove task pleast try again later",
+				message: "Can't delete or remove task pleas try again later",
 				reason: 'databaseError'
 			});
 
-		const toUpdateBoard = await prisma.boards.findFirst({
-			where: {
-				id: {
-					equals: deletedTask.status
-				}
-			},
-			select: {
-				tasks: true,
-				id: true
-			}
-		});
-		if (!toUpdateBoard)
-			return invalid(404, {
-				message: 'Board that a task is in cannot be found, please try again',
-				reason: 'databaseError'
-			});
-
-		const updatedBoard = prisma.boards.update({
-			where: {
-				id: toUpdateBoard.id
-			},
-			data: {
-				tasks: toUpdateBoard.tasks.filter((id) => id !== deletedTask.id)
-			},
-			select: {
-				id: true,
-				name: true
-			}
-		});
-		if (!updatedBoard) throw error(404, 'Failed to fetch data of board, please try again later');
-
+		// delete all subtasks under of the parent task
 		const deletedSUBTasks = prisma.tasks.deleteMany({
 			where: {
-				OR: deletedTask.subtasks.map((id) => {
-					return { id };
-				})
+				AND: {
+					isSubtask: true,
+					parentTask: deletedTask.id
+				}
 			}
 		});
+
+		// delete all chats under the parent task
 		const deletedChats = prisma.chats.deleteMany({
 			where: {
-				OR: deletedTask.conversations.map((id) => {
-					return { id };
-				})
+				parentTask: deletedTask.id
 			}
 		});
-		const result = await prisma.$transaction([updatedBoard, deletedSUBTasks, deletedChats]);
+
+		// execute the transaction
+		const result = await prisma.$transaction([deletedSUBTasks, deletedChats]);
 		if (!result)
 			return invalid(500, {
 				message: 'Error in deleting subtasks and chats',
 				reason: 'databaseError'
 			});
 
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				boards: {
-					has: toUpdateBoard.id
+					has: deletedTask.status
 				}
 			},
 			select: {
@@ -966,73 +649,19 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// create a log for all members in the workspace
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `deleted the task ${deletedTask.name} in the workspace ${workspace.name}`,
+				logDate: new Date(),
+				type: 'task',
+				involve: workspace.members
+			}
+		})
+		if (!newlog) return invalid(500, { message: 'Failed to log the process please try again', reason: 'databaseError' })
+		
 		if (workspace.members.length > 1) {
-			let trs1 = [];
-			workspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs1 = [
-						...trs1,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: '',
-									subInterface: ''
-								},
-								fromTask: '',
-								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} deleted task ${deletedTask.name} in ${workspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-				}
-			});
-			const res1 = await prisma.$transaction(trs1);
-			if (!res1)
-				return invalid(500, {
-					message: 'Error in generating notifications please reload',
-					reason: 'databaseError'
-				});
-
-			let trs2 = [];
-			let i = 0;
-			workspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs2 = [
-						...trs2,
-						prisma.users.update({
-							where: {
-								id: m
-							},
-							data: {
-								notifications: {
-									push: res1[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-					i++;
-				}
-			});
-			const res2 = await prisma.$transaction(trs2);
-			if (!res2)
-				return invalid(500, {
-					message: 'Sending notifications to other members please reload',
-					reason: 'databaseError'
-				});
-
 			pusherServer.trigger(
 				workspace.members
 					.filter((m) => m !== cUser.id)
@@ -1050,6 +679,7 @@ export const actions = {
 		const color = data.get('color')?.toString();
 		const workspaceID = data.get('workspaceID')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -1064,21 +694,23 @@ export const actions = {
 		});
 		if (!cUser) throw error(404, 'Account not found');
 
+		// create new board
 		const newBoard = await prisma.boards.create({
 			data: {
 				//@ts-ignore
 				color,
-				filter: 'a1',
 				//@ts-ignore
 				name,
-				tasks: []
+				parentWorkspace: workspaceID
 			},
 			select: {
 				id: true,
 				name: true
 			}
 		});
+		if(!newBoard) return invalid(500, {message: 'Board creation failed please try again later', reason: 'databaseError'})
 
+		// get the workspace before the update
 		const toUpdateWorkspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1090,15 +722,16 @@ export const actions = {
 				id: true
 			}
 		});
-
 		if (!toUpdateWorkspace)
 			return invalid(500, {
 				message: "Can't update workspace, please try again",
 				reason: 'databaseError'
 			});
 
+		// insert the new board before the done board in the workspace
 		toUpdateWorkspace.boards.splice(toUpdateWorkspace.boards.length - 1, 0, newBoard.id);
 
+		// update the workspace
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
 				id: workspaceID
@@ -1112,92 +745,38 @@ export const actions = {
 				name: true
 			}
 		});
-
 		if (!updatedWorkspace)
 			return invalid(500, {
 				message: "Can't update workspace, please try again 2",
 				reason: 'databaseError'
 			});
 
+		// get the parent subject
+		const subject = await prisma.subjects.findFirst({
+			where: {
+				id: {
+					equals: params.subjectID
+				}
+			},
+			select: {
+				id: true
+			}
+		});
+		if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
+
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `added new status/board ${newBoard.name} in workspace ${updatedWorkspace.name}`,
+				logDate: new Date(),
+				type: 'board',
+				involve: updatedWorkspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again', reason: 'databaseError'})
+
 		if (updatedWorkspace.members.length > 1) {
-			const subject = await prisma.subjects.findFirst({
-				where: {
-					id: {
-						equals: params.subjectID
-					}
-				},
-				select: {
-					id: true
-				}
-			});
-			if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
-
-			let trs1 = [];
-			updatedWorkspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs1 = [
-						...trs1,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: subject.id,
-									subInterface: updatedWorkspace.id
-								},
-								fromTask: '',
-								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} added new status/board '${newBoard.name}' in ${updatedWorkspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-				}
-			});
-			const r1 = await prisma.$transaction(trs1);
-			if (!r1)
-				return invalid(500, {
-					message: 'Error in generating notifications for members.',
-					reason: 'databaseError'
-				});
-
-			let trs2 = [];
-			let i = 0;
-			updatedWorkspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs2 = [
-						...trs2,
-						prisma.users.update({
-							where: {
-								id: m
-							},
-							data: {
-								notifications: {
-									push: r1[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-					i++;
-				}
-			});
-			const r2 = await prisma.$transaction(trs2);
-			if (!r2)
-				return invalid(500, {
-					message: 'Failed to send notifications for other member',
-					reason: 'databaseError'
-				});
-
 			pusherServer.trigger(
 				updatedWorkspace.members
 					.filter((m) => m !== cUser.id)
@@ -1217,6 +796,7 @@ export const actions = {
 		const name = data.get('name')?.toString();
 		const color = data.get('color')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -1231,6 +811,7 @@ export const actions = {
 		});
 		if (!cUser) throw error(404, 'Account not found');
 
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				boards: {
@@ -1249,6 +830,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// get the board before update
 		const toUpdateBoard = await prisma.boards.findFirst({
 			where: {
 				id: {
@@ -1267,6 +849,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// update the board
 		const updatedBoard = await prisma.boards.update({
 			where: {
 				id: boardID
@@ -1286,102 +869,29 @@ export const actions = {
 				message: "Can't update this board please try again later",
 				reason: 'databaseError'
 			});
+		
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `updated the board ${toUpdateBoard.name} with a ${toUpdateBoard.name !== name ? `new name of ${updatedBoard.name}, ` : ''}${toUpdateBoard.color !== color ? `new color of ${updatedBoard.color}` : ''} in workspace ${workspace.name}`,
+				logDate: new Date(),
+				type: 'board',
+				involve: workspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
 
 		if (workspace.members.length > 1) {
-			if (toUpdateBoard.name !== updatedBoard.name || toUpdateBoard.color !== updatedBoard.color) {
-				const subject = await prisma.subjects.findFirst({
-					where: {
-						workspaces: {
-							has: workspace.id
-						}
-					},
-					select: {
-						id: true
-					}
-				});
-				if (!subject)
-					return invalid(404, { message: 'Subject not found', reason: 'databaseError' });
-
-				let trs1 = [];
-				workspace.members.forEach((m) => {
-					if (m !== cUser.id) {
-						trs1 = [
-							...trs1,
-							prisma.notifications.create({
-								data: {
-									aMention: false,
-									anInvitation: false,
-									conversationID: '',
-									for: {
-										self: true,
-										userID: cUser.id
-									},
-									fromInterface: {
-										interf: subject.id,
-										subInterface: workspace.id
-									},
-									fromTask: '',
-									isRead: false,
-									message: `${cUser.firstName} ${cUser.lastName} ${
-										toUpdateBoard.name !== updatedBoard.name &&
-										toUpdateBoard.color !== updatedBoard.color
-											? `renamed a status ${toUpdateBoard.name} to ${updatedBoard.name} and changed the color`
-											: toUpdateBoard.name !== updatedBoard.name
-											? `renamed a status ${toUpdateBoard.name} to ${updatedBoard.name}`
-											: `changed the color of status ${updatedBoard.name}`
-									} in ${workspace.name}`
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-					}
-				});
-				const r1 = await prisma.$transaction(trs1);
-				if (!r1)
-					return invalid(500, {
-						message: 'Error in generating notifications',
-						reason: 'databaseError'
-					});
-
-				let trs2 = [];
-				let i = 0;
-				workspace.members.forEach((m) => {
-					if (m !== cUser.id) {
-						trs2 = [
-							...trs2,
-							prisma.users.update({
-								where: {
-									id: m
-								},
-								data: {
-									notifications: {
-										push: r1[i].id
-									}
-								},
-								select: {
-									id: true
-								}
-							})
-						];
-						i++;
-					}
-				});
-				const r2 = await prisma.$transaction(trs2);
-				if (!r2)
-					return invalid(500, { message: 'Failed to send notifications', reason: 'databaseError' });
-
-				pusherServer.trigger(
-					workspace.members
-						.filter((m) => m !== cUser.id)
-						.map((m) => {
-							return m;
-						}),
-					'updates',
-					{}
-				);
-			}
+			pusherServer.trigger(
+				workspace.members
+					.filter((m) => m !== cUser.id)
+					.map((m) => {
+						return m;
+					}),
+				'updates',
+				{}
+			);
 		}
 	},
 	deleteBoard: async ({ request, params }) => {
@@ -1390,8 +900,9 @@ export const actions = {
 		const move = data.get('move')?.toString();
 		const moveToID = data.get('moveToID')?.toString();
 
-		const workspaceID = data.get('workspaceID')?.toString();
+		// const workspaceID = data.get('workspaceID')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -1406,16 +917,12 @@ export const actions = {
 		});
 		if (!cUser) throw error(404, 'Account not found');
 
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				boards: {
 					has: boardID
 				}
-			},
-			select: {
-				id: true,
-				name: true,
-				members: true
 			}
 		});
 		if (!workspace)
@@ -1424,180 +931,75 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
-		const toDeleteBoard = await prisma.boards.findFirst({
-			where: {
-				id: {
-					equals: boardID
-				}
-			},
-			select: {
-				tasks: true,
-				id: true
-			}
-		});
-
+		// determine if the tasks are to be moved or to be deleted too
 		if (move === 'move') {
-			const toUpdateBoard = await prisma.boards.findFirst({
-				where: {
-					id: moveToID
-				},
-				select: {
-					tasks: true
-				}
-			});
-
-			//@ts-ignore
-			// eslint-disable-next-line no-unsafe-optional-chaining
-			const newTasks = [...toUpdateBoard?.tasks, ...toDeleteBoard?.tasks];
-
+			// update the status of the task to the latest board id
 			// eslint-disable-next-line no-unused-vars
-			const updatedBoard = await prisma.boards.update({
+			const updatedTasks = await prisma.tasks.updateMany({
 				where: {
-					id: moveToID
-				},
-				data: {
-					tasks: newTasks
-				},
-				select: {
-					id: true
-				}
-			});
-
-			// eslint-disable-next-line no-unused-vars
-			const updatedTask = await prisma.tasks.updateMany({
-				where: {
-					OR: newTasks.map((id) => {
-						return { id };
-					})
+					status: {
+						equals: boardID
+					}
 				},
 				data: {
 					status: moveToID
 				}
 			});
 		} else {
+			// delete all the task with the same board id that is deleted
 			// eslint-disable-next-line no-unused-vars
 			const deletedTasks = await prisma.tasks.deleteMany({
 				where: {
-					//@ts-ignore
-					OR: toDeleteBoard?.tasks.map((id) => {
-						return { id };
-					})
+					status: {
+						equals: boardID
+					}
 				}
 			});
 		}
 
+		// delete the board
 		const deletedBoard = await prisma.boards.delete({
 			where: {
 				id: boardID
-			},
-			select: {
-				id: true,
-				name: true
 			}
 		});
-
 		if (!deletedBoard)
 			return invalid(500, {
 				message: "Can't delete board, please try again later",
 				reason: 'databaseError'
 			});
 
-		const toUpdateWorkspace = await prisma.workspaces.findFirst({
-			where: {
-				id: {
-					equals: params.workspaceID
-				}
-			},
-			select: {
-				boards: true
-			}
-		});
-
+		// remove the board in the workspace
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
-				id: params.workspaceID
+				id: workspace.id
 			},
 			data: {
-				boards: toUpdateWorkspace?.boards.filter((id) => id !== boardID)
+				boards: workspace.boards.filter((id) => id !== boardID)
 			},
 			select: {
 				id: true
 			}
 		});
-
 		if (!updatedWorkspace)
 			return invalid(500, {
 				message: "Can't update workspace boards lists, please try again later",
 				reason: 'databaseError'
 			});
 
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `deleted the status/board ${deletedBoard.name} and ${move === 'move' ? `moved all tasks under it to another status/board` : `deleted all tasks under it`} in workspace ${workspace.name}`,
+				logDate: new Date(),
+				type: 'board',
+				involve: workspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again', reason: 'databaseError'})
+		
 		if (workspace.members.length > 1) {
-			let trs1 = [];
-			workspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs1 = [
-						...trs1,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: '',
-									subInterface: ''
-								},
-								fromTask: '',
-								isRead: false,
-								message: `${cUser.firstName} ${cUser.lastName} deleted board/status ${deletedBoard.name} in ${workspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-				}
-			});
-			const r1 = await prisma.$transaction(trs1);
-			if (!r1)
-				return invalid(500, {
-					messafe: 'Error in generating notifications',
-					reason: 'databaseError'
-				});
-
-			let trs2 = [];
-			let i = 0;
-			workspace.members.forEach((m) => {
-				if (m !== cUser.id) {
-					trs2 = [
-						...trs2,
-						prisma.users.update({
-							where: {
-								id: m
-							},
-							data: {
-								notifications: {
-									push: r1[i].id
-								}
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-					i++;
-				}
-			});
-			const r2 = await prisma.$transaction(trs2);
-			if (!r2)
-				return invalid(500, {
-					messafe: 'Failed to send notifications on members',
-					reason: 'databaseError'
-				});
-
 			pusherServer.trigger(
 				workspace.members
 					.filter((m) => m !== cUser.id)
@@ -1612,6 +1014,7 @@ export const actions = {
 		return { value: deletedBoard.id };
 	},
 	leaveWorkspace: async ({ params }) => {
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -1622,7 +1025,7 @@ export const actions = {
 				id: true,
 				firstName: true,
 				lastName: true,
-				subjects
+				subjects: true
 			}
 		});
 		if (!cUser)
@@ -1631,20 +1034,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
-		const updatedUser = await prisma.users.update({
-			where: {
-				id: cUser.id
-			},
-			data: {
-				subjects: cUser.subjects.filter((s) => s !== params.subjectID)
-			}
-		});
-		if (!updatedUser)
-			return invalid(404, {
-				message: 'Failed to clear subject on user please try again later',
-				reason: 'databaseError'
-			});
-
+		// get the workspace before leaving
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -1658,6 +1048,7 @@ export const actions = {
 				reason: 'databaseError'
 			});
 
+		// update the members list of the workspace
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
 				id: workspace.id
@@ -1672,59 +1063,62 @@ export const actions = {
 				message: 'Updated workspace not found please try again later',
 				reason: 'databaseError'
 			});
+		
+		// get all other workspaces that has the same parent subject
+		const workspaces = await prisma.workspaces.findMany({
+			where: {
+				parentSubject: {
+					equals: workspace.parentSubject
+				}
+			}
+		})
 
-		let trs1 = [];
-		updatedWorkspace.members.forEach((m) => {
-			trs1 = [
-				...trs1,
-				prisma.notifications.create({
-					data: {
-						aMention: false,
-						anInvitation: false,
-						conversationID: '',
-						for: {
-							self: true,
-							userID: cUser.id
-						},
-						fromInterface: {
-							interf: '',
-							subInterface: ''
-						},
-						fromTask: '',
-						isRead: false,
-						message: `${cUser.firstName} ${cUser.lastName} leaved the workspace ${updatedWorkspace.name}`
-					},
-					select: {
-						id: true
+		// determine if the current user is still existing to other workspace if not remove the current user to the master members list of the subject
+		let existing = false
+		workspaces.every(w => {
+			if (w.members.includes(cUser.id)) {
+				existing = true
+				return false
+			}
+			return true
+		})
+		if (!existing) {
+			// get the parent subject
+			const subject = await prisma.subjects.findFirst({
+				where: {
+					id: {
+						equals: workspace.parentSubject
 					}
-				})
-			];
-		});
-		const r1 = await prisma.$transaction(trs1);
+				}
+			})
+			if (!subject) return invalid(404, { message: 'Subject not found please try again later', reason: 'databaseError' })
 
-		let trs2 = [];
-		let i = 0;
-		updatedWorkspace.members.forEach((m) => {
-			trs2 = [
-				...trs2,
-				prisma.users.update({
-					where: {
-						id: m
-					},
-					data: {
-						notifications: {
-							push: r1[i].id
-						}
-					},
-					select: {
-						id: true
-					}
-				})
-			];
-			i++;
-		});
-		const r2 = await prisma.$transaction(trs2);
+			// update the parent subject's master members list
+			const updatedSubject = await prisma.subjects.update({
+				where: {
+					id: workspace.parentSubject
+				},
+				data: {
+					members: subject.members.filter(m => m !== cUser.id)
+				}
+			})
+			if(!updatedSubject) return invalid(500, {message: 'Failed to update the parent subject please try again later', reason: 'databaseError'})
+		}
 
-		pusherServer.trigger(updatedWorkspace.members, 'updates', {});
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `leaved the workspce ${workspace.name}`,
+				logDate: new Date(),
+				type: 'workspace',
+				involve: workspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
+
+		if (workspace.members.length > 1) {
+			pusherServer.trigger(updatedWorkspace.members, 'updates', {});
+		}
 	}
 };
