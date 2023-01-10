@@ -43,14 +43,7 @@ export async function load({ params }) {
 
 	const tasks = await prisma.tasks.findMany({
 		where: {
-			OR: board.tasks.map(id => {
-				return {
-					AND: {
-						id,
-						isSubtask: false
-					}
-				}
-			})
+			status: board.id
 		},
 		select: {
 			id: true,
@@ -58,8 +51,8 @@ export async function load({ params }) {
 			level: true,
 			status: true,
 			dueDateTime: true,
-			subtasks: true,
-			members: true
+			members: true,
+			parentTask: true
 		}
 	})
 
@@ -96,32 +89,4 @@ export async function load({ params }) {
 	});
 
 	return { user, subject, workspace, board, tasks, taskMembers };
-}
-
-/** @type {import('./$types').Actions} */
-export const actions = {
-	logout: async ({ params }) => {
-		const user = await prisma.users.findFirst({
-			where: {
-				email: {
-					equals: params.userEmail
-				}
-			}
-		})
-		if(!user) throw error(404, 'Account not found')
-
-		const user2 = await prisma.users.update({
-			where: {
-				id: user.id
-			},
-			data: {
-				online: {
-					set: false
-				}
-			}
-		})
-		if(!user2) throw redirect(301, 'my-profile')
-    
-    throw redirect(301, '/Signin')
-  }
 }

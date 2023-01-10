@@ -1,5 +1,4 @@
-/* eslint-disable no-unused-vars */
-import prisma from '$lib/db';
+import prisma from '$lib/db'
 import { error, invalid, redirect } from '@sveltejs/kit'
 import pusherServer from '$lib/configs/helpers/realtime.server';
 
@@ -55,7 +54,26 @@ export async function load({ params }) {
 	
 	const invitations = await prisma.invitations.findMany({
 		where: {
-			OR: user.invitations.map(id=>{return{id}})
+			OR: [
+				{
+					from: {
+						is: {
+							id: {
+								equals: user.id
+							}
+						}
+					}
+				},
+				{
+					to: {
+						is: {
+							id: {
+								equals: user.id
+							}
+						}
+					}
+				}
+			]
 		}
 	})
   
@@ -83,34 +101,11 @@ export async function load({ params }) {
 
 /** @type {import('./$types').Actions} */
 export const actions = {
-	logout: async ({ params }) => {
-		const user = await prisma.users.findFirst({
-			where: {
-				email: {
-					equals: params.userEmail
-				}
-			}
-		});
-		if (!user) throw error(404, 'Account not found');
-
-		const user2 = await prisma.users.update({
-			where: {
-				id: user.id
-			},
-			data: {
-				online: {
-					set: false
-				}
-			}
-		});
-		if (!user2) throw redirect(301, 'my-profile');
-		
-		throw redirect(301, '/Signin');
-	},
   removeMember: async ({ request, params }) => {
 		const data = await request.formData();
 		const memberID = data.get('id')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -123,8 +118,9 @@ export const actions = {
 				lastName: true
 			}
 		});
-		if (!cUser) return invalid(404, { message: 'Account not found please login', reason: 'databaseError' });
+		if (!cUser) return invalid(404, { message: 'Account not found please relogin', reason: 'databaseError' });
 
+		// get the user to be remove
 		let userToRemove = await prisma.users.findFirst({
 			where: {
 				id: {
@@ -139,34 +135,17 @@ export const actions = {
 		});
 		if (!userToRemove) return invalid(404, { message: 'Member data not found on database', reason: 'noaccount' });
 
-		const subject = await prisma.subjects.findFirst({
-			where: {
-				id: {
-					equals: params.subjectID
-				}
-			},
-			select: {
-				id: true,
-				workspaces: true
-			}
-		});
-		if (!subject) return invalid(404, { message: { message: 'Subject not found', reason: 'nosubject' } });
-
+		// get the workspace before update of members list
 		const toUpdateWorkspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
 					equals: params.workspaceID
 				}
-			},
-			select: {
-				members: true,
-				admins: true,
-				boards: true,
-				id: true
 			}
 		});
 		if (!toUpdateWorkspace) return invalid(404, { message: 'Workspace not found', reason: 'noworkspace' });
 
+		// update the workspace members and admins list
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
 				id: params.workspaceID
@@ -182,26 +161,27 @@ export const actions = {
 				reason: 'updatingerror'
 			});
 
-		const allTaskID = await prisma.boards.findMany({
-			where: {
-				OR: toUpdateWorkspace.boards.map((id) => {return { id };})
-			},
-			select: {
-				tasks: true
-			}
-		});
-
+		// get all task that the member to be remove is part of
 		let allToUpdatedTasks = await prisma.tasks.findMany({
 			where: {
-				OR: allTaskID.map(at => {return{OR: at.tasks.map(id => {return{id}})}})
+				OR: [
+					{
+						members: {
+							has: memberID
+						}
+					}
+				]
 			},
 			select: {
 				members: true,
 				id: true
 			}
 		});
+
 		//@ts-ignore
 		let trs = [];
+
+		// query the removing of the member to all task as the member of the task
 		allToUpdatedTasks.forEach((task) => {
 			task.members = task.members.filter((id) => id !== memberID);
 			//@ts-ignore
@@ -223,68 +203,23 @@ export const actions = {
 			];
 		});
 		//@ts-ignore
-		const result = await prisma.$transaction(trs);
+		await prisma.$transaction(trs);
 
-		//@ts-ignore
-		let trs3 = [];
-		toUpdateWorkspace.members.forEach((id) => {
-			//@ts-ignore
-			if (id !== cUser.id) {
-				trs3 = [
-					//@ts-ignore
-					...trs3,
-					prisma.notifications.create({
-						data: {
-							aMention: false,
-							anInvitation: false,
-							conversationID: '',
-							for: {
-								self: true,
-								userID: cUser.id
-							},
-							fromInterface: {
-								interf: subject.id,
-								subInterface: updatedWorkspace.id
-							},
-							fromTask: '',
-							isRead: false,
-							//@ts-ignore
-							message: `${cUser.firstName} ${cUser.lastName} removed ${id === memberID ? 'you' : `${userToRemove.firstName} ${userToRemove.lastName}`} as member in ${updatedWorkspace.name}`
-						}
-					})
-				];
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `removed ${userToRemove.firstName} ${userToRemove.lastName} as a member of workspace ${updatedWorkspace.name}`,
+				logDate: new Date(),
+				type: 'member',
+				involve: updatedWorkspace.members
 			}
-		});
-		//@ts-ignore
-		let secondBatchNotifications = await prisma.$transaction(trs3);
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again', reason: 'databaseError'})
 
-		//@ts-ignore
-		let trs2 = [];
-		let i = 0
-    toUpdateWorkspace.members.forEach((id) => {
-			//@ts-ignore
-			if (id !== cUser.id) {
-				trs2 = [
-					//@ts-ignore
-					...trs2,
-					prisma.users.update({
-						where: {
-							id
-						},
-						data: {
-							notifications: {
-								push: secondBatchNotifications[i].id
-							}
-						}
-					})
-				];
-				i++;
-			}
-		});
-		//@ts-ignore
-		let updatedWorkspaceMembersNotifs = await prisma.$transaction(trs2);
-
-		pusherServer.trigger(toUpdateWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+		if (updatedWorkspace.members.length > 1) {
+			pusherServer.trigger(toUpdateWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
+		}
 
 		return {workspace: updatedWorkspace}
 	},
@@ -292,6 +227,7 @@ export const actions = {
 		const data = await request.formData();
 		const adminID = data.get('id')?.toString();
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: {
@@ -307,6 +243,7 @@ export const actions = {
 		});
 		if (!cUser) return invalid(404, {message: 'Current account is not found in database please login', reason: 'databaseError'});
 
+		// get the user to be demoted
 		const toRemoveAdmin = await prisma.users.findFirst({
 			where: {
 				id: {
@@ -319,9 +256,9 @@ export const actions = {
 				lastName: true
 			}
 		});
-
 		if (!toRemoveAdmin) return invalid(404, {message: 'Admin data cannot be found please reload', reason: 'databaseError'});
 
+		// get the workspace before the updates
 		let toUpdateWorkspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -335,92 +272,32 @@ export const actions = {
 				members: true
 			}
 		});
-
 		if (!toUpdateWorkspace) return invalid(404, {message: 'Workspace data cannot be found please reload', reason: 'databaseError'});
 
-		toUpdateWorkspace.admins = toUpdateWorkspace.admins.filter((id) => id !== adminID);
-
+		// update the admins list of the workspace
 		const updatedWorkspace = await prisma.workspaces.update({
 			where: {
 				id: toUpdateWorkspace.id
 			},
 			data: {
-				admins: toUpdateWorkspace.admins
+				admins: toUpdateWorkspace.admins.filter((id) => id !== adminID)
 			}
 		});
 		if (!updatedWorkspace) return invalid(204, {message: 'Workspace is updated but did not return updated data please reload', reason: 'databaseError'});
 
-		if (updatedWorkspace.members.length > 1) {
-			const subject = await prisma.subjects.findFirst({
-				where: {
-					workspaces: {
-						has: updatedWorkspace.id
-					}
-				}
-			})
-			if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
-			//@ts-ignore
-			let trs = [];
-			updatedWorkspace.members.forEach((member) => {
-				if (member !== cUser.id) {
-					trs = [
-						//@ts-ignore
-						...trs,
-						prisma.notifications.create({
-							data: {
-								aMention: false,
-								anInvitation: false,
-								conversationID: '',
-								for: {
-									self: true,
-									userID: cUser.id
-								},
-								fromInterface: {
-									interf: subject.id,
-									subInterface: updatedWorkspace.id
-								},
-								fromTask: '',
-								isRead: false,
-								//@ts-ignore
-								message: `${cUser.firstName} ${cUser.lastName} demoted ${toRemoveAdmin.id === member ? 'you' : `${toRemoveAdmin.firstName} ${toRemoveAdmin.lastName}`} as member in ${toUpdateWorkspace.name}`
-							},
-							select: {
-								id: true
-							}
-						})
-					];
-				}
-			});
-			//@ts-ignore
-			let secondBatchNotifications = await prisma.$transaction(trs);
-	
-			//@ts-ignore
-			let trs2 = []
-			let i = 0
-			updatedWorkspace.members.forEach((id) => {
-				if (id !== cUser.id) { 
-					trs2 = [
-						//@ts-ignore
-						...trs2,
-						prisma.users.update({
-							where: {
-								id
-							},
-							data: {
-								notifications: {
-									push: secondBatchNotifications[i].id
-								}
-							}
-						})
-					]
-					i++
-				}
-			});
-			//@ts-ignore
-			let updatedWorkspaceMembersNotifs = await prisma.$transaction(trs2)
-			if (!updatedWorkspaceMembersNotifs)
-				return invalid(500, { message: 'Failed to generate notifications', reason: 'databaseError' })
-			
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `removed ${toRemoveAdmin.firstName} ${toRemoveAdmin.lastName} as admin in workspace ${updatedWorkspace.name}`,
+				logDate: new Date(),
+				type: 'member',
+				involve: updatedWorkspace.members
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
+
+		if (updatedWorkspace.members.length > 1) {			
 			pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
 		}
 
@@ -430,6 +307,7 @@ export const actions = {
     const data = await request.formData()
     const memberID = data.get('id')?.toString()
 
+		// get the current user
     const cUser = await prisma.users.findFirst({
       where: {
         email: {
@@ -442,20 +320,24 @@ export const actions = {
         lastName: true
       }
     })
-    if (!cUser) throw error(404, 'Account not found')
+		if (!cUser) throw error(404, 'Account not found')
+		
+		// get the promoted member
+		const promotedMember = await prisma.users.findFirst({
+			where: {
+				id: {
+					equals: memberID
+				}
+			},
+			select: {
+				id: true,
+				firstName: true,
+				lastName: true
+			}
+		})
+		if(!promotedMember) return invalid(404, {message: 'Member is not found please try again later', reason: 'databaseError'})
     
-    const subject = await prisma.subjects.findFirst({
-      where: {
-        id: {
-          equals: params.subjectID
-        }
-      },
-      select: {
-        id: true
-      }
-    })
-    if (!subject) return invalid(404, { message: 'Subject not found', reason: 'databaseError' })
-    
+		// get the workspace before updates
     const workspace = await prisma.workspaces.findFirst({
       where: {
         id: {
@@ -469,6 +351,7 @@ export const actions = {
     })
     if (!workspace) return invalid(404, { message: 'Workspace not found', reason: 'databaseError' })
     
+		// update the workspace's admins list
     const updatedWorkspace = await prisma.workspaces.update({
       where: {
         id: workspace.id
@@ -480,94 +363,20 @@ export const actions = {
       }
     })
 		if (!updatedWorkspace) return invalid(404, { message: 'Updated workspace did not return', reason: 'databaseError' })
-		
-		const toUpdatePromotedMember = await prisma.users.findFirst({
-			where: {
-				id: {
-					equals: memberID
-				}
-			},
-			select: {
-				id: true,
-				firstName: true,
-				lastName: true
+
+		// create a log for all workspace members
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `promoted ${promotedMember.firstName} ${promotedMember.lastName} as an admin in the workspace ${updatedWorkspace.name}`,
+				logDate: new Date(),
+				type: "member",
+				involve: updatedWorkspace.members
 			}
 		})
-		if(!toUpdatePromotedMember) return invalid(404, {message: 'Promoting an unknown user please try again later', reason: 'databaseError'})
-
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
 
 		if (updatedWorkspace.members.length > 1) {
-			const subject = await prisma.subjects.findFirst({
-				where: {
-					workspaces: {
-						has: updatedWorkspace.id
-					}
-				},
-				select: {
-					id: true
-				}
-			})
-			if(!subject) return invalid(404, {message: 'Subject not found', reason: 'databaseError'})
-
-			let members = updatedWorkspace.members.filter(id => id !== cUser.id)
-	
-			//@ts-ignore
-			let trs = []
-			members.forEach(id => {
-				trs = [
-					//@ts-ignore
-					...trs,
-					prisma.notifications.create({
-						data: {
-							aMention: false,
-							anInvitation: false,
-							conversationID: '',
-							for: {
-								self: true,
-								userID: cUser.id
-							},
-							fromInterface: {
-								interf: subject.id,
-								subInterface: updatedWorkspace.id
-							},
-							fromTask: '',
-							isRead: false,
-							message: `${cUser.firstName} ${cUser.lastName} promoted ${toUpdatePromotedMember.id === id ? 'you' : `${toUpdatePromotedMember.firstName} ${toUpdatePromotedMember.lastName}`} as admin in ${updatedWorkspace.name}`
-						},
-						select: {
-							id: true
-						}
-					})
-				];
-			})
-	
-			//@ts-ignore
-			let secondBatchNotifications = await prisma.$transaction(trs)
-	
-			//@ts-ignore
-			let trs2 = []
-			let i = 0
-			members.forEach((id) => {
-				trs2 = [
-					//@ts-ignore
-					...trs2,
-					prisma.users.update({
-						where: {
-							id
-						},
-						data: {
-							notifications: {
-								push: secondBatchNotifications[i].id
-							}
-						}
-					})
-				]
-				i++
-			})
-	
-			//@ts-ignore
-			let secondBatchUpdateMembers = await prisma.$transaction(trs2)
-			
 			pusherServer.trigger(updatedWorkspace.members.filter(m => m !== cUser.id), 'updates', {})
 		}
 		
@@ -577,7 +386,9 @@ export const actions = {
 		const data = await request.formData()
 		const invitedUserID = data.get('iuID')?.toString()
 		const invitedUserName = data.get('iuName')?.toString()
+		const invitedUserProfile = data.get('iuProfile')?.toString()
 
+		// get the current user
 		const cUser = await prisma.users.findFirst({
 			where: {
 				email: params.userEmail
@@ -592,6 +403,7 @@ export const actions = {
 		})
 		if (!cUser) throw error(404, 'Account not found')
 		
+		// get the workspace
 		const workspace = await prisma.workspaces.findFirst({
 			where: {
 				id: {
@@ -605,6 +417,7 @@ export const actions = {
 		})
 		if(!workspace) return invalid(404, {message: 'Error looking for workspace please reload.', reason: 'databaseError'})
 
+		// create new invitation
 		const newInvitation = await prisma.invitations.create({
 			data: {
 				from: {
@@ -616,9 +429,11 @@ export const actions = {
 				message: `${cUser.firstName} ${cUser.lastName} invites ${invitedUserName} to their workspace ${workspace.name}`,
 				status: 'Pending',
 				subjectID: params.subjectID,
+				//@ts-ignore
 				to: {
 					id: invitedUserID,
-					name: invitedUserName
+					name: invitedUserName,
+					profile: invitedUserProfile
 				},
 				workspace: {
 					id: params.workspaceID,
@@ -630,60 +445,21 @@ export const actions = {
 			}
 		});
 		if (!newInvitation) return invalid(404, { message: 'Inviting process failed.', reason: 'databaseError' })
+		
+		// create a log for both parties
+		const newlog = await prisma.logs.create({
+			data: {
+				commiter: cUser.id,
+				log: `invited ${invitedUserName}(${invitedUserID}) to join in workspace ${workspace.name}`,
+				logDate: new Date(),
+				type: 'invitation',
+				//@ts-ignore
+				involve: [cUser.id, invitedUserID]
+			}
+		})
+		if(!newlog) return invalid(500, {message: 'Failed to log the process please try again later', reason: 'databaseError'})
 
-		const newNotification = await prisma.notifications.create({
-			data: {
-				aMention: false,
-				anInvitation: true,
-				conversationID: '',
-				for: {
-					self: true,
-					userID: cUser.id
-				},
-				fromInterface: {
-					interf: '',
-					subInterface: ''
-				},
-				fromTask: '',
-				isRead: false,
-				message: `${cUser.firstName} ${cUser.lastName} invites ${invitedUserName} to their workspace ${workspace.name}`
-			},
-			select: {
-				id: true
-			}
-		});
-		if(!newNotification) return invalid(500, {message: 'Error generating notification', reason: 'databaseError'})
-		
-		const updatedUser1 = await prisma.users.update({
-			where: {
-				id: cUser.id
-			},
-			data: {
-				invitations: {
-					push: newInvitation.id
-				}
-			},
-			select: {
-				id: true
-			}
-		})
-		if (!updatedUser1) return invalid(500, { message: 'Invitation proccess stopped by server, please reload', reason: 'databaseError' })
-		
-		const updatedUser2 = await prisma.users.update({
-			where: {
-				id: invitedUserID
-			},
-			data: {
-				invitations: {
-					push: newInvitation.id
-				},
-				notifications: {
-					push: newNotification.id
-				}
-			}
-		})
-		if (!updatedUser2) return invalid(500, { message: 'Invitation proccess stopped by server, please reload', reason: 'databaseError' })
-		
+		//@ts-ignore
 		pusherServer.trigger(invitedUserID, 'updates', {})
 	}
 }

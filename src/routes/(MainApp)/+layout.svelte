@@ -1,15 +1,13 @@
 <script>
   //@ts-nocheck
   import { ClickOutside, AppBar, Icon, NavigationDrawer, Overlay, Button, MaterialApp, Avatar, List, ListItem, ListItemGroup, Divider, Badge } from 'svelte-materialify'
-  import {mdiBell, mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup } from '@mdi/js';
+  import { mdiViewDashboard, mdiAccountCheck, mdiTune, mdiStar, mdiAccount, mdiLogoutVariant, mdiMenu, mdiChevronLeft, mdiChevronRight, mdiAccountGroup, mdiHistory } from '@mdi/js';
 	import { goto, invalidateAll } from '$app/navigation';
-	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifCenterOpen, notifs, currentIndex, global_USERID } from '$lib/stores/global.store';
+	import { breadCrumbsItems, hintText, loading, loadingScreen, navDrawerActive, notifs, currentIndex, global_USERID } from '$lib/stores/global.store';
 	import { invModalActive } from '$lib/stores/dashboard.store';
 	import { page } from '$app/stores';
-	import NotificationCenter from '$lib/components/User-Notification-Center/NotificationCenter.svelte';
 	import LoadingScreen from '$lib/components/LoadingScreen.svelte';
   import { fade } from 'svelte/transition'
-	import NotificationContainer from '$lib/components/System-Notification/Notification-container.svelte';
 	import Fab from '$lib/components/fab/fab.svelte';
 	import { onMount } from 'svelte';
 	import AddSubjectPanel from '$lib/components/subject/addSubjectPanel.svelte';
@@ -153,7 +151,6 @@
 
   const unload = () => {
     pusher.disconnect()
-    console.log('pusher disconnected');
     logout()
   }
 </script>
@@ -167,7 +164,6 @@
 <LoadingScreen />
 {:else}
   <div in:fade>
-    <NotificationContainer />
     <AddSubjectPanel />
     <AddWorkspacePanel />
     <AddTaskPanel />
@@ -179,7 +175,7 @@
     <BoardSettingsPanel />
 
 
-    <SubjectDeleteConfirmationModal />
+    <SubjectDeleteConfirmationModal {data} />
     <WorkspaceDeleteConfirmationModal />
     <TaskDeleteConfirmationModal />
     <BoardDeleteConfirmationModal />
@@ -216,6 +212,31 @@
         <!-- Expansion-er -->
         <div class="is-flex-grow-1"/>
   
+        <Badge
+          dot
+          active={data.invitations.filter(invitation => invitation.to.id === data.user.id ).length > 0}
+          class="success-color"
+          offsetX={23}
+          offsetY={innerWidth < 426 ? 13 : 10}
+        >
+          <a
+            data-sveltekit-preload-data="hover"
+            data-sveltekit-preload-code='eager'
+            disabled={$page.url.pathname === `/${data.user.email}/logs`}
+            on:click={() => {
+              if($page.url.pathname === `/${data.user.email}/logs`) return
+              loadingScreen.set(true)
+            }}
+            href="/{data.user.email}/logs">
+            <Button
+              icon
+              class="mr-3 p-2 is-flex is-justify-content-center is-align-items-center"
+            >
+              <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiHistory} />
+            </Button>
+          </a>
+        </Badge>
+
         <!-- invitations inbox -->
         {#if data.user.verified}
           <Badge
@@ -244,95 +265,70 @@
           </Badge>
         {/if}
   
-        <!-- notification -->
+        <!-- profile -->
         <div
-            use:ClickOutside
-            on:clickOutside={() => notifCenterOpen.set(false)}
+          use:ClickOutside
+          on:clickOutside={() => showProfileMenu = false}
+        >
+          <!-- Account Button -->
+          <!-- {!$sidebarActive?"is-hidden":""} -->
+          <Button
+            icon
+            class="is-hidden-touch" 
+            on:click={() => {
+              helpers.resetPanels()
+              showProfileMenu = !showProfileMenu
+            }}
           >
-            <Badge
-              dot
-              active={data.notifications.filter(notification => notification.isRead != true).length > 0}
-              class="success-color"
-              offsetX={23}
-              offsetY={13}
-            >
-              <Button
-                icon
-                on:click={() => {
-                  notifCenterOpen.set(!$notifCenterOpen)
-                }}
-                class="mr-3 has-background-grey-{$notifCenterOpen? 'dark': ''} p-2 is-flex is-justify-content-center is-align-items-center"
-              >
-                <Icon class='white-text' size={innerWidth < 426 ? '20px': '30px'} path={mdiBell } />
-              </Button>
-            </Badge>
-            <NotificationCenter {data} notifications={data.notifications} notifFromPic={data.notifFromPic} />
-          </div>
-  
-          <!-- profile -->
+            {#if data.user.profile}
+              <Avatar size='30px' class='maxmins-w-30 maxmins-h-30 has-background-white-bis'>
+                <img src={data.user.profile} alt={`${data.user.firstName} ${data.user.lastName}`}>
+              </Avatar>
+            {:else}
+              <Icon class="white-text" size='30px' path={mdiAccount}/>
+            {/if}
+          </Button>
+    
           <div
-            use:ClickOutside
-            on:clickOutside={() => showProfileMenu = false}
-          >
-            <!-- Account Button -->
-            <!-- {!$sidebarActive?"is-hidden":""} -->
-            <Button
-              icon
-              class="is-hidden-touch" 
-              on:click={() => {
-                helpers.resetPanels()
-                showProfileMenu = !showProfileMenu
-              }}
-            >
-              {#if data.user.profile}
-                <Avatar size='30px' class='maxmins-w-30 maxmins-h-30 has-background-white-bis'>
-                  <img src={data.user.profile} alt={`${data.user.firstName} ${data.user.lastName}`}>
-                </Avatar>
-              {:else}
-                <Icon class="white-text" size='30px' path={mdiAccount}/>
-              {/if}
-            </Button>
-      
-            <div
-              style='transform-origin: top center' class="pos-abs pos-t-65 pos-r-5 has-background-white-bis elevation-3 rounded-b maxmins-w-200 z-100 has-transition rot-x-{showProfileMenu ? '0' : '90'}">
-              <List nav>
-                <a
-                  data-sveltekit-preload-data="hover"
-                  data-sveltekit-preload-code='eager'
-                  href="/{data.user.email}/my-profile"
+            style='transform-origin: top center' class="pos-abs pos-t-65 pos-r-5 has-background-white-bis elevation-3 rounded-b maxmins-w-200 z-100 has-transition rot-x-{showProfileMenu ? '0' : '90'}">
+            <List nav>
+              <a
+                data-sveltekit-preload-data="hover"
+                data-sveltekit-preload-code='eager'
+                href="/{data.user.email}/my-profile"
+                disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
+                on:click={() => {
+                  showProfileMenu = false
+                  if($currentIndex == 3) return
+                  loadingScreen.set(true)
+                  currentIndex.set(3)
+                }}
+              >
+                <ListItem
                   disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
-                  on:click={() => {
-                    showProfileMenu = false
-                    if($currentIndex == 3) return
-                    loadingScreen.set(true)
-                    currentIndex.set(3)
-                  }}
+                  active={$page.url.pathname === `/${data.user.email}/my-profile`}
                 >
-                  <ListItem
-                    disabled={$page.url.pathname === `/${data.user.email}/my-profile`}
-                    active={$page.url.pathname === `/${data.user.email}/my-profile`}
-                  >
-                    <span slot="prepend">
-                      <Icon path={mdiTune} />
-                    </span>
-                    <span class="fredoka-reg">
-                      My profile
-                    </span>
-                  </ListItem>
-                </a>
-                
-                <!-- logoutModalActive.set(true) -->
-                <ListItem on:click={logout}>
                   <span slot="prepend">
-                    <Icon path={mdiLogoutVariant} />
+                    <Icon path={mdiTune} />
                   </span>
                   <span class="fredoka-reg">
-                    Logout
+                    My profile
                   </span>
                 </ListItem>
-              </List>
-            </div>
+              </a>
+              
+              <!-- logoutModalActive.set(true) -->
+              <ListItem on:click={logout}>
+                <span slot="prepend">
+                  <Icon path={mdiLogoutVariant} />
+                </span>
+                <span class="fredoka-reg">
+                  Logout
+                </span>
+              </ListItem>
+            </List>
           </div>
+        </div>
       </AppBar>
   
       <NavigationDrawer width={innerWidth < 571 ? '100%' : '250px'} fixed clipped active mini={!active} miniWidth={innerWidth < 571 && !active? "0px": "68px"} class='has-background-white'>
@@ -394,14 +390,14 @@
   
       <div class="hero is-fullheight pl-{innerWidth < 571 ? '' : '16'} pt-14">
         <!-- HEAD BREADCRUMBS -->
-        <div class="hero-head z-{$addSubjectPanelActive || $subjectSettingsPanelActive || $confirmDeleteModalActive || $addWorkspacePanelActive || $workspaceSettingsPanelActive || $confirmDeleteWorkspaceModalActive || $addTaskPanelActive || $taskSettingsPanelActive || $taskConfirmDeleteModalActive || $navDrawerActive || $notifCenterOpen || $addBoardPanelActive || $boardSettingsPanelActive || $deleteBoardConfirmationModalActive ? '1' : '2'}">
-          <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' ? 'pl-3' : ''}">
+        <div class="hero-head z-{$addSubjectPanelActive || $subjectSettingsPanelActive || $confirmDeleteModalActive || $addWorkspacePanelActive || $workspaceSettingsPanelActive || $confirmDeleteWorkspaceModalActive || $addTaskPanelActive || $taskSettingsPanelActive || $addBoardPanelActive || $boardSettingsPanelActive || $deleteBoardConfirmationModalActive ? '1' : '2'}">
+          <div class="is-flex is-align-items-center {breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Process logs' ? 'pl-3' : ''}">
             {#if innerWidth < 571}
               <a
                 data-sveltekit-preload-data="hover"
                 data-sveltekit-preload-code='eager'
                 on:click={() => loadingScreen.set(true)}
-                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' || breadcrumbs[breadcrumbs.length-1].text === 'Process logs' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
                 <Button 
                   icon
                   class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Invitations' ? 'opacity-0p' : ''}'
@@ -414,7 +410,7 @@
                 data-sveltekit-preload-code='eager'
                 on:click={() => loadingScreen.set(true)}
                 href='{$breadCrumbsItems[$breadCrumbsItems.length - 1].href}'
-                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Invitations' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
+                class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {$breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Subjects' || $breadCrumbsItems[$breadCrumbsItems.length-1].text === 'Assigned to me' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Favorites' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'My profile'  || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'boards' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'view' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Invitations' || $breadCrumbsItems[$breadCrumbsItems.length - 1].text === 'Process logs' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
               >
                 {$breadCrumbsItems[$breadCrumbsItems.length - 1].text}
               </a>
@@ -423,10 +419,10 @@
                 data-sveltekit-preload-data="hover"
                 data-sveltekit-preload-code='eager'
                 on:click={() => loadingScreen.set(true)}
-                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
+                href='{breadcrumbs.length > 1 ? `${breadcrumbs[breadcrumbs[breadcrumbs.length-1].text === 'view' || breadcrumbs[breadcrumbs.length-1].text === 'members' || breadcrumbs[breadcrumbs.length-1].text === 'manage members' || breadcrumbs[breadcrumbs.length-1].text === 'Process logs' ? 2 : 1].href}` : `${breadcrumbs[0].href}`}'>
                 <Button
                   icon
-                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Invitations' ? 'opacity-0p' : ''}'
+                  class='{breadcrumbs[0].text === 'My profile' || breadcrumbs[0].text === 'Assigned to me' || breadcrumbs[0].text === 'Favorites' || breadcrumbs[0].text === 'Subjects' || breadcrumbs[0].text === 'Invitations' || breadcrumbs[0].text === 'Process logs' ? 'opacity-0p' : ''}'
                 >
                   <Icon path={mdiChevronLeft} />
                 </Button>
@@ -437,7 +433,7 @@
                   data-sveltekit-preload-code='eager'
                   on:click={() => loadingScreen.set(true)}
                   href='{crumb.href}'
-                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' || crumb.text === 'Invitations' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
+                  class="txt-size-{innerWidth < 426 ? '12' : '18'} fredoka-reg {crumb.text === 'Subjects' || crumb.text === 'Assigned to me' || crumb.text === 'Favorites' || crumb.text === 'My profile'  || crumb.text === 'boards' || crumb.text === 'view' || crumb.text === 'Invitations' || crumb.text === 'Process logs' ? 'has-text-grey' : 'is-underlined has-text-link is-clickable'}"
                 >
                   {crumb.text}
                 </a>
@@ -504,7 +500,7 @@
   </div>
   {/if}
 
-  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' && $currentIndex !== 3 }
+  {#if $currentIndex == 0 && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'view' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'members' && $breadCrumbsItems[$breadCrumbsItems.length-1].text !== 'manage members' && $currentIndex != 3 && $breadCrumbsItems[0].text !== 'Process logs' }
     <div class="z-90">
       <Fab {data} />
     </div>

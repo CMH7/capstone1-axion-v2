@@ -17,21 +17,12 @@ type InvitationsFrom {
 type InvitationsTo {
   id              String
   name            String
+  profile         String
 }
 
 type InvitationsWorkspace {
   id              String
   name            String
-}
-
-type NotificationsFor {
-  self            Boolean
-  userID          String
-}
-
-type NotificationsFromInterface {
-  interf          String
-  subInterface    String
 }
 
 type UsersFavorites {
@@ -43,8 +34,7 @@ model boards {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   color           String
   name            String
-  tasks           String[]
-  filter          String
+  parentWorkspace String
 }
 
 model chats {
@@ -53,6 +43,7 @@ model chats {
   message         String
   deliveredTime   DateTime  @db.Date
   edited          Boolean
+  parentTask      String
 }
 
 model invitations {
@@ -65,29 +56,16 @@ model invitations {
   workspace       InvitationsWorkspace
 }
 
-model notifications {
-  id              String                     @id @default(auto()) @map("_id") @db.ObjectId
-  aMention        Boolean
-  anInvitation    Boolean
-  conversationID  String
-  for             NotificationsFor
-  fromInterface   NotificationsFromInterface
-  fromTask        String
-  isRead          Boolean
-  message         String
-}
-
 model subjects {
   id              String   @id @default(auto()) @map("_id") @db.ObjectId
   color           String
   name            String
   owner           String
-  workspaces      String[]
+  members         String[]
 }
 
 model tasks {
   id              String         @id @default(auto()) @map("_id") @db.ObjectId
-  conversations   String[]
   createdBy       String
   createdOn       DateTime       @db.Date
   description     String
@@ -97,9 +75,8 @@ model tasks {
   members         String[]
   name            String
   status          String
-  subtasks        String[]
+  parentTask      String
   viewers         String[]
-  subscribers     String[]
 }
 
 model users {
@@ -111,14 +88,11 @@ model users {
   favorites       UsersFavorites[]
   firstName       String
   gender          String
-  invitations     String[]
   lastName        String
-  notifications   String[]
   password        String
   profile         String
   school          String
   showTutorial    Boolean
-  subjects        String[]
   verified        Boolean
   year            Int
   online          Boolean
@@ -135,4 +109,14 @@ model workspaces {
   members         String[]
   name            String
   owner           String
+  parentSubject   String
+}
+
+model logs {
+  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  log             String
+  logDate         DateTime  @db.Date
+  type            String
+  commiter        String
+  involve         String[]
 }

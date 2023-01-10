@@ -1,7 +1,6 @@
 <script>
-	import { applyAction, deserialize, enhance } from '$app/forms';
-
   // @ts-nocheck
+	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { goto, invalidateAll } from '$app/navigation';
 	import NothingFound from '$lib/components/nothingFound.svelte';
 	import helpers from '$lib/configs/helpers';
@@ -20,7 +19,6 @@
   let innerWidth = 0
   let currentInv = ''
   let processing = false
-  let from = ''
   let searchFor = ''
   let fromMe = true
   let fromOthers = true
@@ -133,13 +131,9 @@
     currentInv = ''
   }
   
-  /**
-   * @param {string} f
-  */
-  const removeInv = async (f) => {
+  const removeInv = async () => {
     if(processing) return
     processing = true
-    from = f
 
     let form = document.getElementById('formRemoveInvitation')
     const data = new FormData(form);
@@ -252,7 +246,6 @@
   <form action="?/removeInvitation" id='formRemoveInvitation' class='is-hidden' use:enhance>
     <input type="text" name='id' bind:value={data.user.id}>
     <input type="text" name='invID' bind:value={currentInv}>
-    <input type="text" name='from' bind:value={from}>
   </form>
 
   <form action="?/cancelInvitation" id='formCancelInvitation' class='is-hidden' use:enhance>
@@ -321,8 +314,8 @@
               
               {#if invitation.from.id === data.user.id}
                 <Avatar>
-                  {#if data.toPics.filter(u => u.id === invitation.to.id)[0].profile !== ''}
-                    <img src="{data.toPics.filter(u => u.id === invitation.to.id)[0].profile}" alt="pic">
+                  {#if invitation.to.profile !== ''}
+                    <img src="{invitation.to.profile}" alt="pic">
                   {:else}
                     <Icon class='blue-text' path={mdiAccountOutline} />
                   {/if}
@@ -368,7 +361,7 @@
                       Cancel
                     </Button>
                   {:else}
-                    <Button text size='small' class='has-background-danger has-text-white ml-3' on:click={() => removeInv(invitation.from.id === data.user.id ? 'yes' : 'no')}>
+                    <Button text size='small' class='has-background-danger has-text-white ml-3' on:click={removeInv}>
                       Remove
                     </Button>
                   {/if}
@@ -380,10 +373,6 @@
                     
                     <Button text size='small' class='has-background-danger has-text-white ml-3' on:click={declineInv}>
                       Decline
-                    </Button>
-                  {:else}
-                    <Button text size='small' class='has-background-danger has-text-white ml-3' on:click={() => removeInv(invitation.from.id === data.user.id ? 'yes' : 'no')}>
-                      Remove
                     </Button>
                   {/if}
                 {/if}

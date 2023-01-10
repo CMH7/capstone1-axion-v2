@@ -1,12 +1,11 @@
 <script>
   //@ts-nocheck
-	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard, showFilter } from '$lib/stores/boards.store';
+	import { addBoardPanelActive, boardSettingsPanelActive, newBoardName, selectedBoard } from '$lib/stores/boards.store';
 	import { modalChosenColor } from '$lib/stores/global.store';
 	import { newTaskDueDateTime, newTaskLevel, newTaskName, newTaskStatus, taskSettingsPanelActive } from '$lib/stores/task.store';
-  import { mdiTune, mdiFilter } from '@mdi/js'
+  import { mdiTune } from '@mdi/js'
   import { ExpansionPanels, ExpansionPanel, Button, Icon } from 'svelte-materialify'
 	import TaskCard from '../task/task-card.svelte';
-	import TaskFilterDropdown from '../taskFilterDropdown.svelte';
 
   export let data
 </script>

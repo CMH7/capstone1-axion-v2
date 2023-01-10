@@ -8,8 +8,6 @@
 	import { workspaceInviteUserModalActive, selectedMember } from '$lib/stores/workspace.store';
 	import { mdiClose } from '@mdi/js';
 
-  export let data
-
   let inviting = false
 
   $: uiName = `${$selectedMember.firstName} ${$selectedMember.lastName}`
@@ -80,6 +78,7 @@
 <form id='formInviteUser' class="is-hidden" action="?/inviteUser" use:enhance>
   <input type="text" name='iuID' bind:value={$selectedMember.id}>
   <input type="text" name='iuName' bind:value={uiName}>
+  <input type="text" name='iuProfile' bind:value={$selectedMember.profile}>
 </form>
 
 <Dialog persistent bind:active={$workspaceInviteUserModalActive} class='p-2'>

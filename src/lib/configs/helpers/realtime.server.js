@@ -1,4 +1,5 @@
-import Pusher from "pusher";
+//@ts-nocheck
+import Pusher from "pusher"
 
 const pusherServer = new Pusher({
 	appId: process.env.PUSHER_APPID3,

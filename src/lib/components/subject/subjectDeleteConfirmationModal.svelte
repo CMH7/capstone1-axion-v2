@@ -8,6 +8,8 @@
   import { Button, Dialog } from 'svelte-materialify'
   import { Pulse } from 'svelte-loading-spinners'
 
+  export let data
+
   let deleting = false
 
   const deleteSubject = async () => {
@@ -59,7 +61,7 @@
   }
 </script>
 
-<form id='formDeleteSubject' class="is-hidden" action="?/deleteSubject" use:enhance>
+<form id='formDeleteSubject' class="is-hidden" action="/{data.user.email}?/deleteSubject" use:enhance>
   <input type="text" bind:value={$selectedSubject.id} name='id'>
 </form>
 

@@ -24,43 +24,30 @@ export async function load({ params }) {
 		if (!user) throw error(404, 'Account not found');
 	}
 
-	let notifications = await prisma.notifications.findMany({
-		where: {
-			OR: user.notifications.map(id => {return{id}})
-		}
-	})
-
-	notifications = notifications.reverse()
-
 	const invitations = await prisma.invitations.findMany({
 		where: {
-			OR: user.invitations.map(id => {return{id}})
+			OR: [
+				{
+					from: {
+						is: {
+							id: {
+								equals: user.id
+							}
+						}
+					}
+				},
+				{
+					to: {
+						is: {
+							id: {
+								equals: user.id
+							}
+						}
+					}
+				}
+			]
 		}
 	})
 
-	let profiles = await prisma.users.findMany({
-		where: {
-			OR: notifications.map(n => {return{id: n.for.userID}})
-		},
-		select: {
-			id: true,
-			profile: true
-		}
-	})
-	/** 
-	 * @type {{notifID: string, profile: string}[]} 
-	 * */
-	let notifFromPic = []
-	notifications.forEach(notif => {
-		notifFromPic = [
-			...notifFromPic,
-			{
-				notifID: notif.id,
-				profile: profiles.filter(u => u.id === notif.for.userID)[0].profile
-			}
-		]
-	})
-	// console.log(notifFromPic);
-
-	return { user, notifications, invitations, notifFromPic };
+	return { user, invitations };
 }

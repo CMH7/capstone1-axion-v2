@@ -3,7 +3,7 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { global_USERID, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, modalChosenColor, navDrawerActive, notifs } from '$lib/stores/global.store';
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider} from 'svelte-materialify';
   import { Pulse } from 'svelte-loading-spinners'
@@ -62,12 +62,11 @@
 <form id='formAddWorkspace' class="is-hidden" action="?/createWorkspace" use:enhance>
   <input type="text" bind:value={$newWorkspaceName} name='name'>
   <input type="text" bind:value={$modalChosenColor} name='color'>
-  <input type="text" bind:value={$activeSubject.id} name='subjectID'>
   <input type="text" bind:value={$global_USERID} name='creator'>
 </form>
 
 <div
-  class="has-transition z-{$notifCenterOpen || $navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addWorkspacePanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$addWorkspacePanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->

@@ -1,4 +1,5 @@
 <script>
+  //@ts-nocheck
   import { Dialog, Button, Icon, TextField } from 'svelte-materialify'
   import bcryptjs from 'bcryptjs'
 	import { deleteAccoutConfirmationModalActive } from '$lib/stores/myProfile.store';

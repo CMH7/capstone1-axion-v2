@@ -3,7 +3,7 @@
 	import { applyAction, deserialize, enhance } from '$app/forms';
 	import { invalidateAll } from '$app/navigation';
   import constants from '$lib/configs/constants';
-	import { global_USERID, hintText, modalChosenColor, navDrawerActive, notifCenterOpen, notifs } from '$lib/stores/global.store';
+	import { global_USERID, hintText, modalChosenColor, navDrawerActive, notifs } from '$lib/stores/global.store';
   import { confirmDeleteModalActive, newSubjectName, selectedSubject, subjectSettingsPanelActive } from '$lib/stores/subject.store'
 	import { mdiClose } from '@mdi/js';
 	import { TextField, Button, Icon, Divider, Switch} from 'svelte-materialify';
@@ -18,9 +18,8 @@
   
   $: isFavorite1 = data.user.favorites[0].ids.includes($selectedSubject.id)
   $: isFavorite = isFavorite1
-  $: addFavorite = isFavorite1 == false && isFavorite == true ? 'add' : isFavorite1 == true && isFavorite == false ? 'rem' : 'nothing'
+  $: addFavorite = !isFavorite1 && isFavorite == true ? 'add' : isFavorite1 && isFavorite == false ? 'rem' : 'nothing'
   $: subjectNameError = $newSubjectName === ''
-  $: size = innerWidth < 571 ? 'small' : 'large'
 
   const updateSubject = async () => {
     if(updating) return
@@ -73,7 +72,7 @@
 
 <svelte:window bind:innerWidth />
 
-<form id='formUpdateSubject' class="is-hidden" action="?/updateSubject" use:enhance>
+<form id='formUpdateSubject' class="is-hidden" action="/{data.user.email}?/updateSubject" use:enhance>
   <input type="text" bind:value={$newSubjectName} name='name'>
   <input type="text" bind:value={$modalChosenColor} name='color'>
   <input type="text" bind:value={$selectedSubject.id} name='id'>
@@ -81,7 +80,7 @@
 </form>
 
 <div
-  class="has-transition z-{$confirmDeleteModalActive || $notifCenterOpen || $navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$subjectSettingsPanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
+  class="has-transition z-{$confirmDeleteModalActive || $navDrawerActive ? 'n100' : '30'} pos-fix p-2 pos-t-57 pos-r-0 maxmins-h-calc-100vh-65px maxmins-w-400-dt-to-mb-100p has-background-white-bis {!$subjectSettingsPanelActive ? 'rot-y-90' : 'rot-y-0'} rounded-b elevation-4 is-flex is-flex-direction-column"
   style='transform-origin: top right'
 >
   <!-- title -->
